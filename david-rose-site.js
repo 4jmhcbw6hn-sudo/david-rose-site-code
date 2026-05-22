@@ -1728,31 +1728,15 @@ setTimeout(() => {
     overlay.style.pointerEvents = "none";
   }
 }, 3000);
-/* Contact overlay patch */
+
+/* Contact modal control */
 (function () {
   let contactIsOpen = false;
-  let contactTimeouts = [];
-
-  function clearContactTimeouts() {
-    contactTimeouts.forEach((timeout) => {
-      clearTimeout(timeout);
-    });
-
-    contactTimeouts = [];
-  }
 
   function findContactButton() {
     return Array.from(document.querySelectorAll(".side-nav .nav-text, .side-nav a")).find((item) => {
       return item.textContent.trim().toLowerCase() === "contact";
     });
-  }
-
-  function getContactOverlay() {
-    return document.querySelector(".contact-overlay");
-  }
-
-  function getContactModal() {
-    return document.querySelector(".contact-modal");
   }
 
   function getContactCloseButton() {
@@ -1769,27 +1753,8 @@ setTimeout(() => {
     );
   }
 
-  function prepareContactHidden() {
-    const overlay = getContactOverlay();
-    const modal = getContactModal();
+  function setCloseCursor() {
     const closeButton = getContactCloseButton();
-
-    if (overlay) {
-      overlay.style.transition = "none";
-      overlay.style.opacity = "0";
-      overlay.style.visibility = "hidden";
-      overlay.style.pointerEvents = "none";
-    }
-
-    if (modal) {
-      modal.style.transition = "none";
-      modal.style.opacity = "0";
-      modal.style.visibility = "hidden";
-      modal.style.pointerEvents = "none";
-      modal.style.filter = "blur(10px)";
-      modal.style.transform = "scale(0.965)";
-      modal.style.transformOrigin = "50% 50%";
-    }
 
     if (closeButton) {
       closeButton.style.cursor = "pointer";
@@ -1798,7 +1763,7 @@ setTimeout(() => {
   }
 
   function softenNavForContact() {
-    getLeftNavButtons().forEach((button) => {
+    document.querySelectorAll(".side-nav .nav-text, .side-nav a").forEach((button) => {
       button.style.transition =
         "opacity 1800ms cubic-bezier(0.22, 1, 0.36, 1), " +
         "filter 2200ms cubic-bezier(0.22, 1, 0.36, 1), " +
@@ -1809,24 +1774,31 @@ setTimeout(() => {
       button.style.transform = "scale(0.99)";
       button.style.pointerEvents = "none";
     });
+
+    setCloseCursor();
   }
 
   function restoreNavAfterContact() {
-    getLeftNavButtons().forEach((button) => {
-      resetElement(button);
+    document.querySelectorAll(".side-nav .nav-text, .side-nav a").forEach((button) => {
+      button.style.transition =
+        "opacity 1600ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "filter 1800ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "transform 1800ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+      button.style.opacity = "";
+      button.style.filter = "";
+      button.style.transform = "";
       button.style.pointerEvents = "";
     });
   }
 
-  function showContactAnimated() {
-    const overlay = getContactOverlay();
-    const modal = getContactModal();
-    const closeButton = getContactCloseButton();
+  function forceContactClosedOnLoad() {
+    document.documentElement.classList.remove("contact-open");
+    contactIsOpen = false;
+    setCloseCursor();
+  }
 
-    if (!overlay || !modal) return;
-
-    clearContactTimeouts();
-
+  function openContact() {
     contactIsOpen = true;
 
     if (typeof hideApproachImmediate === "function") {
@@ -1837,102 +1809,48 @@ setTimeout(() => {
       closeActiveSectionAnimated();
     }
 
-    if (typeof returnToMainWebsiteVideo === "function" && current === "tom-ford") {
+    if (typeof returnToMainWebsiteVideo === "function" && typeof current !== "undefined" && current === "tom-ford") {
       returnToMainWebsiteVideo();
     }
 
-    hideProjectsGradient();
-    hideCenterNameAnimated();
-    fadeCurrentAudioToZero();
-    softenNavForContact();
-
-    overlay.style.display = "";
-    overlay.style.transition =
-      "opacity 1400ms cubic-bezier(0.22, 1, 0.36, 1)";
-    overlay.style.visibility = "visible";
-    overlay.style.opacity = "1";
-    overlay.style.pointerEvents = "auto";
-
-    modal.style.display = "";
-    modal.style.transformOrigin = "50% 50%";
-    modal.style.transition = "none";
-    modal.style.visibility = "visible";
-    modal.style.opacity = "0";
-    modal.style.filter = "blur(10px)";
-    modal.style.transform = "scale(0.965)";
-    modal.style.pointerEvents = "auto";
-
-    if (closeButton) {
-      closeButton.style.cursor = "pointer";
-      closeButton.style.pointerEvents = "auto";
+    if (typeof hideProjectsGradient === "function") {
+      hideProjectsGradient();
     }
 
-    const revealTimeout = setTimeout(() => {
-      modal.style.transition =
-        "opacity 3000ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "filter 3600ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 4200ms cubic-bezier(0.13, 1, 0.22, 1)";
+    if (typeof hideCenterNameAnimated === "function") {
+      hideCenterNameAnimated();
+    }
 
-      modal.style.opacity = "1";
-      modal.style.filter = "blur(0)";
-      modal.style.transform = "scale(1)";
-    }, 80);
+    if (typeof fadeCurrentAudioToZero === "function") {
+      fadeCurrentAudioToZero();
+    }
 
-    contactTimeouts.push(revealTimeout);
+    softenNavForContact();
+    document.documentElement.classList.add("contact-open");
+    setCloseCursor();
   }
 
-  function hideContactAnimated() {
-    const overlay = getContactOverlay();
-    const modal = getContactModal();
-
-    if (!overlay || !modal) return;
-
-    clearContactTimeouts();
-
+  function closeContact() {
     contactIsOpen = false;
 
-    modal.style.transition =
-      "opacity 1900ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "filter 2300ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 2600ms cubic-bezier(0.22, 1, 0.36, 1)";
+    document.documentElement.classList.remove("contact-open");
 
-    modal.style.opacity = "0";
-    modal.style.filter = "blur(9px)";
-    modal.style.transform = "scale(0.985)";
-    modal.style.pointerEvents = "none";
+    if (typeof showCenterNameAnimated === "function") {
+      showCenterNameAnimated(600);
+    }
 
-    overlay.style.pointerEvents = "none";
-    overlay.style.transition =
-      "opacity 2100ms cubic-bezier(0.22, 1, 0.36, 1)";
-    overlay.style.opacity = "0";
-
-    showCenterNameAnimated(600);
-
-    const restoreNavTimeout = setTimeout(() => {
+    setTimeout(() => {
       restoreNavAfterContact();
     }, 550);
-
-    const finalHideTimeout = setTimeout(() => {
-      overlay.style.visibility = "hidden";
-      overlay.style.pointerEvents = "none";
-
-      modal.style.visibility = "hidden";
-      modal.style.pointerEvents = "none";
-
-      restoreNavAfterContact();
-    }, 2400);
-
-    contactTimeouts.push(restoreNavTimeout);
-    contactTimeouts.push(finalHideTimeout);
   }
 
-  prepareContactHidden();
+  forceContactClosedOnLoad();
 
-  setTimeout(() => {
-    prepareContactHidden();
-  }, 300);
+  setTimeout(forceContactClosedOnLoad, 100);
+  setTimeout(forceContactClosedOnLoad, 500);
+  setTimeout(forceContactClosedOnLoad, 1200);
 
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", function (event) {
     const contactButton = findContactButton();
     const closeButton = getContactCloseButton();
 
@@ -1941,7 +1859,7 @@ setTimeout(() => {
       event.stopPropagation();
       event.stopImmediatePropagation();
 
-      hideContactAnimated();
+      closeContact();
       return;
     }
 
@@ -1950,10 +1868,7 @@ setTimeout(() => {
       event.stopPropagation();
       event.stopImmediatePropagation();
 
-      if (!contactIsOpen) {
-        showContactAnimated();
-      }
-
+      openContact();
       return;
     }
 
@@ -1963,13 +1878,4 @@ setTimeout(() => {
       event.stopImmediatePropagation();
     }
   }, true);
-
-  setTimeout(() => {
-    const closeButton = getContactCloseButton();
-
-    if (closeButton) {
-      closeButton.style.cursor = "pointer";
-      closeButton.style.pointerEvents = "auto";
-    }
-  }, 600);
 })();
