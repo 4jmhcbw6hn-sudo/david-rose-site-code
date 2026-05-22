@@ -127,20 +127,39 @@ html.projects-gradient-on .hero-section::after {
 .center-name-wrapper-opening {
   z-index: 40 !important;
 }
-/* Contact overlay controlled by external code */
-.contact-overlay {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+
+/* Hard contact modal control */
+html:not(.contact-open) .contact-overlay,
+html:not(.contact-open) .contact-modal {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
-.contact-modal {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform-origin: 50% 50%;
-  filter: blur(10px);
-  transform: scale(0.965);
+html:not(.contact-open) .contact-modal {
+  filter: blur(10px) !important;
+  transform: scale(0.965) !important;
+  transform-origin: 50% 50% !important;
+}
+
+html.contact-open .contact-overlay {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transition: opacity 1400ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+html.contact-open .contact-modal {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  filter: blur(0) !important;
+  transform: scale(1) !important;
+  transform-origin: 50% 50% !important;
+  transition:
+    opacity 3000ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 3600ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 4200ms cubic-bezier(0.13, 1, 0.22, 1) !important;
 }
 
 .Exit-Contact,
