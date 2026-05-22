@@ -1511,6 +1511,17 @@ const videos = {
     activeSection = sectionName;
     activeMainNavButton = navButton;
 
+    if (isSwitchingBetweenProjectMenus) {
+      getSectionPanels(previousSection).forEach((panel) => {
+        panel.dataset.projectMenuTransitioning = "true";
+        showPanelWithoutBreakingLayout(panel);
+
+        panel.querySelectorAll(".nav-text, a").forEach((item) => {
+          item.style.pointerEvents = "none";
+        });
+      });
+    }
+
     showProjectsGradient();
 
     clearProjectFocus();
