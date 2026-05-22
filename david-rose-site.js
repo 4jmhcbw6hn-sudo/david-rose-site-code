@@ -866,7 +866,7 @@ const videos = {
         html.dcr-mobile-approach-focus-active .approach-txt,
         html.dcr-mobile-approach-focus-active .approach-text,
         html.dcr-mobile-approach-focus-active .approach-copy {
-          transform: translateY(calc(var(--dcr-mobile-vh, 100svh) * -0.18)) !important;
+          transform: translateY(calc(var(--dcr-mobile-vh, 100svh) * -0.095)) !important;
         }
 
         html.dcr-mobile-approach-focus-active .approach-ig-link,
