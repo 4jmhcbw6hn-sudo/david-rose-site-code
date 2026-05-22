@@ -365,8 +365,8 @@ const videos = {
 
     return (
       element.closest(".side-nav") ||
-      element.matches(".approach-ig-link, [data-approach-ig], [data-instagram-link]") ||
-      element.closest(".approach-ig-link, [data-approach-ig], [data-instagram-link]")
+      element.matches(".dcr-mobile-approach-back, .approach-ig-link, [data-approach-ig], [data-instagram-link]") ||
+      element.closest(".dcr-mobile-approach-back, .approach-ig-link, [data-approach-ig], [data-instagram-link]")
     );
   }
 
@@ -414,12 +414,137 @@ const videos = {
     setNavItemResting(element);
   }
 
+  let mobileApproachNavTimeouts = [];
+
   function isMobileLayoutViewport() {
     return window.matchMedia("(max-width: 1024px)").matches;
   }
 
+  function clearMobileApproachNavTimeouts() {
+    mobileApproachNavTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+    mobileApproachNavTimeouts = [];
+  }
+
   function getMobileApproachBackButton() {
     return document.querySelector(".dcr-mobile-approach-back");
+  }
+
+  function prepareMobileApproachBackButton(button) {
+    if (!button) return;
+
+    button.style.transition = "none";
+    button.style.visibility = "hidden";
+    button.style.opacity = "0";
+    button.style.filter = "blur(6px)";
+    button.style.transform = "translateX(-16px) scale(0.986)";
+    button.style.pointerEvents = "none";
+  }
+
+  function revealMobileApproachBackButton(delay) {
+    const button = ensureMobileApproachBackButton();
+    const revealDelay = typeof delay === "number" ? delay : 0;
+
+    prepareMobileApproachBackButton(button);
+
+    const revealTimeout = setTimeout(() => {
+      button.style.visibility = "visible";
+      button.style.pointerEvents = "auto";
+      button.style.transition =
+        "opacity 2100ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 3200ms cubic-bezier(0.13, 1, 0.22, 1)";
+
+      button.style.opacity = "1";
+      button.style.filter = "blur(0)";
+      button.style.transform = "translateX(0) scale(1)";
+
+      const settleTimeout = setTimeout(() => {
+        settleNavItemAfterArrival(button);
+      }, 2600);
+
+      mobileApproachNavTimeouts.push(settleTimeout);
+    }, revealDelay);
+
+    mobileApproachNavTimeouts.push(revealTimeout);
+  }
+
+  function hideMobileApproachBackButton() {
+    const button = getMobileApproachBackButton();
+
+    if (!button) return;
+
+    button.style.transition =
+      "opacity 1150ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 1500ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 1700ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+    button.style.opacity = "0";
+    button.style.filter = "blur(6px)";
+    button.style.transform = "translateX(-16px) scale(0.986)";
+    button.style.pointerEvents = "none";
+
+    const hideTimeout = setTimeout(() => {
+      button.style.visibility = "hidden";
+    }, 1750);
+
+    mobileApproachNavTimeouts.push(hideTimeout);
+  }
+
+  function animateMobileNavOut() {
+    const items = Array.from(getLeftNavButtons());
+
+    items.forEach((item, index) => {
+      item.style.transitionDelay = "0ms";
+      item.style.pointerEvents = "none";
+
+      const outTimeout = setTimeout(() => {
+        item.style.transition =
+          "opacity 1250ms cubic-bezier(0.22, 1, 0.36, 1), " +
+          "filter 1650ms cubic-bezier(0.22, 1, 0.36, 1), " +
+          "transform 1850ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+        item.style.opacity = "0";
+        item.style.filter = "blur(8px)";
+        item.style.transform = "translateX(-22px) scale(0.988)";
+      }, index * 95);
+
+      mobileApproachNavTimeouts.push(outTimeout);
+    });
+  }
+
+  function animateMobileNavIn(delay) {
+    const introDelay = typeof delay === "number" ? delay : 0;
+    const items = Array.from(getLeftNavButtons());
+
+    items.forEach((item, index) => {
+      item.style.transition = "none";
+      item.style.transitionDelay = "0ms";
+      item.style.visibility = "visible";
+      item.style.opacity = "0";
+      item.style.filter = "blur(8px)";
+      item.style.transform = "translateX(-18px) scale(0.988)";
+      item.style.pointerEvents = "none";
+
+      const inTimeout = setTimeout(() => {
+        item.style.transition =
+          "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "filter 3100ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
+
+        item.style.opacity = "1";
+        item.style.filter = "blur(0)";
+        item.style.transform = "translateX(0) scale(1)";
+        item.style.pointerEvents = "auto";
+
+        const settleTimeout = setTimeout(() => {
+          settleNavItemAfterArrival(item);
+        }, 2700 + index * 65);
+
+        mobileApproachNavTimeouts.push(settleTimeout);
+      }, introDelay + index * 115);
+
+      mobileApproachNavTimeouts.push(inTimeout);
+    });
   }
 
   function ensureMobileApproachBackButton() {
@@ -437,10 +562,22 @@ const videos = {
     if (!button.dataset.dcrBackReady) {
       button.dataset.dcrBackReady = "true";
 
+      button.addEventListener("mouseenter", () => {
+        if (!isMobileLayoutViewport()) return;
+        setNavItemFocused(button);
+      });
+
+      button.addEventListener("mouseleave", () => {
+        if (!isMobileLayoutViewport()) return;
+        settleNavItemAfterArrival(button);
+      });
+
       button.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
+
+        setNavItemFocused(button);
 
         if (isApproachOpen) {
           hideApproachAnimated(true);
@@ -456,19 +593,33 @@ const videos = {
   function enterMobileApproachFocus() {
     if (!isMobileLayoutViewport()) return;
 
+    clearMobileApproachNavTimeouts();
     ensureMobileApproachBackButton();
     document.documentElement.classList.add("dcr-mobile-approach-focus-active");
+
+    animateMobileNavOut();
+    revealMobileApproachBackButton(4550);
   }
 
   function exitMobileApproachFocus(delay) {
+    if (!isMobileLayoutViewport()) {
+      document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
+      return;
+    }
+
     const exitDelay = typeof delay === "number" ? delay : 0;
+
+    clearMobileApproachNavTimeouts();
+    hideMobileApproachBackButton();
 
     const runExit = () => {
       document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
+      animateMobileNavIn(120);
     };
 
     if (exitDelay > 0) {
       const exitTimeout = setTimeout(runExit, exitDelay);
+      mobileApproachNavTimeouts.push(exitTimeout);
       approachTimeouts.push(exitTimeout);
     } else {
       runExit();
@@ -665,7 +816,7 @@ const videos = {
           text-transform: uppercase;
           cursor: pointer;
           filter: blur(6px);
-          transform: translateX(-14px) scale(0.986);
+          transform: translateX(-16px) scale(0.986);
           transition:
             opacity 2100ms cubic-bezier(0.16, 1, 0.3, 1),
             filter 2600ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -673,31 +824,15 @@ const videos = {
         }
 
         html.dcr-mobile-approach-focus-active .side-nav {
-          opacity: 0 !important;
-          filter: blur(8px) !important;
-          transform: translateX(-18px) scale(0.988) !important;
           pointer-events: none !important;
-          transition:
-            opacity 1450ms cubic-bezier(0.22, 1, 0.36, 1),
-            filter 1850ms cubic-bezier(0.22, 1, 0.36, 1),
-            transform 2100ms cubic-bezier(0.22, 1, 0.36, 1) !important;
-        }
-
-        html.dcr-mobile-approach-focus-active .dcr-mobile-approach-back {
-          visibility: visible;
-          opacity: 1;
-          pointer-events: auto;
-          filter: blur(0);
-          transform: translateX(0) scale(1);
-          transition-delay: 520ms;
         }
 
         html.dcr-mobile-approach-focus-active .approach-container {
           left: 8vw !important;
           right: 8vw !important;
-          top: 52% !important;
+          top: 47.5% !important;
           transform: translateY(-50%) !important;
-          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.72) !important;
+          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.74) !important;
         }
 
         html.dcr-mobile-approach-focus-active .approach-txt {
@@ -1653,10 +1788,14 @@ const videos = {
     const textElements = getApproachTextElements();
     const igLinks = Array.from(document.querySelectorAll(".approach-ig-link"));
 
-    const textStartDelay = 1550;
-    const lineStagger = 170;
-    const groupPause = 460;
-    const fadeInDuration = 3600;
+    const isMobileApproachFocus =
+      isMobileLayoutViewport() &&
+      document.documentElement.classList.contains("dcr-mobile-approach-focus-active");
+
+    const textStartDelay = isMobileApproachFocus ? 420 : 1550;
+    const lineStagger = isMobileApproachFocus ? 135 : 170;
+    const groupPause = isMobileApproachFocus ? 360 : 460;
+    const fadeInDuration = isMobileApproachFocus ? 3000 : 3600;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     let delay = textStartDelay;
@@ -1823,11 +1962,11 @@ const videos = {
     activeSection = null;
     activeMainNavButton = approachLink;
 
-    enterMobileApproachFocus();
-
     if (approachLink) {
       focusElement(approachLink);
     }
+
+    enterMobileApproachFocus();
 
     blurCurrentVideoForApproach();
 
