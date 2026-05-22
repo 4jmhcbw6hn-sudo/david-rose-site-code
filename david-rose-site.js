@@ -1669,13 +1669,13 @@ const videos = {
   function softenNavForContact() {
     getLeftNavButtons().forEach((button) => {
       button.style.transition =
-        "opacity 1800ms cubic-bezier(0.22, 1, 0.36, 1), " +
-        "filter 2200ms cubic-bezier(0.22, 1, 0.36, 1), " +
-        "transform 2200ms cubic-bezier(0.22, 1, 0.36, 1)";
+        "opacity 3400ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "filter 4200ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "transform 4200ms cubic-bezier(0.22, 1, 0.36, 1)";
 
-      button.style.opacity = "0.38";
-      button.style.filter = "blur(2.4px)";
-      button.style.transform = "scale(0.99)";
+      button.style.opacity = "0.42";
+      button.style.filter = "blur(2px)";
+      button.style.transform = "scale(0.992)";
       button.style.pointerEvents = "none";
     });
   }
@@ -1720,7 +1720,7 @@ const videos = {
 
     overlay.style.display = "";
     overlay.style.transition =
-      "opacity 1400ms cubic-bezier(0.22, 1, 0.36, 1)";
+      "opacity 1900ms cubic-bezier(0.22, 1, 0.36, 1)";
     overlay.style.visibility = "visible";
     overlay.style.opacity = "1";
     overlay.style.pointerEvents = "auto";
@@ -1729,9 +1729,18 @@ const videos = {
     modal.style.transformOrigin = "50% 50%";
     modal.style.transition = "none";
     modal.style.visibility = "visible";
-    modal.style.opacity = "0";
-    modal.style.filter = "blur(10px)";
-    modal.style.transform = "scale(0.965)";
+
+    /* Keep the glass/backdrop layer alive before the fade begins.
+       This avoids the mid-fade backdrop blur pop in Chrome/Webflow. */
+    modal.style.opacity = "0.001";
+    modal.style.background = "rgba(255, 255, 255, 0.08)";
+    modal.style.backdropFilter = "blur(12px)";
+    modal.style.webkitBackdropFilter = "blur(12px)";
+    modal.style.filter = "blur(8px)";
+    modal.style.transform = "scale(0.985)";
+    modal.style.willChange = "opacity, filter, transform, backdrop-filter";
+    modal.style.backfaceVisibility = "hidden";
+    modal.style.webkitBackfaceVisibility = "hidden";
     modal.style.pointerEvents = "auto";
 
     if (closeButton) {
@@ -1741,14 +1750,14 @@ const videos = {
 
     const revealTimeout = setTimeout(() => {
       modal.style.transition =
-        "opacity 3000ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "filter 3600ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 4200ms cubic-bezier(0.13, 1, 0.22, 1)";
+        "opacity 3200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 4300ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 4600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
       modal.style.opacity = "1";
       modal.style.filter = "blur(0)";
       modal.style.transform = "scale(1)";
-    }, 80);
+    }, 220);
 
     contactTimeouts.push(revealTimeout);
   }
