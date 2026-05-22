@@ -443,12 +443,24 @@ const videos = {
     return element === clickedButton || element === activeMainNavButton;
   }
 
+  function clearProjectMenuTransitionFlags() {
+    document.querySelectorAll(
+      ".post-production-projects-panel, " +
+      ".direction-projects-panel, " +
+      ".colour-projects-panel, " +
+      ".color-projects-panel"
+    ).forEach((panel) => {
+      delete panel.dataset.projectMenuTransitioning;
+    });
+  }
+
   function clearRevealTimeouts() {
     revealTimeouts.forEach((timeout) => {
       clearTimeout(timeout);
     });
 
     revealTimeouts = [];
+    clearProjectMenuTransitionFlags();
   }
 
   function clearApproachTimeouts() {
@@ -472,6 +484,8 @@ const videos = {
       if (activeSection === sectionName) return;
 
       getSectionPanels(sectionName).forEach((panel) => {
+        if (panel.dataset.projectMenuTransitioning === "true") return;
+
         hidePanelWithoutBreakingLayout(panel);
 
         panel.querySelectorAll(".nav-text, a").forEach((item) => {
@@ -1406,6 +1420,8 @@ const videos = {
   }
 
   function hideProjectButtonsStaggered(panel, sectionName) {
+    panel.dataset.projectMenuTransitioning = "true";
+
     const buttons = Array.from(panel.querySelectorAll(".nav-text"));
 
     const staggerOut = 180;
@@ -1445,6 +1461,8 @@ const videos = {
     });
 
     const hidePanelTimeout = setTimeout(() => {
+      delete panel.dataset.projectMenuTransitioning;
+
       if (activeSection === sectionName) return;
 
       hidePanelWithoutBreakingLayout(panel);
