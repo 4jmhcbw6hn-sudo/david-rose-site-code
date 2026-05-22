@@ -341,7 +341,7 @@ const videos = {
     const style = document.createElement("style");
     style.id = "dcr-mobile-layout-fixes";
     style.textContent = `
-      @media (max-width: 767px) {
+      @media (max-width: 1024px) {
         html,
         body {
           width: 100% !important;
@@ -390,17 +390,23 @@ const videos = {
           top: calc(var(--dcr-mobile-vh, 100svh) * 0.5) !important;
           right: auto !important;
           bottom: auto !important;
-          translate: -50% -50% !important;
+          transform: translate(-50%, -50%) !important;
+          translate: none !important;
           width: max-content !important;
           max-width: 86vw !important;
           text-align: center !important;
           z-index: 45 !important;
         }
 
+        .center-name-wrapper .name-stack,
+        .center-name-wrapper .subheadline {
+          text-align: center !important;
+        }
+
         .side-nav {
           position: fixed !important;
           left: 8.5vw !important;
-          top: calc(var(--dcr-mobile-vh, 100svh) * 0.065) !important;
+          top: calc(var(--dcr-mobile-vh, 100svh) * 0.058) !important;
           right: auto !important;
           bottom: auto !important;
           z-index: 110 !important;
@@ -426,11 +432,11 @@ const videos = {
           position: fixed !important;
           left: 11.8vw !important;
           right: 7vw !important;
-          top: calc(var(--dcr-mobile-vh, 100svh) * 0.295) !important;
+          top: calc(var(--dcr-mobile-vh, 100svh) * 0.36) !important;
           width: auto !important;
           max-width: none !important;
           height: auto !important;
-          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.57) !important;
+          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.485) !important;
           overflow: hidden !important;
           z-index: 36 !important;
         }
@@ -439,9 +445,9 @@ const videos = {
         .approach-copy {
           width: 100% !important;
           max-width: none !important;
-          font-size: clamp(14px, 3.18vw, 18px) !important;
-          line-height: 1.58 !important;
-          letter-spacing: 0.12em !important;
+          font-size: clamp(12px, 2.9vw, 16px) !important;
+          line-height: 1.5 !important;
+          letter-spacing: 0.11em !important;
         }
 
         .approach-reveal-line {
