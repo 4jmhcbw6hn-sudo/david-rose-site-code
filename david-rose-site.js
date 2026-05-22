@@ -1718,9 +1718,18 @@ const videos = {
     activeProjectButton = null;
     activeMainNavButton = contactLink || null;
 
+    const modalRevealItems = Array.from(modal.children);
+
+    modalRevealItems.forEach((item) => {
+      item.style.transition = "none";
+      item.style.opacity = "0";
+      item.style.filter = "blur(5px)";
+      item.style.transform = "scale(0.996)";
+      item.style.visibility = "visible";
+    });
+
     overlay.style.display = "";
-    overlay.style.transition =
-      "opacity 1900ms cubic-bezier(0.22, 1, 0.36, 1)";
+    overlay.style.transition = "none";
     overlay.style.visibility = "visible";
     overlay.style.opacity = "1";
     overlay.style.pointerEvents = "auto";
@@ -1730,15 +1739,16 @@ const videos = {
     modal.style.transition = "none";
     modal.style.visibility = "visible";
 
-    /* Keep the glass/backdrop layer alive before the fade begins.
-       This avoids the mid-fade backdrop blur pop in Chrome/Webflow. */
-    modal.style.opacity = "0.001";
+    /* No opacity fade on the glass layer.
+       Backdrop-filter can pop when opacity is animated, so the glass stays fully rendered
+       and only the contents/scale are animated. */
+    modal.style.opacity = "1";
     modal.style.background = "rgba(255, 255, 255, 0.08)";
     modal.style.backdropFilter = "blur(12px)";
     modal.style.webkitBackdropFilter = "blur(12px)";
-    modal.style.filter = "blur(8px)";
-    modal.style.transform = "scale(0.985)";
-    modal.style.willChange = "opacity, filter, transform, backdrop-filter";
+    modal.style.filter = "blur(0)";
+    modal.style.transform = "scale(0.986)";
+    modal.style.willChange = "transform";
     modal.style.backfaceVisibility = "hidden";
     modal.style.webkitBackfaceVisibility = "hidden";
     modal.style.pointerEvents = "auto";
@@ -1750,14 +1760,22 @@ const videos = {
 
     const revealTimeout = setTimeout(() => {
       modal.style.transition =
-        "opacity 3200ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "filter 4300ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 4600ms cubic-bezier(0.13, 1, 0.22, 1)";
+        "transform 4200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-      modal.style.opacity = "1";
-      modal.style.filter = "blur(0)";
       modal.style.transform = "scale(1)";
-    }, 220);
+
+      modalRevealItems.forEach((item, index) => {
+        item.style.transition =
+          "opacity 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "filter 3400ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
+
+        item.style.transitionDelay = (index * 45) + "ms";
+        item.style.opacity = "1";
+        item.style.filter = "blur(0)";
+        item.style.transform = "scale(1)";
+      });
+    }, 360);
 
     contactTimeouts.push(revealTimeout);
   }
@@ -1772,20 +1790,31 @@ const videos = {
 
     isContactOpen = false;
 
-    modal.style.transition =
-      "opacity 1900ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "filter 2300ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 2600ms cubic-bezier(0.22, 1, 0.36, 1)";
+    const modalRevealItems = Array.from(modal.children);
 
-    modal.style.opacity = "0";
-    modal.style.filter = "blur(9px)";
-    modal.style.transform = "scale(0.985)";
+    modalRevealItems.forEach((item) => {
+      item.style.transitionDelay = "0ms";
+      item.style.transition =
+        "opacity 1300ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "filter 1700ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "transform 1900ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+      item.style.opacity = "0";
+      item.style.filter = "blur(5px)";
+      item.style.transform = "scale(0.996)";
+    });
+
+    modal.style.transition =
+      "transform 2200ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+    modal.style.opacity = "1";
+    modal.style.filter = "blur(0)";
+    modal.style.transform = "scale(0.986)";
     modal.style.pointerEvents = "none";
 
     overlay.style.pointerEvents = "none";
-    overlay.style.transition =
-      "opacity 2100ms cubic-bezier(0.22, 1, 0.36, 1)";
-    overlay.style.opacity = "0";
+    overlay.style.transition = "none";
+    overlay.style.opacity = "1";
 
     showCenterNameAnimated(600);
 
@@ -1796,12 +1825,13 @@ const videos = {
     const finalHideTimeout = setTimeout(() => {
       overlay.style.visibility = "hidden";
       overlay.style.pointerEvents = "none";
+      overlay.style.opacity = "0";
 
       modal.style.visibility = "hidden";
       modal.style.pointerEvents = "none";
 
       restoreNavAfterContact();
-    }, 2400);
+    }, 1700);
 
     contactTimeouts.push(restoreNavTimeout);
     contactTimeouts.push(finalHideTimeout);
