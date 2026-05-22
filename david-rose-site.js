@@ -1886,8 +1886,6 @@ const videos = {
       (document.documentElement.classList.contains("dcr-mobile-approach-focus-active") ||
         mobileApproachFocusIsExiting);
 
-    exitMobileApproachFocus(0);
-
     getApproachElements().forEach((element) => {
       element.style.display = "";
       element.style.transition = "none";
@@ -1899,6 +1897,8 @@ const videos = {
       element.style.clipPath = "";
       element.style.webkitClipPath = "";
     });
+
+    exitMobileApproachFocus(0);
 
     if (shouldResetButton && activeMainNavButton === approachLink) {
       if (approachLink && !isMobileApproachReturn) {
@@ -1924,7 +1924,7 @@ const videos = {
 
     isApproachOpen = false;
 
-    exitMobileApproachFocus(900);
+    exitMobileApproachFocus(5200);
 
     resumeApproachVideoPlayback();
     showCenterNameAnimated(1500);
