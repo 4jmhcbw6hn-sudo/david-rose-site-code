@@ -373,10 +373,10 @@ const videos = {
 
     if (videos.main) {
       videos.main.style.transition = "none";
-      videos.main.style.opacity = "0.58";
-      videos.main.style.filter = "blur(18px) brightness(0.74)";
+      videos.main.style.opacity = "1";
+      videos.main.style.filter = "blur(18px)";
       videos.main.style.transform = "scale(1.026)";
-      videos.main.style.willChange = "opacity, filter, transform";
+      videos.main.style.willChange = "filter, transform";
     }
 
     const introOverlay = document.querySelector(".intro-overlay");
@@ -398,12 +398,11 @@ const videos = {
       requestAnimationFrame(() => {
         if (videos.main) {
           videos.main.style.transition =
-            "opacity 2600ms cubic-bezier(0.22, 1, 0.36, 1), " +
             "filter 3800ms cubic-bezier(0.16, 1, 0.3, 1), " +
             "transform 5600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
           videos.main.style.opacity = "1";
-          videos.main.style.filter = "blur(0) brightness(1)";
+          videos.main.style.filter = "blur(0)";
           videos.main.style.transform = "scale(1)";
         }
 
