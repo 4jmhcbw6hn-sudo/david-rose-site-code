@@ -335,6 +335,163 @@ const videos = {
     );
   }
 
+  function installMobileLayoutFixes() {
+    if (document.getElementById("dcr-mobile-layout-fixes")) return;
+
+    const style = document.createElement("style");
+    style.id = "dcr-mobile-layout-fixes";
+    style.textContent = `
+      @media (max-width: 767px) {
+        html,
+        body {
+          width: 100% !important;
+          height: var(--dcr-mobile-vh, 100svh) !important;
+          min-height: var(--dcr-mobile-vh, 100svh) !important;
+          max-height: var(--dcr-mobile-vh, 100svh) !important;
+          overflow: hidden !important;
+          overscroll-behavior: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        body {
+          position: relative !important;
+          touch-action: manipulation;
+        }
+
+        .hero-section {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: var(--dcr-mobile-vh, 100svh) !important;
+          min-height: var(--dcr-mobile-vh, 100svh) !important;
+          max-height: var(--dcr-mobile-vh, 100svh) !important;
+          overflow: hidden !important;
+        }
+
+        #main-reel,
+        #commercial-reel,
+        #narrative-reel,
+        #tom-ford-reel {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: var(--dcr-mobile-vh, 100svh) !important;
+          min-height: var(--dcr-mobile-vh, 100svh) !important;
+          max-height: var(--dcr-mobile-vh, 100svh) !important;
+          object-fit: cover !important;
+          object-position: center center !important;
+        }
+
+        .center-name-wrapper,
+        .center-name-wrapper-opening {
+          position: fixed !important;
+          left: 50vw !important;
+          top: calc(var(--dcr-mobile-vh, 100svh) * 0.5) !important;
+          right: auto !important;
+          bottom: auto !important;
+          translate: -50% -50% !important;
+          width: max-content !important;
+          max-width: 86vw !important;
+          text-align: center !important;
+          z-index: 45 !important;
+        }
+
+        .side-nav {
+          position: fixed !important;
+          left: 8.5vw !important;
+          top: calc(var(--dcr-mobile-vh, 100svh) * 0.065) !important;
+          right: auto !important;
+          bottom: auto !important;
+          z-index: 110 !important;
+        }
+
+        .side-nav .nav-text,
+        .side-nav a {
+          max-width: 76vw !important;
+        }
+
+        .approach-overlay {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: var(--dcr-mobile-vh, 100svh) !important;
+          min-height: var(--dcr-mobile-vh, 100svh) !important;
+          max-height: var(--dcr-mobile-vh, 100svh) !important;
+          overflow: hidden !important;
+          z-index: 32 !important;
+        }
+
+        .approach-container {
+          position: fixed !important;
+          left: 11.8vw !important;
+          right: 7vw !important;
+          top: calc(var(--dcr-mobile-vh, 100svh) * 0.295) !important;
+          width: auto !important;
+          max-width: none !important;
+          height: auto !important;
+          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.57) !important;
+          overflow: hidden !important;
+          z-index: 36 !important;
+        }
+
+        .approach-text,
+        .approach-copy {
+          width: 100% !important;
+          max-width: none !important;
+          font-size: clamp(14px, 3.18vw, 18px) !important;
+          line-height: 1.58 !important;
+          letter-spacing: 0.12em !important;
+        }
+
+        .approach-reveal-line {
+          max-width: 100% !important;
+        }
+
+        .approach-ig-link {
+          position: fixed !important;
+          right: 6.8vw !important;
+          bottom: calc(var(--dcr-mobile-vh, 100svh) * 0.075) !important;
+          z-index: 120 !important;
+        }
+
+        .post-production-projects-panel,
+        .direction-projects-panel,
+        .colour-projects-panel,
+        .color-projects-panel,
+        .contact-overlay {
+          max-height: var(--dcr-mobile-vh, 100svh) !important;
+          overflow: hidden !important;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+
+    function setMobileViewportHeight() {
+      const viewportHeight =
+        window.visualViewport && window.visualViewport.height
+          ? window.visualViewport.height
+          : window.innerHeight;
+
+      document.documentElement.style.setProperty(
+        "--dcr-mobile-vh",
+        viewportHeight + "px"
+      );
+    }
+
+    setMobileViewportHeight();
+
+    window.addEventListener("resize", setMobileViewportHeight);
+    window.addEventListener("orientationchange", () => {
+      setTimeout(setMobileViewportHeight, 250);
+    });
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", setMobileViewportHeight);
+    }
+  }
+
   let customPageLoadIntroHasRun = false;
 
   function prepareCustomPageLoadIntro() {
@@ -2042,6 +2199,7 @@ const videos = {
 
   prepareClientOneShotVideo(videos["tom-ford"]);
 
+  installMobileLayoutFixes();
   prepareCustomPageLoadIntro();
 
   hideProjectsGradient();
