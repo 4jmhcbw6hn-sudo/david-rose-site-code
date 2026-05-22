@@ -854,9 +854,9 @@ const videos = {
         html.dcr-mobile-approach-focus-active .approach-container {
           left: 8vw !important;
           right: 8vw !important;
-          top: 41.5% !important;
+          top: 34.5% !important;
           transform: translateY(-50%) !important;
-          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.78) !important;
+          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.72) !important;
         }
 
         html.dcr-mobile-approach-focus-active .approach-txt {
