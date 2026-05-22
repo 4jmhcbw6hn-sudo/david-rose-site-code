@@ -1935,6 +1935,43 @@ const videos = {
     forceInactiveProjectPanelsHidden();
   }, 500);
 
+  const instagramUrl = "https://www.instagram.com/davidr0se/";
+
+  function getApproachInstagramLinks() {
+    return document.querySelectorAll(
+      ".approach-ig-link, " +
+      "[data-approach-ig], " +
+      "[data-instagram-link]"
+    );
+  }
+
+  getApproachInstagramLinks().forEach((link) => {
+    link.style.cursor = "pointer";
+    link.style.pointerEvents = "auto";
+
+    if (link.tagName && link.tagName.toLowerCase() === "a") {
+      link.setAttribute("href", instagramUrl);
+      link.setAttribute("target", "_blank");
+      link.setAttribute("rel", "noopener noreferrer");
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!event.target || !event.target.closest) return;
+
+    const instagramLink = event.target.closest(
+      ".approach-ig-link, [data-approach-ig], [data-instagram-link]"
+    );
+
+    if (!instagramLink) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    window.open(instagramUrl, "_blank", "noopener,noreferrer");
+  }, true);
+
   document.addEventListener("click", (event) => {
     if (!isApproachClickTarget(event.target)) return;
     if (isContactOpen) return;
