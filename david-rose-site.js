@@ -415,6 +415,7 @@ const videos = {
   }
 
   let mobileApproachNavTimeouts = [];
+  let mobileApproachFocusIsExiting = false;
 
   function isMobileLayoutViewport() {
     return window.matchMedia("(max-width: 1024px)").matches;
@@ -499,14 +500,14 @@ const videos = {
 
       const outTimeout = setTimeout(() => {
         item.style.transition =
-          "opacity 1250ms cubic-bezier(0.22, 1, 0.36, 1), " +
-          "filter 1650ms cubic-bezier(0.22, 1, 0.36, 1), " +
-          "transform 1850ms cubic-bezier(0.22, 1, 0.36, 1)";
+          "opacity 2400ms cubic-bezier(0.22, 1, 0.36, 1), " +
+          "filter 3000ms cubic-bezier(0.22, 1, 0.36, 1), " +
+          "transform 3400ms cubic-bezier(0.22, 1, 0.36, 1)";
 
         item.style.opacity = "0";
-        item.style.filter = "blur(8px)";
-        item.style.transform = "translateX(-22px) scale(0.988)";
-      }, index * 95);
+        item.style.filter = "blur(9px)";
+        item.style.transform = "translateX(-30px) scale(0.986)";
+      }, 180 + index * 145);
 
       mobileApproachNavTimeouts.push(outTimeout);
     });
@@ -522,14 +523,14 @@ const videos = {
       item.style.visibility = "visible";
       item.style.opacity = "0";
       item.style.filter = "blur(8px)";
-      item.style.transform = "translateX(-18px) scale(0.988)";
+      item.style.transform = "translateX(-22px) scale(0.988)";
       item.style.pointerEvents = "none";
 
       const inTimeout = setTimeout(() => {
         item.style.transition =
-          "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "filter 3100ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
+          "opacity 2500ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "filter 3300ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "transform 3900ms cubic-bezier(0.13, 1, 0.22, 1)";
 
         item.style.opacity = "1";
         item.style.filter = "blur(0)";
@@ -538,10 +539,10 @@ const videos = {
 
         const settleTimeout = setTimeout(() => {
           settleNavItemAfterArrival(item);
-        }, 2700 + index * 65);
+        }, 2950 + index * 70);
 
         mobileApproachNavTimeouts.push(settleTimeout);
-      }, introDelay + index * 115);
+      }, introDelay + index * 125);
 
       mobileApproachNavTimeouts.push(inTimeout);
     });
@@ -594,27 +595,50 @@ const videos = {
     if (!isMobileLayoutViewport()) return;
 
     clearMobileApproachNavTimeouts();
+    mobileApproachFocusIsExiting = false;
     ensureMobileApproachBackButton();
     document.documentElement.classList.add("dcr-mobile-approach-focus-active");
 
     animateMobileNavOut();
-    revealMobileApproachBackButton(4550);
+    revealMobileApproachBackButton(5200);
   }
 
   function exitMobileApproachFocus(delay) {
     if (!isMobileLayoutViewport()) {
       document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
+      mobileApproachFocusIsExiting = false;
       return;
     }
 
+    const focusIsActive =
+      document.documentElement.classList.contains("dcr-mobile-approach-focus-active");
+
+    if (!focusIsActive && mobileApproachFocusIsExiting) return;
+
     const exitDelay = typeof delay === "number" ? delay : 0;
 
+    mobileApproachFocusIsExiting = true;
     clearMobileApproachNavTimeouts();
     hideMobileApproachBackButton();
 
+    getLeftNavButtons().forEach((item) => {
+      item.style.transition = "none";
+      item.style.transitionDelay = "0ms";
+      item.style.opacity = "0";
+      item.style.filter = "blur(8px)";
+      item.style.transform = "translateX(-22px) scale(0.988)";
+      item.style.pointerEvents = "none";
+    });
+
     const runExit = () => {
       document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
-      animateMobileNavIn(120);
+      animateMobileNavIn(360);
+
+      const clearExitStateTimeout = setTimeout(() => {
+        mobileApproachFocusIsExiting = false;
+      }, 5200);
+
+      mobileApproachNavTimeouts.push(clearExitStateTimeout);
     };
 
     if (exitDelay > 0) {
@@ -830,9 +854,9 @@ const videos = {
         html.dcr-mobile-approach-focus-active .approach-container {
           left: 8vw !important;
           right: 8vw !important;
-          top: 47.5% !important;
+          top: 41.5% !important;
           transform: translateY(-50%) !important;
-          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.74) !important;
+          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.78) !important;
         }
 
         html.dcr-mobile-approach-focus-active .approach-txt {
@@ -1850,6 +1874,12 @@ const videos = {
 
   function hideApproachFinal(shouldResetButton) {
     isApproachOpen = false;
+
+    const isMobileApproachReturn =
+      isMobileLayoutViewport() &&
+      (document.documentElement.classList.contains("dcr-mobile-approach-focus-active") ||
+        mobileApproachFocusIsExiting);
+
     exitMobileApproachFocus(0);
 
     getApproachElements().forEach((element) => {
@@ -1865,7 +1895,7 @@ const videos = {
     });
 
     if (shouldResetButton && activeMainNavButton === approachLink) {
-      if (approachLink) {
+      if (approachLink && !isMobileApproachReturn) {
         resetElement(approachLink);
       }
 
@@ -1894,7 +1924,12 @@ const videos = {
     showCenterNameAnimated(1500);
 
     if (shouldResetButton && activeMainNavButton === approachLink) {
-      if (approachLink) {
+      const isMobileApproachReturn =
+        isMobileLayoutViewport() &&
+        (document.documentElement.classList.contains("dcr-mobile-approach-focus-active") ||
+          mobileApproachFocusIsExiting);
+
+      if (approachLink && !isMobileApproachReturn) {
         resetElement(approachLink);
       }
 
