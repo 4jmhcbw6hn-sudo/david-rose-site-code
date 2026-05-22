@@ -1722,9 +1722,10 @@ const videos = {
 
     modalRevealItems.forEach((item) => {
       item.style.transition = "none";
+      item.style.transitionDelay = "0ms";
       item.style.opacity = "0";
-      item.style.filter = "blur(5px)";
-      item.style.transform = "scale(0.996)";
+      item.style.filter = "blur(4px)";
+      item.style.transform = "scale(0.998)";
       item.style.visibility = "visible";
     });
 
@@ -1738,17 +1739,18 @@ const videos = {
     modal.style.transformOrigin = "50% 50%";
     modal.style.transition = "none";
     modal.style.visibility = "visible";
-
-    /* No opacity fade on the glass layer.
-       Backdrop-filter can pop when opacity is animated, so the glass stays fully rendered
-       and only the contents/scale are animated. */
     modal.style.opacity = "1";
-    modal.style.background = "rgba(255, 255, 255, 0.08)";
-    modal.style.backdropFilter = "blur(12px)";
-    modal.style.webkitBackdropFilter = "blur(12px)";
+
+    /* Glass build: do not fade the whole backdrop-filter element.
+       Instead, gently build the glass itself using background/border/blur/scale,
+       while the contents fade in at the same time. */
+    modal.style.backgroundColor = "rgba(255, 255, 255, 0)";
+    modal.style.borderColor = "rgba(255, 255, 255, 0)";
+    modal.style.backdropFilter = "blur(0px)";
+    modal.style.webkitBackdropFilter = "blur(0px)";
     modal.style.filter = "blur(0)";
-    modal.style.transform = "scale(0.986)";
-    modal.style.willChange = "transform";
+    modal.style.transform = "scale(0.968)";
+    modal.style.willChange = "background-color, border-color, backdrop-filter, transform";
     modal.style.backfaceVisibility = "hidden";
     modal.style.webkitBackfaceVisibility = "hidden";
     modal.style.pointerEvents = "auto";
@@ -1758,24 +1760,34 @@ const videos = {
       closeButton.style.pointerEvents = "auto";
     }
 
+    modal.getBoundingClientRect();
+
     const revealTimeout = setTimeout(() => {
       modal.style.transition =
+        "background-color 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "border-color 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "backdrop-filter 3000ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "-webkit-backdrop-filter 3000ms cubic-bezier(0.16, 1, 0.3, 1), " +
         "transform 4200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
+      modal.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+      modal.style.borderColor = "rgba(255, 255, 255, 0.15)";
+      modal.style.backdropFilter = "blur(12px)";
+      modal.style.webkitBackdropFilter = "blur(12px)";
       modal.style.transform = "scale(1)";
 
-      modalRevealItems.forEach((item, index) => {
+      modalRevealItems.forEach((item) => {
         item.style.transition =
-          "opacity 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "filter 3400ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
+          "opacity 2400ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "filter 3000ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "transform 3400ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-        item.style.transitionDelay = (index * 45) + "ms";
+        item.style.transitionDelay = "120ms";
         item.style.opacity = "1";
         item.style.filter = "blur(0)";
         item.style.transform = "scale(1)";
       });
-    }, 360);
+    }, 90);
 
     contactTimeouts.push(revealTimeout);
   }
@@ -1795,21 +1807,29 @@ const videos = {
     modalRevealItems.forEach((item) => {
       item.style.transitionDelay = "0ms";
       item.style.transition =
-        "opacity 1300ms cubic-bezier(0.22, 1, 0.36, 1), " +
-        "filter 1700ms cubic-bezier(0.22, 1, 0.36, 1), " +
-        "transform 1900ms cubic-bezier(0.22, 1, 0.36, 1)";
+        "opacity 1600ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "filter 2000ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "transform 2200ms cubic-bezier(0.22, 1, 0.36, 1)";
 
       item.style.opacity = "0";
-      item.style.filter = "blur(5px)";
-      item.style.transform = "scale(0.996)";
+      item.style.filter = "blur(4px)";
+      item.style.transform = "scale(0.998)";
     });
 
     modal.style.transition =
-      "transform 2200ms cubic-bezier(0.22, 1, 0.36, 1)";
+      "background-color 1900ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "border-color 1900ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "backdrop-filter 2300ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "-webkit-backdrop-filter 2300ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 2500ms cubic-bezier(0.22, 1, 0.36, 1)";
 
     modal.style.opacity = "1";
+    modal.style.backgroundColor = "rgba(255, 255, 255, 0)";
+    modal.style.borderColor = "rgba(255, 255, 255, 0)";
+    modal.style.backdropFilter = "blur(0px)";
+    modal.style.webkitBackdropFilter = "blur(0px)";
     modal.style.filter = "blur(0)";
-    modal.style.transform = "scale(0.986)";
+    modal.style.transform = "scale(0.968)";
     modal.style.pointerEvents = "none";
 
     overlay.style.pointerEvents = "none";
@@ -1831,7 +1851,7 @@ const videos = {
       modal.style.pointerEvents = "none";
 
       restoreNavAfterContact();
-    }, 1700);
+    }, 2500);
 
     contactTimeouts.push(restoreNavTimeout);
     contactTimeouts.push(finalHideTimeout);
