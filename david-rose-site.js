@@ -414,6 +414,67 @@ const videos = {
     setNavItemResting(element);
   }
 
+  function isMobileLayoutViewport() {
+    return window.matchMedia("(max-width: 1024px)").matches;
+  }
+
+  function getMobileApproachBackButton() {
+    return document.querySelector(".dcr-mobile-approach-back");
+  }
+
+  function ensureMobileApproachBackButton() {
+    let button = getMobileApproachBackButton();
+
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "dcr-mobile-approach-back";
+      button.textContent = "BACK";
+      button.setAttribute("aria-label", "Back to navigation");
+      document.body.appendChild(button);
+    }
+
+    if (!button.dataset.dcrBackReady) {
+      button.dataset.dcrBackReady = "true";
+
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        if (isApproachOpen) {
+          hideApproachAnimated(true);
+        } else {
+          exitMobileApproachFocus(0);
+        }
+      });
+    }
+
+    return button;
+  }
+
+  function enterMobileApproachFocus() {
+    if (!isMobileLayoutViewport()) return;
+
+    ensureMobileApproachBackButton();
+    document.documentElement.classList.add("dcr-mobile-approach-focus-active");
+  }
+
+  function exitMobileApproachFocus(delay) {
+    const exitDelay = typeof delay === "number" ? delay : 0;
+
+    const runExit = () => {
+      document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
+    };
+
+    if (exitDelay > 0) {
+      const exitTimeout = setTimeout(runExit, exitDelay);
+      approachTimeouts.push(exitTimeout);
+    } else {
+      runExit();
+    }
+  }
+
   function installMobileLayoutFixes() {
     if (document.getElementById("dcr-mobile-layout-fixes")) return;
 
@@ -579,6 +640,80 @@ const videos = {
         .contact-overlay {
           max-height: var(--dcr-mobile-vh, 100svh) !important;
           overflow: hidden !important;
+        }
+
+        .dcr-mobile-approach-back {
+          position: fixed !important;
+          left: 8.5vw !important;
+          top: calc(var(--dcr-mobile-vh, 100svh) * 0.058) !important;
+          z-index: 160 !important;
+          display: block !important;
+          visibility: hidden;
+          opacity: 0;
+          pointer-events: none;
+          appearance: none;
+          -webkit-appearance: none;
+          background: transparent;
+          border: 0;
+          margin: 0;
+          padding: 0;
+          color: rgba(255, 255, 255, 0.92);
+          font: inherit;
+          font-size: clamp(13px, 3.05vw, 17px);
+          line-height: 1;
+          letter-spacing: 0.38em;
+          text-transform: uppercase;
+          cursor: pointer;
+          filter: blur(6px);
+          transform: translateX(-14px) scale(0.986);
+          transition:
+            opacity 2100ms cubic-bezier(0.16, 1, 0.3, 1),
+            filter 2600ms cubic-bezier(0.16, 1, 0.3, 1),
+            transform 3200ms cubic-bezier(0.13, 1, 0.22, 1);
+        }
+
+        html.dcr-mobile-approach-focus-active .side-nav {
+          opacity: 0 !important;
+          filter: blur(8px) !important;
+          transform: translateX(-18px) scale(0.988) !important;
+          pointer-events: none !important;
+          transition:
+            opacity 1450ms cubic-bezier(0.22, 1, 0.36, 1),
+            filter 1850ms cubic-bezier(0.22, 1, 0.36, 1),
+            transform 2100ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+        }
+
+        html.dcr-mobile-approach-focus-active .dcr-mobile-approach-back {
+          visibility: visible;
+          opacity: 1;
+          pointer-events: auto;
+          filter: blur(0);
+          transform: translateX(0) scale(1);
+          transition-delay: 520ms;
+        }
+
+        html.dcr-mobile-approach-focus-active .approach-container {
+          left: 8vw !important;
+          right: 8vw !important;
+          top: 52% !important;
+          transform: translateY(-50%) !important;
+          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.72) !important;
+        }
+
+        html.dcr-mobile-approach-focus-active .approach-txt {
+          margin-bottom: calc(var(--dcr-mobile-vh, 100svh) * 0.04) !important;
+        }
+
+        html.dcr-mobile-approach-focus-active .approach-ig-link,
+        html.dcr-mobile-approach-focus-active .ig-link,
+        html.dcr-mobile-approach-focus-active [data-approach-ig],
+        html.dcr-mobile-approach-focus-active [data-instagram-link] {
+          opacity: 0 !important;
+          filter: blur(6px) !important;
+          pointer-events: none !important;
+          transition:
+            opacity 1200ms cubic-bezier(0.22, 1, 0.36, 1),
+            filter 1600ms cubic-bezier(0.22, 1, 0.36, 1) !important;
         }
       }
     `;
@@ -1576,6 +1711,7 @@ const videos = {
 
   function hideApproachFinal(shouldResetButton) {
     isApproachOpen = false;
+    exitMobileApproachFocus(0);
 
     getApproachElements().forEach((element) => {
       element.style.display = "";
@@ -1612,6 +1748,8 @@ const videos = {
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     isApproachOpen = false;
+
+    exitMobileApproachFocus(900);
 
     resumeApproachVideoPlayback();
     showCenterNameAnimated(1500);
@@ -1684,6 +1822,8 @@ const videos = {
     isApproachOpen = true;
     activeSection = null;
     activeMainNavButton = approachLink;
+
+    enterMobileApproachFocus();
 
     if (approachLink) {
       focusElement(approachLink);
@@ -2335,6 +2475,7 @@ const videos = {
   prepareClientOneShotVideo(videos["tom-ford"]);
 
   installMobileLayoutFixes();
+  ensureMobileApproachBackButton();
   prepareCustomPageLoadIntro();
 
   hideProjectsGradient();
