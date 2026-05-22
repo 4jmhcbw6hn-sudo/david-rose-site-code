@@ -1490,6 +1490,8 @@ const videos = {
   function showSection(sectionName) {
     if (isContactOpen) return;
 
+    const wasApproachOpen = isApproachOpen;
+
     if (isApproachOpen) {
       hideApproachAnimated(true);
     } else {
@@ -1550,20 +1552,38 @@ const videos = {
       });
     });
 
-    if (isSwitchingBetweenProjectMenus) {
-      hideSectionPanelsImmediately(sectionName);
-      revealSectionPanels(sectionName, linkedRevealDelayMap);
-    } else {
-      revealSectionPanels(sectionName);
+    function revealChosenSectionPanels() {
+      if (activeSection !== sectionName || isContactOpen) return;
+
+      if (isSwitchingBetweenProjectMenus) {
+        hideSectionPanelsImmediately(sectionName);
+        revealSectionPanels(sectionName, linkedRevealDelayMap);
+      } else {
+        revealSectionPanels(sectionName);
+      }
+
+      setTimeout(() => {
+        forceInactiveProjectPanelsHidden();
+      }, 80);
+
+      setTimeout(() => {
+        forceInactiveProjectPanelsHidden();
+      }, 600);
     }
 
-    setTimeout(() => {
-      forceInactiveProjectPanelsHidden();
-    }, 80);
+    if (wasApproachOpen) {
+      hideSectionPanelsImmediately(sectionName);
 
-    setTimeout(() => {
-      forceInactiveProjectPanelsHidden();
-    }, 600);
+      const approachToProjectRevealDelay = 1750;
+
+      const delayedRevealTimeout = setTimeout(() => {
+        revealChosenSectionPanels();
+      }, approachToProjectRevealDelay);
+
+      revealTimeouts.push(delayedRevealTimeout);
+    } else {
+      revealChosenSectionPanels();
+    }
   }
 
   function closeActiveSectionAnimated() {
