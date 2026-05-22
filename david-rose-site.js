@@ -1728,3 +1728,248 @@ setTimeout(() => {
     overlay.style.pointerEvents = "none";
   }
 }, 3000);
+/* Contact overlay patch */
+(function () {
+  let contactIsOpen = false;
+  let contactTimeouts = [];
+
+  function clearContactTimeouts() {
+    contactTimeouts.forEach((timeout) => {
+      clearTimeout(timeout);
+    });
+
+    contactTimeouts = [];
+  }
+
+  function findContactButton() {
+    return Array.from(document.querySelectorAll(".side-nav .nav-text, .side-nav a")).find((item) => {
+      return item.textContent.trim().toLowerCase() === "contact";
+    });
+  }
+
+  function getContactOverlay() {
+    return document.querySelector(".contact-overlay");
+  }
+
+  function getContactModal() {
+    return document.querySelector(".contact-modal");
+  }
+
+  function getContactCloseButton() {
+    return (
+      document.querySelector("[data-contact-close]") ||
+      document.querySelector(".Exit-Contact") ||
+      document.querySelector(".exit-contact") ||
+      document.querySelector(".contact-close") ||
+      document.querySelector(".close-contact") ||
+      document.querySelector(".contact-modal [class*='Exit']") ||
+      document.querySelector(".contact-modal [class*='exit']") ||
+      document.querySelector(".contact-modal [class*='Close']") ||
+      document.querySelector(".contact-modal [class*='close']")
+    );
+  }
+
+  function prepareContactHidden() {
+    const overlay = getContactOverlay();
+    const modal = getContactModal();
+    const closeButton = getContactCloseButton();
+
+    if (overlay) {
+      overlay.style.transition = "none";
+      overlay.style.opacity = "0";
+      overlay.style.visibility = "hidden";
+      overlay.style.pointerEvents = "none";
+    }
+
+    if (modal) {
+      modal.style.transition = "none";
+      modal.style.opacity = "0";
+      modal.style.visibility = "hidden";
+      modal.style.pointerEvents = "none";
+      modal.style.filter = "blur(10px)";
+      modal.style.transform = "scale(0.965)";
+      modal.style.transformOrigin = "50% 50%";
+    }
+
+    if (closeButton) {
+      closeButton.style.cursor = "pointer";
+      closeButton.style.pointerEvents = "auto";
+    }
+  }
+
+  function softenNavForContact() {
+    getLeftNavButtons().forEach((button) => {
+      button.style.transition =
+        "opacity 1800ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "filter 2200ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "transform 2200ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+      button.style.opacity = "0.38";
+      button.style.filter = "blur(2.4px)";
+      button.style.transform = "scale(0.99)";
+      button.style.pointerEvents = "none";
+    });
+  }
+
+  function restoreNavAfterContact() {
+    getLeftNavButtons().forEach((button) => {
+      resetElement(button);
+      button.style.pointerEvents = "";
+    });
+  }
+
+  function showContactAnimated() {
+    const overlay = getContactOverlay();
+    const modal = getContactModal();
+    const closeButton = getContactCloseButton();
+
+    if (!overlay || !modal) return;
+
+    clearContactTimeouts();
+
+    contactIsOpen = true;
+
+    if (typeof hideApproachImmediate === "function") {
+      hideApproachImmediate(true);
+    }
+
+    if (typeof closeActiveSectionAnimated === "function") {
+      closeActiveSectionAnimated();
+    }
+
+    if (typeof returnToMainWebsiteVideo === "function" && current === "tom-ford") {
+      returnToMainWebsiteVideo();
+    }
+
+    hideProjectsGradient();
+    hideCenterNameAnimated();
+    fadeCurrentAudioToZero();
+    softenNavForContact();
+
+    overlay.style.display = "";
+    overlay.style.transition =
+      "opacity 1400ms cubic-bezier(0.22, 1, 0.36, 1)";
+    overlay.style.visibility = "visible";
+    overlay.style.opacity = "1";
+    overlay.style.pointerEvents = "auto";
+
+    modal.style.display = "";
+    modal.style.transformOrigin = "50% 50%";
+    modal.style.transition = "none";
+    modal.style.visibility = "visible";
+    modal.style.opacity = "0";
+    modal.style.filter = "blur(10px)";
+    modal.style.transform = "scale(0.965)";
+    modal.style.pointerEvents = "auto";
+
+    if (closeButton) {
+      closeButton.style.cursor = "pointer";
+      closeButton.style.pointerEvents = "auto";
+    }
+
+    const revealTimeout = setTimeout(() => {
+      modal.style.transition =
+        "opacity 3000ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 3600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 4200ms cubic-bezier(0.13, 1, 0.22, 1)";
+
+      modal.style.opacity = "1";
+      modal.style.filter = "blur(0)";
+      modal.style.transform = "scale(1)";
+    }, 80);
+
+    contactTimeouts.push(revealTimeout);
+  }
+
+  function hideContactAnimated() {
+    const overlay = getContactOverlay();
+    const modal = getContactModal();
+
+    if (!overlay || !modal) return;
+
+    clearContactTimeouts();
+
+    contactIsOpen = false;
+
+    modal.style.transition =
+      "opacity 1900ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 2300ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 2600ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+    modal.style.opacity = "0";
+    modal.style.filter = "blur(9px)";
+    modal.style.transform = "scale(0.985)";
+    modal.style.pointerEvents = "none";
+
+    overlay.style.pointerEvents = "none";
+    overlay.style.transition =
+      "opacity 2100ms cubic-bezier(0.22, 1, 0.36, 1)";
+    overlay.style.opacity = "0";
+
+    showCenterNameAnimated(600);
+
+    const restoreNavTimeout = setTimeout(() => {
+      restoreNavAfterContact();
+    }, 550);
+
+    const finalHideTimeout = setTimeout(() => {
+      overlay.style.visibility = "hidden";
+      overlay.style.pointerEvents = "none";
+
+      modal.style.visibility = "hidden";
+      modal.style.pointerEvents = "none";
+
+      restoreNavAfterContact();
+    }, 2400);
+
+    contactTimeouts.push(restoreNavTimeout);
+    contactTimeouts.push(finalHideTimeout);
+  }
+
+  prepareContactHidden();
+
+  setTimeout(() => {
+    prepareContactHidden();
+  }, 300);
+
+  document.addEventListener("click", (event) => {
+    const contactButton = findContactButton();
+    const closeButton = getContactCloseButton();
+
+    if (closeButton && (event.target === closeButton || closeButton.contains(event.target))) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      hideContactAnimated();
+      return;
+    }
+
+    if (contactButton && (event.target === contactButton || contactButton.contains(event.target))) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      if (!contactIsOpen) {
+        showContactAnimated();
+      }
+
+      return;
+    }
+
+    if (contactIsOpen) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+    }
+  }, true);
+
+  setTimeout(() => {
+    const closeButton = getContactCloseButton();
+
+    if (closeButton) {
+      closeButton.style.cursor = "pointer";
+      closeButton.style.pointerEvents = "auto";
+    }
+  }, 600);
+})();
