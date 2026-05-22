@@ -863,6 +863,12 @@ const videos = {
           margin-bottom: calc(var(--dcr-mobile-vh, 100svh) * 0.04) !important;
         }
 
+        html.dcr-mobile-approach-focus-active .approach-txt,
+        html.dcr-mobile-approach-focus-active .approach-text,
+        html.dcr-mobile-approach-focus-active .approach-copy {
+          transform: translateY(calc(var(--dcr-mobile-vh, 100svh) * -0.18)) !important;
+        }
+
         html.dcr-mobile-approach-focus-active .approach-ig-link,
         html.dcr-mobile-approach-focus-active .ig-link,
         html.dcr-mobile-approach-focus-active [data-approach-ig],
