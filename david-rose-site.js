@@ -1804,35 +1804,30 @@ const videos = {
 
     const modalRevealItems = Array.from(modal.children);
 
-    /* Exit sync: keep the form content fading for the same length of time
-       as the glass panel, so we never get an empty transparent box hanging
-       around after the text has disappeared. */
+    /* Exit composite fade:
+       Keep the glass fully formed, then fade the entire modal as one object.
+       This avoids the empty transparent rectangle caused by fading the contents
+       and backdrop-filter separately. */
     modalRevealItems.forEach((item) => {
       item.style.transitionDelay = "0ms";
-      item.style.transition =
-        "opacity 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
-        "filter 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
-        "transform 2450ms cubic-bezier(0.22, 1, 0.36, 1)";
-
-      item.style.opacity = "0";
-      item.style.filter = "blur(4px)";
-      item.style.transform = "scale(0.998)";
+      item.style.transition = "none";
+      item.style.opacity = "1";
+      item.style.filter = "blur(0)";
+      item.style.transform = "scale(1)";
     });
 
     modal.style.transition =
-      "background-color 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "border-color 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "backdrop-filter 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "-webkit-backdrop-filter 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 2450ms cubic-bezier(0.22, 1, 0.36, 1)";
+      "opacity 2200ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 2500ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 2600ms cubic-bezier(0.22, 1, 0.36, 1)";
 
-    modal.style.opacity = "1";
-    modal.style.backgroundColor = "rgba(255, 255, 255, 0)";
-    modal.style.borderColor = "rgba(255, 255, 255, 0)";
-    modal.style.backdropFilter = "blur(0px)";
-    modal.style.webkitBackdropFilter = "blur(0px)";
-    modal.style.filter = "blur(0)";
-    modal.style.transform = "scale(0.968)";
+    modal.style.opacity = "0";
+    modal.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+    modal.style.borderColor = "rgba(255, 255, 255, 0.15)";
+    modal.style.backdropFilter = "blur(12px)";
+    modal.style.webkitBackdropFilter = "blur(12px)";
+    modal.style.filter = "blur(5px)";
+    modal.style.transform = "scale(0.975)";
     modal.style.pointerEvents = "none";
 
     overlay.style.pointerEvents = "none";
@@ -1852,9 +1847,10 @@ const videos = {
 
       modal.style.visibility = "hidden";
       modal.style.pointerEvents = "none";
+      modal.style.opacity = "0";
 
       restoreNavAfterContact();
-    }, 2520);
+    }, 2650);
 
     contactTimeouts.push(restoreNavTimeout);
     contactTimeouts.push(finalHideTimeout);
