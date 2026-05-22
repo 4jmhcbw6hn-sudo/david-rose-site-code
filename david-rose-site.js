@@ -353,9 +353,9 @@ const videos = {
       element.style.transformOrigin = "50% 50%";
       element.style.transition = "none";
       element.style.visibility = "visible";
-      element.style.opacity = "0";
-      element.style.filter = "blur(10px)";
-      element.style.transform = "scale(0.975)";
+      element.style.opacity = "0.86";
+      element.style.filter = "blur(2px)";
+      element.style.transform = "scale(0.982)";
       element.style.pointerEvents = "none";
       element.style.willChange = "opacity, filter, transform";
     });
@@ -366,16 +366,16 @@ const videos = {
       item.style.visibility = "visible";
       item.style.opacity = "0";
       item.style.filter = "blur(8px)";
-      item.style.transform = "translateY(5px) scale(0.986)";
+      item.style.transform = "translateX(-18px) scale(0.988)";
       item.style.pointerEvents = "none";
       item.style.willChange = "opacity, filter, transform";
     });
 
     if (videos.main) {
       videos.main.style.transition = "none";
-      videos.main.style.opacity = "0";
-      videos.main.style.filter = "blur(12px) brightness(0.82)";
-      videos.main.style.transform = "scale(1.018)";
+      videos.main.style.opacity = "0.58";
+      videos.main.style.filter = "blur(18px) brightness(0.74)";
+      videos.main.style.transform = "scale(1.026)";
       videos.main.style.willChange = "opacity, filter, transform";
     }
 
@@ -399,8 +399,8 @@ const videos = {
         if (videos.main) {
           videos.main.style.transition =
             "opacity 2600ms cubic-bezier(0.22, 1, 0.36, 1), " +
-            "filter 3600ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 5200ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "filter 3800ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 5600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
           videos.main.style.opacity = "1";
           videos.main.style.filter = "blur(0) brightness(1)";
@@ -409,11 +409,11 @@ const videos = {
 
         getCenterNameElements().forEach((element) => {
           element.style.transition =
-            "opacity 3000ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 4200ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 5600ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "opacity 2400ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 3600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 6200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          element.style.transitionDelay = "420ms";
+          element.style.transitionDelay = "80ms";
           element.style.visibility = "visible";
           element.style.opacity = "1";
           element.style.filter = "blur(0)";
@@ -422,18 +422,18 @@ const videos = {
         });
 
         getLeftNavButtons().forEach((item, index) => {
-          const delay = 900 + index * 95;
+          const delay = 2850 + index * 115;
 
           item.style.transition =
-            "opacity 2500ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 3400ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 4200ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 3100ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
           item.style.transitionDelay = delay + "ms";
           item.style.visibility = "visible";
           item.style.opacity = "1";
           item.style.filter = "blur(0)";
-          item.style.transform = "translateY(0) scale(1)";
+          item.style.transform = "translateX(0) scale(1)";
           item.style.pointerEvents = "auto";
         });
 
@@ -453,7 +453,7 @@ const videos = {
           if (videos.main) {
             videos.main.style.willChange = "";
           }
-        }, 5600);
+        }, 6900);
 
         revealTimeouts.push(cleanupTimeout);
       });
