@@ -335,6 +335,131 @@ const videos = {
     );
   }
 
+  let customPageLoadIntroHasRun = false;
+
+  function prepareCustomPageLoadIntro() {
+    document.documentElement.classList.add("custom-page-load-intro-active");
+
+    const openingName = document.querySelector(".center-name-wrapper-opening");
+
+    if (openingName) {
+      openingName.style.transition = "none";
+      openingName.style.opacity = "0";
+      openingName.style.visibility = "hidden";
+      openingName.style.pointerEvents = "none";
+    }
+
+    getCenterNameElements().forEach((element) => {
+      element.style.transformOrigin = "50% 50%";
+      element.style.transition = "none";
+      element.style.visibility = "visible";
+      element.style.opacity = "0";
+      element.style.filter = "blur(10px)";
+      element.style.transform = "scale(0.975)";
+      element.style.pointerEvents = "none";
+      element.style.willChange = "opacity, filter, transform";
+    });
+
+    getLeftNavButtons().forEach((item) => {
+      item.style.transformOrigin = "0% 50%";
+      item.style.transition = "none";
+      item.style.visibility = "visible";
+      item.style.opacity = "0";
+      item.style.filter = "blur(8px)";
+      item.style.transform = "translateY(5px) scale(0.986)";
+      item.style.pointerEvents = "none";
+      item.style.willChange = "opacity, filter, transform";
+    });
+
+    if (videos.main) {
+      videos.main.style.transition = "none";
+      videos.main.style.opacity = "0";
+      videos.main.style.filter = "blur(12px) brightness(0.82)";
+      videos.main.style.transform = "scale(1.018)";
+      videos.main.style.willChange = "opacity, filter, transform";
+    }
+
+    const introOverlay = document.querySelector(".intro-overlay");
+
+    if (introOverlay) {
+      introOverlay.style.transition = "opacity 900ms ease";
+      introOverlay.style.opacity = "0";
+      introOverlay.style.visibility = "hidden";
+      introOverlay.style.pointerEvents = "none";
+    }
+  }
+
+  function runCustomPageLoadIntro() {
+    if (customPageLoadIntroHasRun) return;
+
+    customPageLoadIntroHasRun = true;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (videos.main) {
+          videos.main.style.transition =
+            "opacity 2600ms cubic-bezier(0.22, 1, 0.36, 1), " +
+            "filter 3600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 5200ms cubic-bezier(0.13, 1, 0.22, 1)";
+
+          videos.main.style.opacity = "1";
+          videos.main.style.filter = "blur(0) brightness(1)";
+          videos.main.style.transform = "scale(1)";
+        }
+
+        getCenterNameElements().forEach((element) => {
+          element.style.transition =
+            "opacity 3000ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 4200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 5600ms cubic-bezier(0.13, 1, 0.22, 1)";
+
+          element.style.transitionDelay = "420ms";
+          element.style.visibility = "visible";
+          element.style.opacity = "1";
+          element.style.filter = "blur(0)";
+          element.style.transform = "scale(1)";
+          element.style.pointerEvents = "";
+        });
+
+        getLeftNavButtons().forEach((item, index) => {
+          const delay = 900 + index * 95;
+
+          item.style.transition =
+            "opacity 2500ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 3400ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 4200ms cubic-bezier(0.13, 1, 0.22, 1)";
+
+          item.style.transitionDelay = delay + "ms";
+          item.style.visibility = "visible";
+          item.style.opacity = "1";
+          item.style.filter = "blur(0)";
+          item.style.transform = "translateY(0) scale(1)";
+          item.style.pointerEvents = "auto";
+        });
+
+        const cleanupTimeout = setTimeout(() => {
+          document.documentElement.classList.remove("custom-page-load-intro-active");
+
+          getLeftNavButtons().forEach((item) => {
+            item.style.transitionDelay = "";
+            item.style.willChange = "";
+          });
+
+          getCenterNameElements().forEach((element) => {
+            element.style.transitionDelay = "";
+            element.style.willChange = "";
+          });
+
+          if (videos.main) {
+            videos.main.style.willChange = "";
+          }
+        }, 5600);
+
+        revealTimeouts.push(cleanupTimeout);
+      });
+    });
+  }
+
   function getAllHoverButtons() {
     return document.querySelectorAll(
       ".side-nav .nav-text, " +
@@ -1918,11 +2043,17 @@ const videos = {
 
   prepareClientOneShotVideo(videos["tom-ford"]);
 
+  prepareCustomPageLoadIntro();
+
   hideProjectsGradient();
   hideInactivePanelsWithoutBreakingLayout();
   hideApproachImmediate(false);
   prepareContactHidden();
   hideContactImmediate();
+
+  setTimeout(() => {
+    runCustomPageLoadIntro();
+  }, 120);
 
   setTimeout(() => {
     hideInactivePanelsWithoutBreakingLayout();
