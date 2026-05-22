@@ -353,9 +353,9 @@ const videos = {
       element.style.transformOrigin = "50% 50%";
       element.style.transition = "none";
       element.style.visibility = "visible";
-      element.style.opacity = "0.86";
-      element.style.filter = "blur(2px)";
-      element.style.transform = "scale(0.982)";
+      element.style.opacity = "0.72";
+      element.style.filter = "blur(7px)";
+      element.style.transform = "translateY(8px) scale(0.94)";
       element.style.pointerEvents = "none";
       element.style.willChange = "opacity, filter, transform";
     });
@@ -408,15 +408,15 @@ const videos = {
 
         getCenterNameElements().forEach((element) => {
           element.style.transition =
-            "opacity 2400ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 3600ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 6200ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "opacity 4200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 6200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 8200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          element.style.transitionDelay = "80ms";
+          element.style.transitionDelay = "120ms";
           element.style.visibility = "visible";
           element.style.opacity = "1";
           element.style.filter = "blur(0)";
-          element.style.transform = "scale(1)";
+          element.style.transform = "translateY(0) scale(1)";
           element.style.pointerEvents = "";
         });
 
@@ -452,7 +452,7 @@ const videos = {
           if (videos.main) {
             videos.main.style.willChange = "";
           }
-        }, 6900);
+        }, 8800);
 
         revealTimeouts.push(cleanupTimeout);
       });
