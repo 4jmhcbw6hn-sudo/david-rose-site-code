@@ -1,0 +1,129 @@
+.nav-text {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1;
+}
+
+/* Contact Modal Styling */
+.contact-modal {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 2rem;
+}
+
+/* Form fields */
+.contact-modal input,
+.contact-modal textarea {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: #fff;
+  font-size: 0.95rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.contact-modal input::placeholder,
+.contact-modal textarea::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Submit button */
+.contact-modal button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: #fff;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.contact-modal button:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Elegant video legibility gradients */
+.hero-section {
+  position: relative;
+}
+
+.hero-section::before,
+.hero-section::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none !important;
+  z-index: 5;
+}
+
+.hero-section::before {
+  background:
+    radial-gradient(
+      ellipse 60vw 70vh at 0% 0%,
+      rgba(0, 0, 0, 0.42) 0%,
+      rgba(0, 0, 0, 0.28) 24%,
+      rgba(0, 0, 0, 0.13) 43%,
+      rgba(0, 0, 0, 0) 70%
+    );
+  opacity: 0.95;
+}
+
+.hero-section::after {
+  background:
+    radial-gradient(
+      ellipse 78vw 74vh at 100% 100%,
+      rgba(0, 0, 0, 0.38) 0%,
+      rgba(0, 0, 0, 0.24) 26%,
+      rgba(0, 0, 0, 0.11) 46%,
+      rgba(0, 0, 0, 0) 74%
+    );
+  opacity: 0;
+  transition: opacity 1800ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity;
+}
+
+html.projects-gradient-on .hero-section::after {
+  opacity: 0.92;
+}
+
+/* Keep navigation clickable above the Approach overlay */
+.side-nav {
+  z-index: 100 !important;
+}
+
+.post-production-projects-panel,
+.direction-projects-panel,
+.colour-projects-panel,
+.color-projects-panel {
+  z-index: 90 !important;
+}
+
+.approach-overlay,
+.approach-container,
+.approach-text,
+.approach-copy {
+  pointer-events: none !important;
+}
+
+.approach-ig-link {
+  pointer-events: auto !important;
+}
+
+.approach-overlay {
+  z-index: 30 !important;
+}
+
+.contact-overlay {
+  z-index: 120 !important;
+}
+
+.center-name-wrapper,
+.center-name-wrapper-opening {
+  z-index: 40 !important;
+}
