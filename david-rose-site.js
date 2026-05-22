@@ -428,26 +428,58 @@ const videos = {
           z-index: 32 !important;
         }
 
+        .approach-overlay {
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: center !important;
+          align-items: flex-start !important;
+          box-sizing: border-box !important;
+          padding: calc(var(--dcr-mobile-vh, 100svh) * 0.18) 7vw calc(var(--dcr-mobile-vh, 100svh) * 0.10) 8vw !important;
+        }
+
         .approach-container {
           position: fixed !important;
           left: 11.8vw !important;
           right: 7vw !important;
-          top: calc(var(--dcr-mobile-vh, 100svh) * 0.36) !important;
+          top: 50% !important;
+          transform: translateY(-50%) !important;
           width: auto !important;
           max-width: none !important;
           height: auto !important;
-          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.485) !important;
+          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.62) !important;
           overflow: hidden !important;
           z-index: 36 !important;
         }
 
+        .approach-txt,
         .approach-text,
         .approach-copy {
+          position: relative !important;
+          left: auto !important;
+          top: auto !important;
+          right: auto !important;
+          bottom: auto !important;
           width: 100% !important;
           max-width: none !important;
+          transform: none !important;
           font-size: clamp(12px, 2.9vw, 16px) !important;
           line-height: 1.5 !important;
           letter-spacing: 0.11em !important;
+          z-index: 36 !important;
+        }
+
+        .approach-txt {
+          align-self: center !important;
+          text-align: center !important;
+          margin: 0 0 calc(var(--dcr-mobile-vh, 100svh) * 0.035) 0 !important;
+        }
+
+        .approach-copy {
+          margin: 0 !important;
+        }
+
+        .approach-copy + .approach-copy {
+          margin-top: calc(var(--dcr-mobile-vh, 100svh) * 0.035) !important;
         }
 
         .approach-reveal-line {
