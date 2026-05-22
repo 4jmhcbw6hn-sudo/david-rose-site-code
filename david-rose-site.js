@@ -271,6 +271,11 @@ const videos = {
   }
 
   function dimElement(element) {
+    if (isNavAnimationItem(element)) {
+      setNavItemResting(element);
+      return;
+    }
+
     element.style.transition =
       "opacity 1.35s cubic-bezier(0.22, 1, 0.36, 1), " +
       "filter 1.55s cubic-bezier(0.22, 1, 0.36, 1), " +
@@ -293,6 +298,11 @@ const videos = {
   }
 
   function focusElement(element) {
+    if (isNavAnimationItem(element)) {
+      setNavItemFocused(element);
+      return;
+    }
+
     element.style.transition =
       "opacity 0.95s cubic-bezier(0.22, 1, 0.36, 1), " +
       "filter 1.15s cubic-bezier(0.22, 1, 0.36, 1), " +
@@ -304,6 +314,13 @@ const videos = {
   }
 
   function resetElement(element) {
+    if (isNavAnimationItem(element)) {
+      setNavItemResting(element);
+      element.style.visibility = "";
+      element.style.pointerEvents = "";
+      return;
+    }
+
     element.style.transition =
       "opacity 1.35s cubic-bezier(0.22, 1, 0.36, 1), " +
       "filter 1.55s cubic-bezier(0.22, 1, 0.36, 1), " +
@@ -333,6 +350,68 @@ const videos = {
     return document.querySelectorAll(
       ".side-nav .nav-text, .side-nav a"
     );
+  }
+
+  function getInstagramNavItems() {
+    return document.querySelectorAll(
+      ".approach-ig-link, " +
+      "[data-approach-ig], " +
+      "[data-instagram-link]"
+    );
+  }
+
+  function isNavAnimationItem(element) {
+    if (!element || !element.closest) return false;
+
+    return (
+      element.closest(".side-nav") ||
+      element.matches(".approach-ig-link, [data-approach-ig], [data-instagram-link]") ||
+      element.closest(".approach-ig-link, [data-approach-ig], [data-instagram-link]")
+    );
+  }
+
+  function elementIsHovered(element) {
+    try {
+      return element.matches(":hover");
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function setNavItemFocused(element) {
+    if (!element) return;
+
+    element.style.transition =
+      "opacity 950ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 1150ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 1150ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+    element.style.transitionDelay = "";
+    element.style.opacity = "1";
+    element.style.filter = "blur(0)";
+    element.style.transform = "scale(1)";
+  }
+
+  function setNavItemResting(element) {
+    if (!element) return;
+
+    element.style.transition =
+      "opacity 1850ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 1850ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 1850ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+    element.style.transitionDelay = "";
+    element.style.opacity = "0.5";
+    element.style.filter = "blur(0)";
+    element.style.transform = "scale(1)";
+  }
+
+  function settleNavItemAfterArrival(element) {
+    if (!element) return;
+    if (element === activeMainNavButton) return;
+    if (elementIsHovered(element)) return;
+
+    setNavItemResting(element);
   }
 
   function installMobileLayoutFixes() {
@@ -629,6 +708,12 @@ const videos = {
           item.style.filter = "blur(0)";
           item.style.transform = "translateX(0) scale(1)";
           item.style.pointerEvents = "auto";
+
+          const navSettleTimeout = setTimeout(() => {
+            settleNavItemAfterArrival(item);
+          }, delay + 2700 + index * 65);
+
+          revealTimeouts.push(navSettleTimeout);
         });
 
         const cleanupTimeout = setTimeout(() => {
@@ -658,6 +743,9 @@ const videos = {
     return document.querySelectorAll(
       ".side-nav .nav-text, " +
       ".side-nav a, " +
+      ".approach-ig-link, " +
+      "[data-approach-ig], " +
+      "[data-instagram-link], " +
       ".post-production-projects-panel .nav-text, " +
       ".post-production-projects-panel a, " +
       ".direction-projects-panel .nav-text, " +
@@ -736,6 +824,9 @@ const videos = {
     return Array.from(document.querySelectorAll(
       ".side-nav .nav-text, " +
       ".side-nav a, " +
+      ".approach-ig-link, " +
+      "[data-approach-ig], " +
+      "[data-instagram-link], " +
       ".post-production-projects-panel .nav-text, " +
       ".post-production-projects-panel a, " +
       ".direction-projects-panel .nav-text, " +
@@ -1471,6 +1562,12 @@ const videos = {
 
         igLink.style.opacity = "1";
         igLink.style.filter = "blur(0)";
+
+        const igSettleTimeout = setTimeout(() => {
+          settleNavItemAfterArrival(igLink);
+        }, fadeInDuration + 360);
+
+        approachTimeouts.push(igSettleTimeout);
       }, delay + 360);
 
       approachTimeouts.push(igRevealTimeout);
@@ -2280,6 +2377,16 @@ const videos = {
       link.setAttribute("target", "_blank");
       link.setAttribute("rel", "noopener noreferrer");
     }
+
+    link.addEventListener("mouseenter", () => {
+      if (isContactOpen) return;
+      setNavItemFocused(link);
+    });
+
+    link.addEventListener("mouseleave", () => {
+      if (isContactOpen) return;
+      settleNavItemAfterArrival(link);
+    });
   });
 
   document.addEventListener("click", (event) => {
