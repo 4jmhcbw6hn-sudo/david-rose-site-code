@@ -1804,12 +1804,15 @@ const videos = {
 
     const modalRevealItems = Array.from(modal.children);
 
+    /* Exit sync: keep the form content fading for the same length of time
+       as the glass panel, so we never get an empty transparent box hanging
+       around after the text has disappeared. */
     modalRevealItems.forEach((item) => {
       item.style.transitionDelay = "0ms";
       item.style.transition =
-        "opacity 1600ms cubic-bezier(0.22, 1, 0.36, 1), " +
-        "filter 2000ms cubic-bezier(0.22, 1, 0.36, 1), " +
-        "transform 2200ms cubic-bezier(0.22, 1, 0.36, 1)";
+        "opacity 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "filter 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "transform 2450ms cubic-bezier(0.22, 1, 0.36, 1)";
 
       item.style.opacity = "0";
       item.style.filter = "blur(4px)";
@@ -1817,11 +1820,11 @@ const videos = {
     });
 
     modal.style.transition =
-      "background-color 1900ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "border-color 1900ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "backdrop-filter 2300ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "-webkit-backdrop-filter 2300ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 2500ms cubic-bezier(0.22, 1, 0.36, 1)";
+      "background-color 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "border-color 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "backdrop-filter 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "-webkit-backdrop-filter 2450ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 2450ms cubic-bezier(0.22, 1, 0.36, 1)";
 
     modal.style.opacity = "1";
     modal.style.backgroundColor = "rgba(255, 255, 255, 0)";
@@ -1851,7 +1854,7 @@ const videos = {
       modal.style.pointerEvents = "none";
 
       restoreNavAfterContact();
-    }, 2500);
+    }, 2520);
 
     contactTimeouts.push(restoreNavTimeout);
     contactTimeouts.push(finalHideTimeout);
