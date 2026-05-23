@@ -1538,30 +1538,123 @@ const videos = {
     );
   }
 
+  function normalizeMainNavText(text) {
+    return (text || "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  function mainNavTextMatches(text, sectionName) {
+    const normalizedText = normalizeMainNavText(text);
+
+    if (sectionName === "colour") {
+      return (
+        normalizedText === "colour" ||
+        normalizedText === "color" ||
+        normalizedText === "post production"
+      );
+    }
+
+    if (sectionName === "direction") {
+      return normalizedText === "direction";
+    }
+
+    if (sectionName === "approach") {
+      return (
+        normalizedText === "my approach" ||
+        normalizedText === "approach" ||
+        normalizedText === "my philosophy"
+      );
+    }
+
+    if (sectionName === "contact") {
+      return normalizedText === "contact";
+    }
+
+    return false;
+  }
+
+  function mainNavContainerLooksTooBroad(element) {
+    if (!element) return false;
+
+    const text = normalizeMainNavText(element.textContent);
+    let matchedSections = 0;
+
+    ["colour", "direction", "approach", "contact"].forEach((sectionName) => {
+      if (mainNavTextMatches(text, sectionName)) {
+        matchedSections += 1;
+        return;
+      }
+
+      if (sectionName === "colour" && (
+        text.includes("colour") ||
+        text.includes("color") ||
+        text.includes("post production")
+      )) matchedSections += 1;
+
+      if (sectionName === "direction" && text.includes("direction")) matchedSections += 1;
+      if (sectionName === "approach" && text.includes("approach")) matchedSections += 1;
+      if (sectionName === "contact" && text.includes("contact")) matchedSections += 1;
+    });
+
+    return matchedSections > 1;
+  }
+
+  function findExactMainNavTextInside(root, sectionName) {
+    const searchRoot = root || document;
+    const candidates = Array.from(searchRoot.querySelectorAll(
+      ".nav-text, a, [data-main-nav], span, div"
+    )).filter((element) => {
+      if (!element || !element.textContent) return false;
+      if (mainNavContainerLooksTooBroad(element)) return false;
+
+      return mainNavTextMatches(element.textContent, sectionName);
+    });
+
+    if (!candidates.length) return null;
+
+    candidates.sort((a, b) => {
+      const aChildren = a.querySelectorAll ? a.querySelectorAll("*").length : 0;
+      const bChildren = b.querySelectorAll ? b.querySelectorAll("*").length : 0;
+
+      if (aChildren !== bChildren) return aChildren - bChildren;
+
+      return normalizeMainNavText(a.textContent).length -
+        normalizeMainNavText(b.textContent).length;
+    });
+
+    const exact = candidates[0];
+    const clickableParent = exact.closest && exact.closest("a");
+
+    if (
+      clickableParent &&
+      !mainNavContainerLooksTooBroad(clickableParent) &&
+      mainNavTextMatches(clickableParent.textContent, sectionName)
+    ) {
+      return clickableParent;
+    }
+
+    return exact;
+  }
+
   function getMainNavButton(sectionName) {
-    const buttonByAttribute = document.querySelector("[data-main-nav='" + sectionName + "']");
-    if (buttonByAttribute) return buttonByAttribute;
+    const attributeButton = document.querySelector("[data-main-nav='" + sectionName + "']");
+
+    if (attributeButton && !mainNavContainerLooksTooBroad(attributeButton)) {
+      return attributeButton;
+    }
+
+    const attributeChildButton = attributeButton
+      ? findExactMainNavTextInside(attributeButton, sectionName)
+      : null;
+
+    if (attributeChildButton) return attributeChildButton;
+
+    const sideNav = document.querySelector(".side-nav");
+    const exactSideNavButton = findExactMainNavTextInside(sideNav || document, sectionName);
+
+    if (exactSideNavButton) return exactSideNavButton;
 
     return Array.from(getLeftNavButtons()).find((button) => {
-      const text = button.textContent.trim().toLowerCase();
-
-      if (sectionName === "colour") {
-        return text === "colour" || text === "color" || text === "post production";
-      }
-
-      if (sectionName === "direction") {
-        return text === "direction";
-      }
-
-      if (sectionName === "approach") {
-        return text === "my approach" || text === "approach" || text === "my philosophy";
-      }
-
-      if (sectionName === "contact") {
-        return text === "contact";
-      }
-
-      return false;
+      return mainNavTextMatches(button.textContent, sectionName);
     });
   }
 
@@ -3133,14 +3226,19 @@ const videos = {
   const approachLink = getMainNavButton("approach");
   const contactLink = getMainNavButton("contact");
 
-  function itemMatchesActiveMainNav(item, activeButton) {
-    if (!item || !activeButton) return false;
+  function getMobileStickyVisualNavItems() {
+    const items = Array.from(new Set([
+      ...Array.from(getLeftNavButtons()),
+      ...Array.from(getInstagramNavItems())
+    ])).filter(Boolean);
 
-    return (
-      item === activeButton ||
-      (item.contains && item.contains(activeButton)) ||
-      (activeButton.contains && activeButton.contains(item))
-    );
+    return items.filter((item) => {
+      return !items.some((otherItem) => {
+        return otherItem !== item &&
+          otherItem.contains &&
+          otherItem.contains(item);
+      });
+    });
   }
 
   function clearMobileStickyNavHover(activeButton) {
@@ -3148,21 +3246,20 @@ const videos = {
     if (isApproachOpen) return;
     if (document.documentElement.classList.contains("dcr-mobile-approach-focus-active")) return;
 
-    const navItems = Array.from(new Set([
-      ...Array.from(getLeftNavButtons()),
-      ...Array.from(getInstagramNavItems())
-    ]));
-
-    navItems.forEach((item) => {
-      if (itemMatchesActiveMainNav(item, activeButton)) {
-        focusElement(item);
-      } else {
+    getMobileStickyVisualNavItems().forEach((item) => {
+      if (item !== activeButton) {
         setNavItemResting(item);
       }
 
       item.style.visibility = "visible";
       item.style.pointerEvents = "auto";
     });
+
+    if (activeButton) {
+      focusElement(activeButton);
+      activeButton.style.visibility = "visible";
+      activeButton.style.pointerEvents = "auto";
+    }
   }
 
   function clearMobileStickyNavHoverSoon(activeButton) {
