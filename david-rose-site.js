@@ -2486,6 +2486,7 @@ const videos = {
 
     if (approachLink) {
       focusElement(approachLink);
+      lockMainNavToActiveButtonSoon(approachLink);
     }
 
     enterMobileApproachFocus();
@@ -2748,6 +2749,7 @@ const videos = {
 
     if (navButton) {
       focusElement(navButton);
+      lockMainNavToActiveButtonSoon(navButton);
     }
 
     const linkedRevealDelayMap = isSwitchingBetweenProjectMenus
@@ -2955,6 +2957,10 @@ const videos = {
     activeProjectButton = null;
     activeMainNavButton = contactLink || null;
 
+    if (contactLink) {
+      lockMainNavToActiveButtonSoon(contactLink);
+    }
+
     const modalRevealItems = Array.from(modal.children);
 
     modalRevealItems.forEach((item) => {
@@ -3132,6 +3138,49 @@ const videos = {
   const directionLink = getMainNavButton("direction");
   const approachLink = getMainNavButton("approach");
   const contactLink = getMainNavButton("contact");
+
+  function getMainNavControlButtons() {
+    return [colourLink, directionLink, approachLink, contactLink].filter(Boolean);
+  }
+
+  function clearNestedMainNavOverrides(button) {
+    if (!button || !button.querySelectorAll) return;
+
+    button.querySelectorAll(".nav-text, a, [data-main-nav]").forEach((child) => {
+      if (child === button) return;
+      if (getMainNavControlButtons().includes(child)) return;
+
+      child.style.transitionDelay = "";
+      child.style.opacity = "";
+      child.style.filter = "";
+      child.style.transform = "";
+      child.style.willChange = "";
+    });
+  }
+
+  function lockMainNavToActiveButton(activeButton) {
+    getMainNavControlButtons().forEach((button) => {
+      clearNestedMainNavOverrides(button);
+
+      if (button === activeButton) {
+        focusElement(button);
+      } else {
+        setNavItemResting(button);
+      }
+
+      button.style.visibility = "visible";
+      button.style.pointerEvents = "auto";
+    });
+  }
+
+  function lockMainNavToActiveButtonSoon(activeButton) {
+    [0, 90, 360, 900].forEach((delay) => {
+      setTimeout(() => {
+        if (activeButton && activeMainNavButton !== activeButton) return;
+        lockMainNavToActiveButton(activeButton);
+      }, delay);
+    });
+  }
 
   configureVideoAutoplayFallbacks();
   prepareClientOneShotVideo(videos["tom-ford"]);
