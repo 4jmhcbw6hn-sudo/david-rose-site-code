@@ -511,10 +511,6 @@ const videos = {
     );
   }
 
-  function getSideNavWrapper() {
-    return document.querySelector(".side-nav");
-  }
-
   function getInstagramNavItems() {
     return document.querySelectorAll(
       ".approach-ig-link, " +
@@ -591,6 +587,28 @@ const videos = {
     setNavItemResting(element);
   }
 
+  function navItemsBelongTogether(item, activeItem) {
+    if (!item || !activeItem) return false;
+    if (item === activeItem) return true;
+
+    return (
+      (item.contains && item.contains(activeItem)) ||
+      (activeItem.contains && activeItem.contains(item))
+    );
+  }
+
+  function applyActiveMainNavContrast() {
+    if (!activeMainNavButton) return;
+
+    getLeftNavButtons().forEach((item) => {
+      if (navItemsBelongTogether(item, activeMainNavButton)) {
+        focusElement(item);
+      } else {
+        dimElement(item);
+      }
+    });
+  }
+
   function ensureNameShadowSpot() {
     let spot = document.querySelector(".dcr-name-shadow-spot");
 
@@ -605,18 +623,40 @@ const videos = {
 
   function updateNameShadowSpotPosition() {
     const spot = ensureNameShadowSpot();
-    const centerName = Array.from(getCenterNameElements()).find((element) => {
+    const candidates = Array.from(getCenterNameElements()).filter((element) => {
       const rect = element.getBoundingClientRect();
-      return rect.width > 0 && rect.height > 0;
+      const style = window.getComputedStyle(element);
+
+      return (
+        rect.width > 0 &&
+        rect.height > 0 &&
+        style.visibility !== "hidden" &&
+        style.display !== "none" &&
+        Number(style.opacity || 0) > 0.05
+      );
     });
+
+    const centerName =
+      candidates.find((element) => !element.classList.contains("center-name-wrapper-opening")) ||
+      candidates[0];
 
     if (!centerName) return;
 
     const rect = centerName.getBoundingClientRect();
-    const spotWidth = Math.min(Math.max(rect.width * 1.18, 210), window.innerWidth * 0.64);
-    const spotHeight = Math.min(Math.max(rect.height * 1.35, 70), window.innerHeight * 0.18);
+    const mobileSpot = isMobileLayoutViewport();
+
+    const spotWidth = Math.min(
+      Math.max(rect.width * (mobileSpot ? 0.98 : 0.92), mobileSpot ? 180 : 240),
+      window.innerWidth * (mobileSpot ? 0.72 : 0.46)
+    );
+
+    const spotHeight = Math.min(
+      Math.max(rect.height * (mobileSpot ? 0.34 : 0.28), mobileSpot ? 34 : 44),
+      window.innerHeight * 0.12
+    );
+
     const spotX = rect.left + rect.width / 2;
-    const spotY = rect.top + rect.height * 0.72;
+    const spotY = rect.bottom + (mobileSpot ? 8 : 12);
 
     spot.style.left = spotX + "px";
     spot.style.top = spotY + "px";
@@ -1410,41 +1450,16 @@ const videos = {
     ensureNameShadowSpot();
     document.documentElement.classList.add("dcr-name-shadow-spot-on");
 
-    const sideNavWrapper = getSideNavWrapper();
-    const mobileIntroNav = isMobileLayoutViewport();
-
-    if (mobileIntroNav && sideNavWrapper) {
-      sideNavWrapper.style.transition = "none";
-      sideNavWrapper.style.visibility = "visible";
-      sideNavWrapper.style.opacity = "0";
-      sideNavWrapper.style.filter = "blur(8px)";
-      sideNavWrapper.style.transform = "translateX(-18px) scale(0.988)";
-      sideNavWrapper.style.pointerEvents = "none";
-      sideNavWrapper.style.willChange = "opacity, filter, transform";
-
-      getLeftNavButtons().forEach((item) => {
-        item.style.transformOrigin = "0% 50%";
-        item.style.transition = "none";
-        item.style.transitionDelay = "0ms";
-        item.style.visibility = "visible";
-        item.style.opacity = "1";
-        item.style.filter = "blur(0)";
-        item.style.transform = "translateX(0) scale(1)";
-        item.style.pointerEvents = "none";
-        item.style.willChange = "";
-      });
-    } else {
-      getLeftNavButtons().forEach((item) => {
-        item.style.transformOrigin = "0% 50%";
-        item.style.transition = "none";
-        item.style.visibility = "visible";
-        item.style.opacity = "0";
-        item.style.filter = "blur(8px)";
-        item.style.transform = "translateX(-18px) scale(0.988)";
-        item.style.pointerEvents = "none";
-        item.style.willChange = "opacity, filter, transform";
-      });
-    }
+    getLeftNavButtons().forEach((item) => {
+      item.style.transformOrigin = "0% 50%";
+      item.style.transition = "none";
+      item.style.visibility = "visible";
+      item.style.opacity = "0";
+      item.style.filter = "blur(8px)";
+      item.style.transform = "translateX(-18px) scale(0.988)";
+      item.style.pointerEvents = "none";
+      item.style.willChange = "opacity, filter, transform";
+    });
 
     if (videos.main) {
       videos.main.style.transition = "none";
@@ -1497,75 +1512,37 @@ const videos = {
 
         showNameShadowSpot(0);
 
+        const introNavItems = Array.from(getLeftNavButtons());
         const mobileIntroNav = isMobileLayoutViewport();
+        const introNavBaseDelay = mobileIntroNav ? 3350 : 3350;
+        const introNavStagger = mobileIntroNav ? 0 : 72;
+        const introNavSettleBase = mobileIntroNav ? 6180 : 6100;
+        const introNavSettleStagger = mobileIntroNav ? 0 : 92;
 
-        if (mobileIntroNav && getSideNavWrapper()) {
-          const sideNavWrapper = getSideNavWrapper();
-          const navDelay = 3350;
+        introNavItems.forEach((item, index) => {
+          const delay = introNavBaseDelay + index * introNavStagger;
 
-          sideNavWrapper.style.transition =
+          item.style.transition =
             "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
             "filter 3100ms cubic-bezier(0.16, 1, 0.3, 1), " +
             "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          sideNavWrapper.style.transitionDelay = navDelay + "ms";
-          sideNavWrapper.style.visibility = "visible";
-          sideNavWrapper.style.opacity = "1";
-          sideNavWrapper.style.filter = "blur(0)";
-          sideNavWrapper.style.transform = "translateX(0) scale(1)";
-          sideNavWrapper.style.pointerEvents = "auto";
-
-          getLeftNavButtons().forEach((item) => {
-            item.style.transition = "none";
-            item.style.transitionDelay = "0ms";
-            item.style.visibility = "visible";
-            item.style.opacity = "1";
-            item.style.filter = "blur(0)";
-            item.style.transform = "translateX(0) scale(1)";
-            item.style.pointerEvents = "auto";
-          });
+          item.style.transitionDelay = delay + "ms";
+          item.style.visibility = "visible";
+          item.style.opacity = "1";
+          item.style.filter = "blur(0)";
+          item.style.transform = "translateX(0) scale(1)";
+          item.style.pointerEvents = "auto";
 
           const navSettleTimeout = setTimeout(() => {
-            getLeftNavButtons().forEach((item) => {
-              settleNavItemAfterArrival(item);
-            });
-          }, navDelay + 2850);
+            settleNavItemAfterArrival(item);
+          }, introNavSettleBase + index * introNavSettleStagger);
 
           revealTimeouts.push(navSettleTimeout);
-        } else {
-          getLeftNavButtons().forEach((item, index) => {
-            const delay = 2850 + index * 115;
-
-            item.style.transition =
-              "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
-              "filter 3100ms cubic-bezier(0.16, 1, 0.3, 1), " +
-              "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
-
-            item.style.transitionDelay = delay + "ms";
-            item.style.visibility = "visible";
-            item.style.opacity = "1";
-            item.style.filter = "blur(0)";
-            item.style.transform = "translateX(0) scale(1)";
-            item.style.pointerEvents = "auto";
-
-            const navSettleTimeout = setTimeout(() => {
-              settleNavItemAfterArrival(item);
-            }, delay + 2700 + index * 65);
-
-            revealTimeouts.push(navSettleTimeout);
-          });
-        }
+        });
 
         const cleanupTimeout = setTimeout(() => {
           document.documentElement.classList.remove("custom-page-load-intro-active");
-
-          const sideNavWrapper = getSideNavWrapper();
-
-          if (sideNavWrapper) {
-            sideNavWrapper.style.transitionDelay = "";
-            sideNavWrapper.style.willChange = "";
-            sideNavWrapper.style.pointerEvents = "";
-          }
 
           getLeftNavButtons().forEach((item) => {
             item.style.transitionDelay = "";
@@ -2815,6 +2792,19 @@ const videos = {
 
     if (navButton) {
       focusElement(navButton);
+      applyActiveMainNavContrast();
+
+      setTimeout(() => {
+        if (activeMainNavButton === navButton) {
+          applyActiveMainNavContrast();
+        }
+      }, 80);
+
+      setTimeout(() => {
+        if (activeMainNavButton === navButton) {
+          applyActiveMainNavContrast();
+        }
+      }, 420);
     }
 
     const linkedRevealDelayMap = isSwitchingBetweenProjectMenus
