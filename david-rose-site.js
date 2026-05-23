@@ -534,6 +534,10 @@ const videos = {
     return items;
   }
 
+  function getSideNavWrapper() {
+    return document.querySelector(".side-nav");
+  }
+
   function getInstagramNavItems() {
     return document.querySelectorAll(
       ".approach-ig-link, " +
@@ -608,6 +612,44 @@ const videos = {
     if (elementIsHovered(element)) return;
 
     setNavItemResting(element);
+  }
+
+  function clearNestedNavVisualOverrides(button) {
+    if (!button || !button.querySelectorAll) return;
+
+    button.querySelectorAll(".nav-text, a, [data-main-nav]").forEach((child) => {
+      if (child === button) return;
+
+      child.style.transitionDelay = "";
+      child.style.opacity = "";
+      child.style.filter = "";
+      child.style.transform = "";
+      child.style.willChange = "";
+    });
+  }
+
+  function forceMobileMainNavState(activeButton) {
+    if (!isMobileLayoutViewport()) return;
+
+    const buttons = [
+      getMainNavButton("colour"),
+      getMainNavButton("direction"),
+      getMainNavButton("approach"),
+      getMainNavButton("contact")
+    ].filter(Boolean);
+
+    Array.from(new Set(buttons)).forEach((button) => {
+      clearNestedNavVisualOverrides(button);
+
+      if (activeButton && button === activeButton) {
+        setNavItemFocused(button);
+      } else {
+        setNavItemResting(button);
+      }
+
+      button.style.visibility = "visible";
+      button.style.pointerEvents = "auto";
+    });
   }
 
   function navItemsBelongTogether(item, activeItem) {
@@ -1479,6 +1521,19 @@ const videos = {
     ensureNameShadowSpot();
     document.documentElement.classList.add("dcr-name-shadow-spot-on");
 
+    const sideNavWrapper = getSideNavWrapper();
+
+    if (isMobileLayoutViewport() && sideNavWrapper) {
+      sideNavWrapper.style.transformOrigin = "0% 50%";
+      sideNavWrapper.style.transition = "none";
+      sideNavWrapper.style.visibility = "visible";
+      sideNavWrapper.style.opacity = "0";
+      sideNavWrapper.style.filter = "blur(8px)";
+      sideNavWrapper.style.transform = "translateX(-18px) scale(0.988)";
+      sideNavWrapper.style.pointerEvents = "none";
+      sideNavWrapper.style.willChange = "opacity, filter, transform";
+    }
+
     getLeftNavButtons().forEach((item) => {
       item.style.transformOrigin = "0% 50%";
       item.style.transition = "none";
@@ -1547,6 +1602,21 @@ const videos = {
         const introNavStagger = mobileIntroNav ? 0 : 72;
         const introNavSettleBase = mobileIntroNav ? 6180 : 6100;
         const introNavSettleStagger = mobileIntroNav ? 0 : 92;
+        const introSideNavWrapper = getSideNavWrapper();
+
+        if (mobileIntroNav && introSideNavWrapper) {
+          introSideNavWrapper.style.transition =
+            "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 3100ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
+
+          introSideNavWrapper.style.transitionDelay = introNavBaseDelay + "ms";
+          introSideNavWrapper.style.visibility = "visible";
+          introSideNavWrapper.style.opacity = "1";
+          introSideNavWrapper.style.filter = "blur(0)";
+          introSideNavWrapper.style.transform = "translateX(0) scale(1)";
+          introSideNavWrapper.style.pointerEvents = "auto";
+        }
 
         introNavItems.forEach((item, index) => {
           const delay = introNavBaseDelay + index * introNavStagger;
@@ -1570,8 +1640,24 @@ const videos = {
           revealTimeouts.push(navSettleTimeout);
         });
 
+        if (mobileIntroNav) {
+          const mobileNavStateTimeout = setTimeout(() => {
+            forceMobileMainNavState(null);
+          }, introNavSettleBase + 120);
+
+          revealTimeouts.push(mobileNavStateTimeout);
+        }
+
         const cleanupTimeout = setTimeout(() => {
           document.documentElement.classList.remove("custom-page-load-intro-active");
+
+          const cleanupSideNavWrapper = getSideNavWrapper();
+
+          if (cleanupSideNavWrapper) {
+            cleanupSideNavWrapper.style.transitionDelay = "";
+            cleanupSideNavWrapper.style.willChange = "";
+            cleanupSideNavWrapper.style.pointerEvents = "";
+          }
 
           getLeftNavButtons().forEach((item) => {
             item.style.transitionDelay = "";
@@ -1675,21 +1761,24 @@ const videos = {
   }
 
   function getElementsToDim() {
-    return Array.from(document.querySelectorAll(
-      ".side-nav .nav-text, " +
-      ".side-nav a, " +
-      ".approach-ig-link, " +
-      "[data-approach-ig], " +
-      "[data-instagram-link], " +
-      ".post-production-projects-panel .nav-text, " +
-      ".post-production-projects-panel a, " +
-      ".direction-projects-panel .nav-text, " +
-      ".direction-projects-panel a, " +
-      ".colour-projects-panel .nav-text, " +
-      ".colour-projects-panel a, " +
-      ".color-projects-panel .nav-text, " +
-      ".color-projects-panel a"
-    )).filter((element) => {
+    const items = [
+      ...Array.from(getLeftNavButtons()),
+      ...Array.from(document.querySelectorAll(
+        ".approach-ig-link, " +
+        "[data-approach-ig], " +
+        "[data-instagram-link], " +
+        ".post-production-projects-panel .nav-text, " +
+        ".post-production-projects-panel a, " +
+        ".direction-projects-panel .nav-text, " +
+        ".direction-projects-panel a, " +
+        ".colour-projects-panel .nav-text, " +
+        ".colour-projects-panel a, " +
+        ".color-projects-panel .nav-text, " +
+        ".color-projects-panel a"
+      ))
+    ];
+
+    return Array.from(new Set(items)).filter((element) => {
       return !elementBelongsToInactiveProjectPanel(element);
     });
   }
@@ -2821,6 +2910,19 @@ const videos = {
 
     if (navButton) {
       focusElement(navButton);
+      forceMobileMainNavState(navButton);
+
+      setTimeout(() => {
+        if (activeMainNavButton === navButton) {
+          forceMobileMainNavState(navButton);
+        }
+      }, 120);
+
+      setTimeout(() => {
+        if (activeMainNavButton === navButton) {
+          forceMobileMainNavState(navButton);
+        }
+      }, 650);
     }
 
     const linkedRevealDelayMap = isSwitchingBetweenProjectMenus
@@ -3331,11 +3433,13 @@ const videos = {
 
   if (colourLink) {
     colourLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(colourLink);
     });
 
     colourLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== colourLink) {
         resetElement(colourLink);
@@ -3346,16 +3450,22 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("colour");
+
+      setTimeout(() => {
+        forceMobileMainNavState(activeMainNavButton);
+      }, 0);
     });
   }
 
   if (directionLink) {
     directionLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(directionLink);
     });
 
     directionLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== directionLink) {
         resetElement(directionLink);
@@ -3366,16 +3476,22 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("direction");
+
+      setTimeout(() => {
+        forceMobileMainNavState(activeMainNavButton);
+      }, 0);
     });
   }
 
   if (approachLink) {
     approachLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(approachLink);
     });
 
     approachLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== approachLink) {
         resetElement(approachLink);
@@ -3385,11 +3501,13 @@ const videos = {
 
   if (contactLink) {
     contactLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(contactLink);
     });
 
     contactLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== contactLink) {
         resetElement(contactLink);
@@ -3402,6 +3520,10 @@ const videos = {
       event.stopImmediatePropagation();
 
       showContactAnimated();
+
+      setTimeout(() => {
+        forceMobileMainNavState(contactLink);
+      }, 0);
     });
   }
 
@@ -3419,12 +3541,14 @@ const videos = {
 
   allHoverButtons.forEach((button) => {
     button.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport() && isNavAnimationItem(button)) return;
       if (isContactOpen) return;
       if (elementBelongsToInactiveProjectPanel(button)) return;
       focusElement(button);
     });
 
     button.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport() && isNavAnimationItem(button)) return;
       if (isContactOpen) return;
       if (elementBelongsToInactiveProjectPanel(button)) return;
 
