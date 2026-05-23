@@ -505,106 +505,10 @@ const videos = {
     );
   }
 
-  function normalizeMainNavText(text) {
-    return (text || "").replace(/\s+/g, " ").trim().toLowerCase();
-  }
-
-  function mainNavTextMatches(text, sectionName) {
-    const normalizedText = normalizeMainNavText(text);
-
-    if (sectionName === "colour") {
-      return (
-        normalizedText === "colour" ||
-        normalizedText === "color" ||
-        normalizedText === "post production"
-      );
-    }
-
-    if (sectionName === "direction") {
-      return normalizedText === "direction";
-    }
-
-    if (sectionName === "approach") {
-      return (
-        normalizedText === "my approach" ||
-        normalizedText === "approach" ||
-        normalizedText === "my philosophy"
-      );
-    }
-
-    if (sectionName === "contact") {
-      return normalizedText === "contact";
-    }
-
-    return false;
-  }
-
-  function elementContainsMultipleMainNavLabels(element) {
-    if (!element) return false;
-
-    const text = normalizeMainNavText(element.textContent);
-    let matches = 0;
-
-    ["colour", "direction", "approach", "contact"].forEach((sectionName) => {
-      if (sectionName === "colour") {
-        if (text.includes("colour") || text.includes("color") || text.includes("post production")) {
-          matches += 1;
-        }
-        return;
-      }
-
-      if (sectionName === "direction" && text.includes("direction")) matches += 1;
-      if (sectionName === "approach" && text.includes("approach")) matches += 1;
-      if (sectionName === "contact" && text.includes("contact")) matches += 1;
-    });
-
-    return matches > 1;
-  }
-
-  function findVisibleMainNavButton(sectionName) {
-    const sideNav = document.querySelector(".side-nav") || document;
-    const candidates = Array.from(sideNav.querySelectorAll(".nav-text, a, [data-main-nav]"))
-      .filter((element) => {
-        if (!element || !element.textContent) return false;
-        if (elementContainsMultipleMainNavLabels(element)) return false;
-
-        const attrValue =
-          element.getAttribute && element.getAttribute("data-main-nav")
-            ? element.getAttribute("data-main-nav")
-            : "";
-
-        return (
-          mainNavTextMatches(element.textContent, sectionName) ||
-          mainNavTextMatches(attrValue, sectionName)
-        );
-      });
-
-    if (!candidates.length) return null;
-
-    candidates.sort((a, b) => {
-      const aChildren = a.querySelectorAll ? a.querySelectorAll("*").length : 0;
-      const bChildren = b.querySelectorAll ? b.querySelectorAll("*").length : 0;
-
-      if (aChildren !== bChildren) return aChildren - bChildren;
-
-      return normalizeMainNavText(a.textContent).length -
-        normalizeMainNavText(b.textContent).length;
-    });
-
-    return candidates[0];
-  }
-
   function getLeftNavButtons() {
-    const exactMainNavButtons = ["colour", "direction", "approach", "contact"]
-      .map((sectionName) => findVisibleMainNavButton(sectionName))
-      .filter(Boolean);
-
-    if (exactMainNavButtons.length) {
-      return exactMainNavButtons;
-    }
-
-    return Array.from(document.querySelectorAll(".side-nav .nav-text, .side-nav a"))
-      .filter((element) => !elementContainsMultipleMainNavLabels(element));
+    return document.querySelectorAll(
+      ".side-nav .nav-text, .side-nav a"
+    );
   }
 
   function getInstagramNavItems() {
@@ -1635,12 +1539,29 @@ const videos = {
   }
 
   function getMainNavButton(sectionName) {
-    const visibleButton = findVisibleMainNavButton(sectionName);
-
-    if (visibleButton) return visibleButton;
+    const buttonByAttribute = document.querySelector("[data-main-nav='" + sectionName + "']");
+    if (buttonByAttribute) return buttonByAttribute;
 
     return Array.from(getLeftNavButtons()).find((button) => {
-      return mainNavTextMatches(button.textContent, sectionName);
+      const text = button.textContent.trim().toLowerCase();
+
+      if (sectionName === "colour") {
+        return text === "colour" || text === "color" || text === "post production";
+      }
+
+      if (sectionName === "direction") {
+        return text === "direction";
+      }
+
+      if (sectionName === "approach") {
+        return text === "my approach" || text === "approach" || text === "my philosophy";
+      }
+
+      if (sectionName === "contact") {
+        return text === "contact";
+      }
+
+      return false;
     });
   }
 
@@ -2827,6 +2748,7 @@ const videos = {
 
     if (navButton) {
       focusElement(navButton);
+      clearMobileStickyNavHoverSoon(navButton);
     }
 
     const linkedRevealDelayMap = isSwitchingBetweenProjectMenus
@@ -3212,33 +3134,52 @@ const videos = {
   const approachLink = getMainNavButton("approach");
   const contactLink = getMainNavButton("contact");
 
-  function settleMobileDesktopNavAfterTap(activeButton) {
+  function mobileElementLooksLikeNavContainer(element) {
+    if (!element) return false;
+
+    const text = (element.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+    let matches = 0;
+
+    if (text.includes("colour") || text.includes("color") || text.includes("post production")) matches += 1;
+    if (text.includes("direction")) matches += 1;
+    if (text.includes("approach")) matches += 1;
+    if (text.includes("contact")) matches += 1;
+
+    return matches > 1;
+  }
+
+  function getAllMobileNavVisualItems() {
+    return Array.from(new Set([
+      ...Array.from(document.querySelectorAll(".side-nav .nav-text, .side-nav a")),
+      ...Array.from(getInstagramNavItems())
+    ])).filter(Boolean);
+  }
+
+  function clearMobileStickyNavHover(activeButton) {
     if (!isMobileLayoutViewport()) return;
     if (isApproachOpen) return;
     if (document.documentElement.classList.contains("dcr-mobile-approach-focus-active")) return;
 
-    const navItems = Array.from(new Set([
-      ...Array.from(getLeftNavButtons()),
-      ...Array.from(getInstagramNavItems())
-    ])).filter(Boolean);
+    const navItems = getAllMobileNavVisualItems();
 
     navItems.forEach((item) => {
-      if (item === activeButton) {
-        setNavItemFocused(item);
-      } else {
-        setNavItemResting(item);
-      }
-
+      setNavItemResting(item);
       item.style.visibility = "visible";
       item.style.pointerEvents = "auto";
     });
+
+    if (activeButton && !mobileElementLooksLikeNavContainer(activeButton)) {
+      setNavItemFocused(activeButton);
+      activeButton.style.visibility = "visible";
+      activeButton.style.pointerEvents = "auto";
+    }
   }
 
-  function settleMobileDesktopNavAfterTapSoon(activeButton) {
-    [0, 140, 520].forEach((delay) => {
+  function clearMobileStickyNavHoverSoon(activeButton) {
+    [0, 120, 520].forEach((delay) => {
       setTimeout(() => {
-        if (activeButton && activeMainNavButton !== activeButton && activeButton !== contactLink) return;
-        settleMobileDesktopNavAfterTap(activeButton);
+        if (activeButton && activeMainNavButton !== activeButton) return;
+        clearMobileStickyNavHover(activeButton);
       }, delay);
     });
   }
@@ -3368,11 +3309,13 @@ const videos = {
 
   if (colourLink) {
     colourLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(colourLink);
     });
 
     colourLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== colourLink) {
         resetElement(colourLink);
@@ -3383,17 +3326,19 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("colour");
-      settleMobileDesktopNavAfterTapSoon(colourLink);
+      clearMobileStickyNavHoverSoon(colourLink);
     });
   }
 
   if (directionLink) {
     directionLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(directionLink);
     });
 
     directionLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== directionLink) {
         resetElement(directionLink);
@@ -3404,17 +3349,19 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("direction");
-      settleMobileDesktopNavAfterTapSoon(directionLink);
+      clearMobileStickyNavHoverSoon(directionLink);
     });
   }
 
   if (approachLink) {
     approachLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(approachLink);
     });
 
     approachLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== approachLink) {
         resetElement(approachLink);
@@ -3424,11 +3371,13 @@ const videos = {
 
   if (contactLink) {
     contactLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(contactLink);
     });
 
     contactLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== contactLink) {
         resetElement(contactLink);
@@ -3441,7 +3390,7 @@ const videos = {
       event.stopImmediatePropagation();
 
       showContactAnimated();
-      settleMobileDesktopNavAfterTapSoon(contactLink);
+      clearMobileStickyNavHoverSoon(contactLink);
     });
   }
 
@@ -3459,12 +3408,14 @@ const videos = {
 
   allHoverButtons.forEach((button) => {
     button.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport() && isNavAnimationItem(button)) return;
       if (isContactOpen) return;
       if (elementBelongsToInactiveProjectPanel(button)) return;
       focusElement(button);
     });
 
     button.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport() && isNavAnimationItem(button)) return;
       if (isContactOpen) return;
       if (elementBelongsToInactiveProjectPanel(button)) return;
 
