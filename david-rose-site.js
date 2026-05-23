@@ -2486,7 +2486,6 @@ const videos = {
 
     if (approachLink) {
       focusElement(approachLink);
-      lockMainNavToActiveButtonSoon(approachLink);
     }
 
     enterMobileApproachFocus();
@@ -2749,7 +2748,6 @@ const videos = {
 
     if (navButton) {
       focusElement(navButton);
-      lockMainNavToActiveButtonSoon(navButton);
     }
 
     const linkedRevealDelayMap = isSwitchingBetweenProjectMenus
@@ -2957,10 +2955,6 @@ const videos = {
     activeProjectButton = null;
     activeMainNavButton = contactLink || null;
 
-    if (contactLink) {
-      lockMainNavToActiveButtonSoon(contactLink);
-    }
-
     const modalRevealItems = Array.from(modal.children);
 
     modalRevealItems.forEach((item) => {
@@ -3139,45 +3133,43 @@ const videos = {
   const approachLink = getMainNavButton("approach");
   const contactLink = getMainNavButton("contact");
 
-  function getMainNavControlButtons() {
-    return [colourLink, directionLink, approachLink, contactLink].filter(Boolean);
+  function itemMatchesActiveMainNav(item, activeButton) {
+    if (!item || !activeButton) return false;
+
+    return (
+      item === activeButton ||
+      (item.contains && item.contains(activeButton)) ||
+      (activeButton.contains && activeButton.contains(item))
+    );
   }
 
-  function clearNestedMainNavOverrides(button) {
-    if (!button || !button.querySelectorAll) return;
+  function clearMobileStickyNavHover(activeButton) {
+    if (!isMobileLayoutViewport()) return;
+    if (isApproachOpen) return;
+    if (document.documentElement.classList.contains("dcr-mobile-approach-focus-active")) return;
 
-    button.querySelectorAll(".nav-text, a, [data-main-nav]").forEach((child) => {
-      if (child === button) return;
-      if (getMainNavControlButtons().includes(child)) return;
+    const navItems = Array.from(new Set([
+      ...Array.from(getLeftNavButtons()),
+      ...Array.from(getInstagramNavItems())
+    ]));
 
-      child.style.transitionDelay = "";
-      child.style.opacity = "";
-      child.style.filter = "";
-      child.style.transform = "";
-      child.style.willChange = "";
-    });
-  }
-
-  function lockMainNavToActiveButton(activeButton) {
-    getMainNavControlButtons().forEach((button) => {
-      clearNestedMainNavOverrides(button);
-
-      if (button === activeButton) {
-        focusElement(button);
+    navItems.forEach((item) => {
+      if (itemMatchesActiveMainNav(item, activeButton)) {
+        focusElement(item);
       } else {
-        setNavItemResting(button);
+        setNavItemResting(item);
       }
 
-      button.style.visibility = "visible";
-      button.style.pointerEvents = "auto";
+      item.style.visibility = "visible";
+      item.style.pointerEvents = "auto";
     });
   }
 
-  function lockMainNavToActiveButtonSoon(activeButton) {
-    [0, 90, 360, 900].forEach((delay) => {
+  function clearMobileStickyNavHoverSoon(activeButton) {
+    [0, 120, 520].forEach((delay) => {
       setTimeout(() => {
         if (activeButton && activeMainNavButton !== activeButton) return;
-        lockMainNavToActiveButton(activeButton);
+        clearMobileStickyNavHover(activeButton);
       }, delay);
     });
   }
@@ -3307,11 +3299,13 @@ const videos = {
 
   if (colourLink) {
     colourLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(colourLink);
     });
 
     colourLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== colourLink) {
         resetElement(colourLink);
@@ -3322,16 +3316,19 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("colour");
+      clearMobileStickyNavHoverSoon(colourLink);
     });
   }
 
   if (directionLink) {
     directionLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(directionLink);
     });
 
     directionLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== directionLink) {
         resetElement(directionLink);
@@ -3342,16 +3339,19 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("direction");
+      clearMobileStickyNavHoverSoon(directionLink);
     });
   }
 
   if (approachLink) {
     approachLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(approachLink);
     });
 
     approachLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== approachLink) {
         resetElement(approachLink);
@@ -3361,11 +3361,13 @@ const videos = {
 
   if (contactLink) {
     contactLink.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(contactLink);
     });
 
     contactLink.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== contactLink) {
         resetElement(contactLink);
@@ -3378,6 +3380,7 @@ const videos = {
       event.stopImmediatePropagation();
 
       showContactAnimated();
+      clearMobileStickyNavHoverSoon(contactLink);
     });
   }
 
@@ -3395,12 +3398,14 @@ const videos = {
 
   allHoverButtons.forEach((button) => {
     button.addEventListener("mouseenter", () => {
+      if (isMobileLayoutViewport() && isNavAnimationItem(button)) return;
       if (isContactOpen) return;
       if (elementBelongsToInactiveProjectPanel(button)) return;
       focusElement(button);
     });
 
     button.addEventListener("mouseleave", () => {
+      if (isMobileLayoutViewport() && isNavAnimationItem(button)) return;
       if (isContactOpen) return;
       if (elementBelongsToInactiveProjectPanel(button)) return;
 
