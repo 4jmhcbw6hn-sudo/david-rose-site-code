@@ -64,6 +64,87 @@ const videos = {
   }
 
   function configureVideoAutoplayFallbacks() {
+    const videoStillUrls = new WeakMap();
+
+    function getVideoStillFallbackElement() {
+      let fallback = document.querySelector(".dcr-video-still-fallback");
+
+      if (!fallback) {
+        fallback = document.createElement("div");
+        fallback.className = "dcr-video-still-fallback";
+        document.body.appendChild(fallback);
+      }
+
+      return fallback;
+    }
+
+    function captureVideoStill(video) {
+      if (!video || videoStillUrls.has(video)) return;
+
+      const poster = video.getAttribute("poster");
+
+      if (poster) {
+        videoStillUrls.set(video, poster);
+        return;
+      }
+
+      try {
+        if (!video.videoWidth || !video.videoHeight) return;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const context = canvas.getContext("2d");
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        videoStillUrls.set(video, canvas.toDataURL("image/jpeg", 0.78));
+      } catch (error) {}
+    }
+
+    function showVideoStillFallback(video) {
+      captureVideoStill(video);
+
+      const stillUrl = videoStillUrls.get(video);
+
+      if (!stillUrl) return;
+
+      const fallback = getVideoStillFallbackElement();
+      fallback.style.backgroundImage = "url('" + stillUrl + "')";
+      document.documentElement.classList.add("dcr-video-fallback-active");
+    }
+
+    function hideVideoStillFallback() {
+      document.documentElement.classList.remove("dcr-video-fallback-active");
+    }
+
+    function attemptAutoplay(video) {
+      if (!video) return;
+
+      try {
+        video.controls = false;
+        video.removeAttribute("controls");
+      } catch (error) {}
+
+      const playPromise = video.play();
+
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            hideVideoStillFallback();
+          })
+          .catch(() => {
+            showVideoStillFallback(video);
+          });
+      }
+
+      setTimeout(() => {
+        if (video.paused || video.readyState < 2) {
+          showVideoStillFallback(video);
+        }
+      }, 1550);
+    }
+
     Object.values(videos).forEach((video) => {
       if (!video) return;
 
@@ -83,8 +164,11 @@ const videos = {
       } catch (error) {}
 
       video.addEventListener("loadeddata", () => {
-        playVideo(video);
+        captureVideoStill(video);
+        attemptAutoplay(video);
       });
+
+      video.addEventListener("playing", hideVideoStillFallback);
     });
 
     function kickstartCurrentVideo() {
@@ -95,11 +179,11 @@ const videos = {
           safelySetMuted(currentVideo, true);
         }
 
-        playVideo(currentVideo);
+        attemptAutoplay(currentVideo);
       }
 
       if (videos.main && currentVideo !== videos.main) {
-        playVideo(videos.main);
+        attemptAutoplay(videos.main);
       }
     }
 
@@ -120,6 +204,7 @@ const videos = {
 
     setTimeout(kickstartCurrentVideo, 250);
     setTimeout(kickstartCurrentVideo, 1200);
+    setTimeout(kickstartCurrentVideo, 2600);
   }
 
   function safelySetPlaybackRate(video, rate) {
@@ -175,6 +260,7 @@ const videos = {
 
   function hideCenterNameAnimated() {
     cancelCenterNameReturn();
+    hideNameShadowSpot();
 
     getCenterNameElements().forEach((element) => {
       element.style.transformOrigin = "50% 50%";
@@ -193,6 +279,7 @@ const videos = {
 
   function showCenterNameAnimated(delay) {
     cancelCenterNameReturn();
+    showNameShadowSpot(delay || 0);
 
     centerNameReturnTimeout = setTimeout(() => {
       getCenterNameElements().forEach((element) => {
@@ -487,6 +574,109 @@ const videos = {
     setNavItemResting(element);
   }
 
+  function ensureNameShadowSpot() {
+    let spot = document.querySelector(".dcr-name-shadow-spot");
+
+    if (!spot) {
+      spot = document.createElement("div");
+      spot.className = "dcr-name-shadow-spot";
+      document.body.appendChild(spot);
+    }
+
+    return spot;
+  }
+
+  function showNameShadowSpot(delay) {
+    const spot = ensureNameShadowSpot();
+    const revealDelay = typeof delay === "number" ? delay : 0;
+
+    const revealSpot = () => {
+      document.documentElement.classList.add("dcr-name-shadow-spot-on");
+      spot.style.visibility = "visible";
+    };
+
+    if (revealDelay > 0) {
+      const timeoutId = setTimeout(revealSpot, revealDelay);
+      revealTimeouts.push(timeoutId);
+    } else {
+      revealSpot();
+    }
+  }
+
+  function hideNameShadowSpot() {
+    ensureNameShadowSpot();
+    document.documentElement.classList.remove("dcr-name-shadow-spot-on");
+  }
+
+  function installReactiveCornerVignettes() {
+    if (document.querySelector(".dcr-corner-vignette-tl")) return;
+
+    const topLeft = document.createElement("div");
+    const bottomRight = document.createElement("div");
+
+    topLeft.className = "dcr-corner-vignette dcr-corner-vignette-tl";
+    bottomRight.className = "dcr-corner-vignette dcr-corner-vignette-br";
+
+    document.body.appendChild(topLeft);
+    document.body.appendChild(bottomRight);
+
+    const supportsFinePointer =
+      window.matchMedia && window.matchMedia("(pointer: fine)").matches;
+
+    if (!supportsFinePointer) return;
+
+    let frameId = null;
+    let lastEvent = null;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function updateVignettes() {
+      frameId = null;
+
+      if (!lastEvent) return;
+
+      const width = window.innerWidth || 1;
+      const height = window.innerHeight || 1;
+      const x = lastEvent.clientX;
+      const y = lastEvent.clientY;
+      const radius = Math.min(width, height) * 0.48;
+
+      const topLeftDistance = Math.sqrt((x * x) + (y * y));
+      const bottomRightDistance = Math.sqrt(
+        ((width - x) * (width - x)) + ((height - y) * (height - y))
+      );
+
+      const topLeftStrength = Math.pow(
+        clamp(1 - (topLeftDistance / radius), 0, 1),
+        1.35
+      );
+
+      const bottomRightStrength = Math.pow(
+        clamp(1 - (bottomRightDistance / radius), 0, 1),
+        1.35
+      );
+
+      topLeft.style.opacity = (topLeftStrength * 0.72).toFixed(3);
+      bottomRight.style.opacity = (bottomRightStrength * 0.68).toFixed(3);
+    }
+
+    document.addEventListener("mousemove", (event) => {
+      lastEvent = event;
+
+      if (!frameId) {
+        frameId = requestAnimationFrame(updateVignettes);
+      }
+    });
+
+    document.addEventListener("mouseleave", () => {
+      lastEvent = null;
+      topLeft.style.opacity = "0";
+      bottomRight.style.opacity = "0";
+    });
+  }
+
   let mobileApproachNavTimeouts = [];
   let mobileApproachFocusIsExiting = false;
 
@@ -748,6 +938,99 @@ const videos = {
     const style = document.createElement("style");
     style.id = "dcr-mobile-layout-fixes";
     style.textContent = `
+      .dcr-video-still-fallback {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: var(--dcr-mobile-vh, 100vh) !important;
+        background-size: cover !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none !important;
+        z-index: 2 !important;
+        transition: opacity 900ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      html.dcr-video-fallback-active .dcr-video-still-fallback {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .dcr-corner-vignette {
+        position: fixed !important;
+        inset: 0 !important;
+        pointer-events: none !important;
+        opacity: 0;
+        z-index: 7 !important;
+        transition: opacity 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .dcr-corner-vignette-tl {
+        background:
+          radial-gradient(
+            ellipse 58vw 62vh at 0% 0%,
+            rgba(0, 0, 0, 0.34) 0%,
+            rgba(0, 0, 0, 0.20) 28%,
+            rgba(0, 0, 0, 0.08) 48%,
+            rgba(0, 0, 0, 0) 74%
+          );
+      }
+
+      .dcr-corner-vignette-br {
+        background:
+          radial-gradient(
+            ellipse 72vw 68vh at 100% 100%,
+            rgba(0, 0, 0, 0.30) 0%,
+            rgba(0, 0, 0, 0.17) 30%,
+            rgba(0, 0, 0, 0.07) 50%,
+            rgba(0, 0, 0, 0) 76%
+          );
+      }
+
+      .dcr-name-shadow-spot {
+        position: fixed !important;
+        left: 50vw !important;
+        top: calc(var(--dcr-mobile-vh, 100vh) * 0.545) !important;
+        width: min(46vw, 560px) !important;
+        height: min(14vw, 155px) !important;
+        transform: translate(-50%, -50%) scale(0.96);
+        transform-origin: 50% 50%;
+        background:
+          radial-gradient(
+            ellipse at center,
+            rgba(0, 0, 0, 0.28) 0%,
+            rgba(0, 0, 0, 0.14) 38%,
+            rgba(0, 0, 0, 0.05) 58%,
+            rgba(0, 0, 0, 0) 78%
+          );
+        filter: blur(18px);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none !important;
+        z-index: 38 !important;
+        mix-blend-mode: multiply;
+        transition:
+          opacity 2800ms cubic-bezier(0.16, 1, 0.3, 1),
+          transform 5200ms cubic-bezier(0.13, 1, 0.22, 1);
+      }
+
+      html.dcr-name-shadow-spot-on .dcr-name-shadow-spot {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      @media (max-width: 1024px) {
+        .dcr-name-shadow-spot {
+          top: calc(var(--dcr-mobile-vh, 100svh) * 0.552) !important;
+          width: 62vw !important;
+          height: 18vw !important;
+          filter: blur(15px);
+        }
+      }
+
       video::-webkit-media-controls,
       video::-webkit-media-controls-panel,
       video::-webkit-media-controls-start-playback-button {
@@ -824,13 +1107,13 @@ const videos = {
         }
 
         .center-name-wrapper .name-stack {
-          line-height: 0.88 !important;
+          line-height: 0.82 !important;
         }
 
         .center-name-wrapper .name-stack > * {
           margin-top: 0 !important;
-          margin-bottom: clamp(0px, 0.55vh, 5px) !important;
-          line-height: 0.88 !important;
+          margin-bottom: clamp(0px, 0.22vh, 2px) !important;
+          line-height: 0.82 !important;
         }
 
         .center-name-wrapper .name-stack > *:last-child {
@@ -1046,12 +1329,15 @@ const videos = {
       element.style.transformOrigin = "50% 50%";
       element.style.transition = "none";
       element.style.visibility = "visible";
-      element.style.opacity = "0.94";
-      element.style.filter = "blur(1.2px)";
-      element.style.transform = "translateY(2px) scale(0.972)";
+      element.style.opacity = "0.97";
+      element.style.filter = "blur(0.45px)";
+      element.style.transform = "translateY(1px) scale(0.984)";
       element.style.pointerEvents = "none";
       element.style.willChange = "opacity, filter, transform";
     });
+
+    ensureNameShadowSpot();
+    document.documentElement.classList.add("dcr-name-shadow-spot-on");
 
     getLeftNavButtons().forEach((item) => {
       item.style.transformOrigin = "0% 50%";
@@ -1091,8 +1377,8 @@ const videos = {
       requestAnimationFrame(() => {
         if (videos.main) {
           videos.main.style.transition =
-            "filter 3800ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 5600ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "filter 8200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 8600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
           videos.main.style.opacity = "1";
           videos.main.style.filter = "blur(0)";
@@ -1101,11 +1387,11 @@ const videos = {
 
         getCenterNameElements().forEach((element) => {
           element.style.transition =
-            "opacity 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 3200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "opacity 1800ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 2200ms cubic-bezier(0.16, 1, 0.3, 1), " +
             "transform 7600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          element.style.transitionDelay = "40ms";
+          element.style.transitionDelay = "20ms";
           element.style.visibility = "visible";
           element.style.opacity = "1";
           element.style.filter = "blur(0)";
@@ -1113,8 +1399,12 @@ const videos = {
           element.style.pointerEvents = "";
         });
 
-        getLeftNavButtons().forEach((item, index) => {
-          const delay = 2850 + index * 115;
+        showNameShadowSpot(0);
+
+        const introNavItems = Array.from(getLeftNavButtons());
+
+        introNavItems.forEach((item, index) => {
+          const delay = 3350 + index * 72;
 
           item.style.transition =
             "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
@@ -1130,7 +1420,7 @@ const videos = {
 
           const navSettleTimeout = setTimeout(() => {
             settleNavItemAfterArrival(item);
-          }, delay + 2700 + index * 65);
+          }, 6100 + index * 92);
 
           revealTimeouts.push(navSettleTimeout);
         });
@@ -1151,7 +1441,7 @@ const videos = {
           if (videos.main) {
             videos.main.style.willChange = "";
           }
-        }, 8800);
+        }, 9800);
 
         revealTimeouts.push(cleanupTimeout);
       });
@@ -2775,6 +3065,8 @@ const videos = {
   prepareClientOneShotVideo(videos["tom-ford"]);
 
   installMobileLayoutFixes();
+  installReactiveCornerVignettes();
+  ensureNameShadowSpot();
   ensureMobileApproachBackButton();
   prepareCustomPageLoadIntro();
 
