@@ -457,6 +457,19 @@ const videos = {
   }
 
   function focusElement(element) {
+    if (
+      isMobileLayoutViewport() &&
+      isMobileMainNavButton(element) &&
+      !document.documentElement.classList.contains("custom-page-load-intro-active") &&
+      !document.documentElement.classList.contains("dcr-mobile-approach-focus-active")
+    ) {
+      element.style.transition = "none";
+      element.style.transitionDelay = "0ms";
+      setNavItemFocused(element);
+      element.style.transition = "none";
+      return;
+    }
+
     if (isNavAnimationItem(element)) {
       setNavItemFocused(element);
       return;
@@ -473,6 +486,21 @@ const videos = {
   }
 
   function resetElement(element) {
+    if (
+      isMobileLayoutViewport() &&
+      isMobileMainNavButton(element) &&
+      !document.documentElement.classList.contains("custom-page-load-intro-active") &&
+      !document.documentElement.classList.contains("dcr-mobile-approach-focus-active")
+    ) {
+      element.style.transition = "none";
+      element.style.transitionDelay = "0ms";
+      element.style.visibility = "visible";
+      element.style.pointerEvents = "auto";
+      setNavItemResting(element);
+      element.style.transition = "none";
+      return;
+    }
+
     if (isNavAnimationItem(element)) {
       setNavItemResting(element);
       element.style.visibility = "";
@@ -505,7 +533,222 @@ const videos = {
     );
   }
 
+  function normalizeMainNavLabel(text) {
+    return (text || "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  function mainNavTextMatchesSection(text, sectionName) {
+    const normalizedText = normalizeMainNavLabel(text);
+
+    if (sectionName === "colour") {
+      return (
+        normalizedText === "colour" ||
+        normalizedText === "color" ||
+        normalizedText === "post production"
+      );
+    }
+
+    if (sectionName === "direction") {
+      return normalizedText === "direction";
+    }
+
+    if (sectionName === "approach") {
+      return (
+        normalizedText === "my approach" ||
+        normalizedText === "approach" ||
+        normalizedText === "my philosophy"
+      );
+    }
+
+    if (sectionName === "contact") {
+      return normalizedText === "contact";
+    }
+
+    return false;
+  }
+
+  function elementContainsMultipleMainNavLabels(element) {
+    if (!element) return false;
+
+    const text = normalizeMainNavLabel(element.textContent);
+    let matches = 0;
+
+    if (text.includes("colour") || text.includes("color") || text.includes("post production")) matches += 1;
+    if (text.includes("direction")) matches += 1;
+    if (text.includes("approach")) matches += 1;
+    if (text.includes("contact")) matches += 1;
+
+    return matches > 1;
+  }
+
+  function elementMatchesMainNavSection(element, sectionName) {
+    if (!element) return false;
+
+    const attributeValue =
+      element.getAttribute && element.getAttribute("data-main-nav")
+        ? element.getAttribute("data-main-nav")
+        : "";
+
+    return (
+      mainNavTextMatchesSection(attributeValue, sectionName) ||
+      mainNavTextMatchesSection(element.textContent, sectionName)
+    );
+  }
+
+  function smallestExactMainNavElement(elements, sectionName) {
+    const candidates = elements
+      .filter(Boolean)
+      .filter((element) => {
+        if (elementContainsMultipleMainNavLabels(element)) return false;
+        return elementMatchesMainNavSection(element, sectionName);
+      });
+
+    if (!candidates.length) return null;
+
+    candidates.sort((a, b) => {
+      const aChildren = a.querySelectorAll ? a.querySelectorAll("*").length : 0;
+      const bChildren = b.querySelectorAll ? b.querySelectorAll("*").length : 0;
+
+      if (aChildren !== bChildren) return aChildren - bChildren;
+
+      return normalizeMainNavLabel(a.textContent).length -
+        normalizeMainNavLabel(b.textContent).length;
+    });
+
+    return candidates[0];
+  }
+
+  function getMobileMainNavButton(sectionName) {
+    const sideNav = document.querySelector(".side-nav") || document;
+    const attributeElement = document.querySelector("[data-main-nav='" + sectionName + "']");
+
+    if (attributeElement) {
+      const exactChild = smallestExactMainNavElement(
+        Array.from(attributeElement.querySelectorAll(".nav-text, a, span, div")),
+        sectionName
+      );
+
+      if (exactChild) return exactChild;
+
+      if (
+        !elementContainsMultipleMainNavLabels(attributeElement) &&
+        elementMatchesMainNavSection(attributeElement, sectionName)
+      ) {
+        return attributeElement;
+      }
+    }
+
+    const exactSideNavText = smallestExactMainNavElement(
+      Array.from(sideNav.querySelectorAll(".nav-text")),
+      sectionName
+    );
+
+    if (exactSideNavText) return exactSideNavText;
+
+    const exactSideNavLink = smallestExactMainNavElement(
+      Array.from(sideNav.querySelectorAll("a, [data-main-nav]")),
+      sectionName
+    );
+
+    if (exactSideNavLink) return exactSideNavLink;
+
+    return null;
+  }
+
+  function getMobileMainNavButtons() {
+    const orderedButtons = ["colour", "direction", "approach", "contact"]
+      .map((sectionName) => getMobileMainNavButton(sectionName))
+      .filter(Boolean);
+
+    return Array.from(new Set(orderedButtons));
+  }
+
+  function isMobileMainNavButton(element) {
+    if (!element) return false;
+
+    return getMobileMainNavButtons().some((button) => button === element);
+  }
+
+  function getMainNavRelatedElements() {
+    return Array.from(new Set([
+      ...Array.from(document.querySelectorAll(".side-nav .nav-text")),
+      ...Array.from(document.querySelectorAll(".side-nav a")),
+      ...Array.from(document.querySelectorAll("[data-main-nav]"))
+    ])).filter(Boolean);
+  }
+
+  function prepareMobileMainNavIntroTargets() {
+    if (!isMobileLayoutViewport()) return;
+
+    const mobileButtons = getMobileMainNavButtons();
+    const mobileButtonSet = new Set(mobileButtons);
+
+    getMainNavRelatedElements().forEach((element) => {
+      const isChosenButton = mobileButtonSet.has(element);
+      const isAncestorOfChosenButton = mobileButtons.some((button) => {
+        return element !== button && element.contains && element.contains(button);
+      });
+      const isDescendantOfChosenButton = mobileButtons.some((button) => {
+        return element !== button && button.contains && button.contains(element);
+      });
+
+      element.style.transition = "none";
+      element.style.transitionDelay = "0ms";
+
+      if (isChosenButton) {
+        element.style.transformOrigin = "0% 50%";
+        element.style.visibility = "visible";
+        element.style.opacity = "0";
+        element.style.filter = "blur(8px)";
+        element.style.transform = "translateX(-18px) scale(0.988)";
+        element.style.pointerEvents = "none";
+        element.style.willChange = "opacity, filter, transform";
+        return;
+      }
+
+      if (isAncestorOfChosenButton || isDescendantOfChosenButton) {
+        element.style.opacity = "";
+        element.style.filter = "";
+        element.style.transform = "";
+        element.style.visibility = "visible";
+        element.style.pointerEvents = "none";
+        return;
+      }
+
+      element.style.opacity = "0";
+      element.style.filter = "blur(8px)";
+      element.style.transform = "translateX(-18px) scale(0.988)";
+      element.style.visibility = "hidden";
+      element.style.pointerEvents = "none";
+    });
+  }
+
+  function applyMobileMainNavStaticState(activeSectionName) {
+    if (!isMobileLayoutViewport()) return;
+    if (isApproachOpen) return;
+    if (document.documentElement.classList.contains("dcr-mobile-approach-focus-active")) return;
+
+    getMobileMainNavButtons().forEach((button) => {
+      button.style.transition = "none";
+      button.style.transitionDelay = "0ms";
+      button.style.visibility = "visible";
+      button.style.pointerEvents = "auto";
+      button.style.filter = "blur(0)";
+      button.style.transform = "scale(1)";
+
+      if (activeSectionName && elementMatchesMainNavSection(button, activeSectionName)) {
+        button.style.opacity = "1";
+      } else {
+        button.style.opacity = "0.5";
+      }
+    });
+  }
+
   function getLeftNavButtons() {
+    if (isMobileLayoutViewport()) {
+      return getMobileMainNavButtons();
+    }
+
     return document.querySelectorAll(
       ".side-nav .nav-text, .side-nav a"
     );
@@ -1414,16 +1657,20 @@ const videos = {
     ensureNameShadowSpot();
     document.documentElement.classList.add("dcr-name-shadow-spot-on");
 
-    getLeftNavButtons().forEach((item) => {
-      item.style.transformOrigin = "0% 50%";
-      item.style.transition = "none";
-      item.style.visibility = "visible";
-      item.style.opacity = "0";
-      item.style.filter = "blur(8px)";
-      item.style.transform = "translateX(-18px) scale(0.988)";
-      item.style.pointerEvents = "none";
-      item.style.willChange = "opacity, filter, transform";
-    });
+    if (isMobileLayoutViewport()) {
+      prepareMobileMainNavIntroTargets();
+    } else {
+      getLeftNavButtons().forEach((item) => {
+        item.style.transformOrigin = "0% 50%";
+        item.style.transition = "none";
+        item.style.visibility = "visible";
+        item.style.opacity = "0";
+        item.style.filter = "blur(8px)";
+        item.style.transform = "translateX(-18px) scale(0.988)";
+        item.style.pointerEvents = "none";
+        item.style.willChange = "opacity, filter, transform";
+      });
+    }
 
     if (videos.main) {
       videos.main.style.transition = "none";
@@ -1506,6 +1753,10 @@ const videos = {
             item.style.willChange = "";
           });
 
+          if (isMobileLayoutViewport() && !activeSection && !isApproachOpen) {
+            applyMobileMainNavStaticState(null);
+          }
+
           getCenterNameElements().forEach((element) => {
             element.style.transitionDelay = "";
             element.style.willChange = "";
@@ -1540,29 +1791,17 @@ const videos = {
   }
 
   function getMainNavButton(sectionName) {
+    if (isMobileLayoutViewport()) {
+      const mobileButton = getMobileMainNavButton(sectionName);
+
+      if (mobileButton) return mobileButton;
+    }
+
     const buttonByAttribute = document.querySelector("[data-main-nav='" + sectionName + "']");
     if (buttonByAttribute) return buttonByAttribute;
 
     return Array.from(getLeftNavButtons()).find((button) => {
-      const text = button.textContent.trim().toLowerCase();
-
-      if (sectionName === "colour") {
-        return text === "colour" || text === "color" || text === "post production";
-      }
-
-      if (sectionName === "direction") {
-        return text === "direction";
-      }
-
-      if (sectionName === "approach") {
-        return text === "my approach" || text === "approach" || text === "my philosophy";
-      }
-
-      if (sectionName === "contact") {
-        return text === "contact";
-      }
-
-      return false;
+      return mainNavTextMatchesSection(button.textContent, sectionName);
     });
   }
 
@@ -1603,6 +1842,24 @@ const videos = {
   }
 
   function getElementsToDim() {
+    if (isMobileLayoutViewport()) {
+      return Array.from(new Set([
+        ...getMobileMainNavButtons(),
+        ...Array.from(document.querySelectorAll(
+          ".post-production-projects-panel .nav-text, " +
+          ".post-production-projects-panel a, " +
+          ".direction-projects-panel .nav-text, " +
+          ".direction-projects-panel a, " +
+          ".colour-projects-panel .nav-text, " +
+          ".colour-projects-panel a, " +
+          ".color-projects-panel .nav-text, " +
+          ".color-projects-panel a"
+        ))
+      ])).filter((element) => {
+        return !elementBelongsToInactiveProjectPanel(element);
+      });
+    }
+
     return Array.from(document.querySelectorAll(
       ".side-nav .nav-text, " +
       ".side-nav a, " +
@@ -1722,6 +1979,20 @@ const videos = {
 
   function clearProjectFocus() {
     activeProjectButton = null;
+
+    if (isMobileLayoutViewport()) {
+      getElementsToDim().forEach((element) => {
+        if (isMobileMainNavButton(element)) {
+          return;
+        }
+
+        resetElement(element);
+      });
+
+      applyMobileMainNavStaticState(activeSection);
+      forceInactiveProjectPanelsHidden();
+      return;
+    }
 
     getElementsToDim().forEach((element) => {
       resetElement(element);
@@ -2748,8 +3019,11 @@ const videos = {
     forceInactiveProjectPanelsHidden();
 
     if (navButton) {
-      focusElement(navButton);
-      clearMobileStickyNavHoverSoon(sectionName);
+      if (isMobileLayoutViewport()) {
+        applyMobileMainNavStaticState(sectionName);
+      } else {
+        focusElement(navButton);
+      }
     }
 
     const linkedRevealDelayMap = isSwitchingBetweenProjectMenus
@@ -3135,109 +3409,15 @@ const videos = {
   const approachLink = getMainNavButton("approach");
   const contactLink = getMainNavButton("contact");
 
-  function mobileMainNavTextMatches(text, sectionName) {
-    const normalizedText = (text || "").replace(/\s+/g, " ").trim().toLowerCase();
-
-    if (sectionName === "colour") {
-      return normalizedText === "colour" ||
-        normalizedText === "color" ||
-        normalizedText === "post production";
-    }
-
-    if (sectionName === "direction") return normalizedText === "direction";
-    if (sectionName === "approach") return normalizedText === "my approach" ||
-      normalizedText === "approach" ||
-      normalizedText === "my philosophy";
-    if (sectionName === "contact") return normalizedText === "contact";
-
-    return false;
-  }
-
-  function getMobileMainNavTextItems() {
-    const textItems = Array.from(document.querySelectorAll(".side-nav .nav-text"))
-      .filter((item) => {
-        const text = item.textContent || "";
-
-        return (
-          mobileMainNavTextMatches(text, "colour") ||
-          mobileMainNavTextMatches(text, "direction") ||
-          mobileMainNavTextMatches(text, "approach") ||
-          mobileMainNavTextMatches(text, "contact")
-        );
-      });
-
-    if (textItems.length) {
-      return Array.from(new Set(textItems));
-    }
-
-    return Array.from(document.querySelectorAll(".side-nav a"))
-      .filter((item) => {
-        const text = item.textContent || "";
-
-        return (
-          mobileMainNavTextMatches(text, "colour") ||
-          mobileMainNavTextMatches(text, "direction") ||
-          mobileMainNavTextMatches(text, "approach") ||
-          mobileMainNavTextMatches(text, "contact")
-        );
-      });
-  }
-
-  function getMobileActiveNavTextItem(activeToken) {
-    let sectionName = typeof activeToken === "string" ? activeToken : "";
-
-    if (!sectionName && activeToken) {
-      if (activeToken === colourLink) sectionName = "colour";
-      if (activeToken === directionLink) sectionName = "direction";
-      if (activeToken === approachLink) sectionName = "approach";
-      if (activeToken === contactLink) sectionName = "contact";
-    }
-
-    if (!sectionName) return null;
-
-    return getMobileMainNavTextItems().find((item) => {
-      return mobileMainNavTextMatches(item.textContent, sectionName);
-    }) || null;
-  }
-
-  function applyMobileNavTapStaticState(activeToken) {
-    if (!isMobileLayoutViewport()) return;
-    if (isApproachOpen) return;
-    if (document.documentElement.classList.contains("dcr-mobile-approach-focus-active")) return;
-
-    const activeItem = getMobileActiveNavTextItem(activeToken);
-    const navItems = Array.from(new Set([
-      ...getMobileMainNavTextItems(),
-      ...Array.from(getInstagramNavItems())
-    ])).filter(Boolean);
-
-    navItems.forEach((item) => {
-      item.style.transition = "none";
-      item.style.transitionDelay = "0ms";
-      item.style.opacity = "0.5";
-      item.style.filter = "blur(0)";
-      item.style.transform = "scale(1)";
-      item.style.visibility = "visible";
-      item.style.pointerEvents = "auto";
-    });
-
-    if (activeItem) {
-      activeItem.style.transition = "none";
-      activeItem.style.transitionDelay = "0ms";
-      activeItem.style.opacity = "1";
-      activeItem.style.filter = "blur(0)";
-      activeItem.style.transform = "scale(1)";
-      activeItem.style.visibility = "visible";
-      activeItem.style.pointerEvents = "auto";
-    }
-  }
-
   function clearMobileStickyNavHoverSoon(activeToken) {
-    [0, 80, 220, 520, 1000].forEach((delay) => {
-      setTimeout(() => {
-        applyMobileNavTapStaticState(activeToken);
-      }, delay);
-    });
+    if (!isMobileLayoutViewport()) return;
+
+    const sectionName =
+      typeof activeToken === "string"
+        ? activeToken
+        : activeSection;
+
+    applyMobileMainNavStaticState(sectionName);
   }
 
   configureVideoAutoplayFallbacks();
@@ -3382,7 +3562,6 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("colour");
-      clearMobileStickyNavHoverSoon("colour");
     });
   }
 
@@ -3405,7 +3584,6 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("direction");
-      clearMobileStickyNavHoverSoon("direction");
     });
   }
 
