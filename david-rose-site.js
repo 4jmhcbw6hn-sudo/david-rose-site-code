@@ -630,18 +630,11 @@ const videos = {
     const rect = nameStack.getBoundingClientRect();
     const mobileSpot = isMobileLayoutViewport();
 
-    const spotWidth = Math.min(
-      Math.max(rect.width * (mobileSpot ? 0.90 : 0.86), mobileSpot ? 145 : 210),
-      window.innerWidth * (mobileSpot ? 0.64 : 0.42)
-    );
-
-    const spotHeight = Math.min(
-      Math.max(rect.height * (mobileSpot ? 0.26 : 0.22), mobileSpot ? 24 : 34),
-      window.innerHeight * 0.085
-    );
+    const spotWidth = window.innerWidth * (mobileSpot ? 0.92 : 0.68);
+    const spotHeight = window.innerHeight * (mobileSpot ? 0.34 : 0.30);
 
     const spotX = rect.left + rect.width / 2;
-    const spotY = rect.top + rect.height * (mobileSpot ? 0.64 : 0.66);
+    const spotY = rect.top + rect.height * (mobileSpot ? 0.54 : 0.56);
 
     spot.style.left = spotX + "px";
     spot.style.top = spotY + "px";
@@ -877,15 +870,15 @@ const videos = {
       item.style.transitionDelay = "0ms";
       item.style.visibility = "visible";
       item.style.opacity = "0";
-      item.style.filter = "blur(8px)";
-      item.style.transform = "translateX(-22px) scale(0.988)";
+      item.style.filter = "blur(7px)";
+      item.style.transform = "translateX(-18px) scale(0.99)";
       item.style.pointerEvents = "none";
 
       const inTimeout = setTimeout(() => {
         item.style.transition =
-          "opacity 2500ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "filter 3300ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "transform 3900ms cubic-bezier(0.13, 1, 0.22, 1)";
+          "opacity 1550ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "filter 2050ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "transform 2550ms cubic-bezier(0.13, 1, 0.22, 1)";
 
         item.style.opacity = "1";
         item.style.filter = "blur(0)";
@@ -894,10 +887,10 @@ const videos = {
 
         const settleTimeout = setTimeout(() => {
           settleNavItemAfterArrival(item);
-        }, 2950 + index * 70);
+        }, 1850 + index * 45);
 
         mobileApproachNavTimeouts.push(settleTimeout);
-      }, introDelay + index * 125);
+      }, introDelay + index * 78);
 
       mobileApproachNavTimeouts.push(inTimeout);
     });
@@ -980,28 +973,34 @@ const videos = {
       item.style.transition = "none";
       item.style.transitionDelay = "0ms";
       item.style.opacity = "0";
-      item.style.filter = "blur(8px)";
-      item.style.transform = "translateX(-22px) scale(0.988)";
+      item.style.filter = "blur(7px)";
+      item.style.transform = "translateX(-18px) scale(0.99)";
       item.style.pointerEvents = "none";
     });
 
-    const runExit = () => {
+    const runNavReturn = () => {
+      animateMobileNavIn(120);
+    };
+
+    const runFinalExit = () => {
       document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
-      animateMobileNavIn(360);
 
       const clearExitStateTimeout = setTimeout(() => {
         mobileApproachFocusIsExiting = false;
-      }, 5200);
+      }, 3000);
 
       mobileApproachNavTimeouts.push(clearExitStateTimeout);
     };
 
     if (exitDelay > 0) {
-      const exitTimeout = setTimeout(runExit, exitDelay);
-      mobileApproachNavTimeouts.push(exitTimeout);
-      approachTimeouts.push(exitTimeout);
+      const navReturnTimeout = setTimeout(runNavReturn, 1550);
+      const finalExitTimeout = setTimeout(runFinalExit, exitDelay);
+
+      mobileApproachNavTimeouts.push(navReturnTimeout, finalExitTimeout);
+      approachTimeouts.push(finalExitTimeout);
     } else {
-      runExit();
+      runFinalExit();
+      runNavReturn();
     }
   }
 
@@ -1083,19 +1082,19 @@ const videos = {
         position: fixed !important;
         left: 50vw !important;
         top: 50vh !important;
-        width: 260px !important;
-        height: 46px !important;
+        width: 68vw !important;
+        height: 30vh !important;
         transform: translate(-50%, -50%) scale(0.96);
         transform-origin: 50% 50%;
         background:
           radial-gradient(
             ellipse at center,
-            rgba(0, 0, 0, 0.28) 0%,
-            rgba(0, 0, 0, 0.14) 38%,
-            rgba(0, 0, 0, 0.05) 58%,
-            rgba(0, 0, 0, 0) 78%
+            rgba(0, 0, 0, 0.18) 0%,
+            rgba(0, 0, 0, 0.10) 34%,
+            rgba(0, 0, 0, 0.045) 58%,
+            rgba(0, 0, 0, 0) 82%
           );
-        filter: blur(18px);
+        filter: blur(38px);
         opacity: 0;
         visibility: hidden;
         pointer-events: none !important;
@@ -1114,7 +1113,9 @@ const videos = {
 
       @media (max-width: 1024px) {
         .dcr-name-shadow-spot {
-          filter: blur(15px);
+          width: 92vw !important;
+          height: 34vh !important;
+          filter: blur(32px);
         }
       }
 
@@ -2748,7 +2749,7 @@ const videos = {
 
     if (navButton) {
       focusElement(navButton);
-      clearMobileStickyNavHoverSoon(navButton);
+      clearMobileStickyNavHoverSoon(sectionName);
     }
 
     const linkedRevealDelayMap = isSwitchingBetweenProjectMenus
@@ -3134,52 +3135,107 @@ const videos = {
   const approachLink = getMainNavButton("approach");
   const contactLink = getMainNavButton("contact");
 
-  function mobileElementLooksLikeNavContainer(element) {
-    if (!element) return false;
+  function mobileMainNavTextMatches(text, sectionName) {
+    const normalizedText = (text || "").replace(/\s+/g, " ").trim().toLowerCase();
 
-    const text = (element.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
-    let matches = 0;
+    if (sectionName === "colour") {
+      return normalizedText === "colour" ||
+        normalizedText === "color" ||
+        normalizedText === "post production";
+    }
 
-    if (text.includes("colour") || text.includes("color") || text.includes("post production")) matches += 1;
-    if (text.includes("direction")) matches += 1;
-    if (text.includes("approach")) matches += 1;
-    if (text.includes("contact")) matches += 1;
+    if (sectionName === "direction") return normalizedText === "direction";
+    if (sectionName === "approach") return normalizedText === "my approach" ||
+      normalizedText === "approach" ||
+      normalizedText === "my philosophy";
+    if (sectionName === "contact") return normalizedText === "contact";
 
-    return matches > 1;
+    return false;
   }
 
-  function getAllMobileNavVisualItems() {
-    return Array.from(new Set([
-      ...Array.from(document.querySelectorAll(".side-nav .nav-text, .side-nav a")),
-      ...Array.from(getInstagramNavItems())
-    ])).filter(Boolean);
+  function getMobileMainNavTextItems() {
+    const textItems = Array.from(document.querySelectorAll(".side-nav .nav-text"))
+      .filter((item) => {
+        const text = item.textContent || "";
+
+        return (
+          mobileMainNavTextMatches(text, "colour") ||
+          mobileMainNavTextMatches(text, "direction") ||
+          mobileMainNavTextMatches(text, "approach") ||
+          mobileMainNavTextMatches(text, "contact")
+        );
+      });
+
+    if (textItems.length) {
+      return Array.from(new Set(textItems));
+    }
+
+    return Array.from(document.querySelectorAll(".side-nav a"))
+      .filter((item) => {
+        const text = item.textContent || "";
+
+        return (
+          mobileMainNavTextMatches(text, "colour") ||
+          mobileMainNavTextMatches(text, "direction") ||
+          mobileMainNavTextMatches(text, "approach") ||
+          mobileMainNavTextMatches(text, "contact")
+        );
+      });
   }
 
-  function clearMobileStickyNavHover(activeButton) {
+  function getMobileActiveNavTextItem(activeToken) {
+    let sectionName = typeof activeToken === "string" ? activeToken : "";
+
+    if (!sectionName && activeToken) {
+      if (activeToken === colourLink) sectionName = "colour";
+      if (activeToken === directionLink) sectionName = "direction";
+      if (activeToken === approachLink) sectionName = "approach";
+      if (activeToken === contactLink) sectionName = "contact";
+    }
+
+    if (!sectionName) return null;
+
+    return getMobileMainNavTextItems().find((item) => {
+      return mobileMainNavTextMatches(item.textContent, sectionName);
+    }) || null;
+  }
+
+  function applyMobileNavTapStaticState(activeToken) {
     if (!isMobileLayoutViewport()) return;
     if (isApproachOpen) return;
     if (document.documentElement.classList.contains("dcr-mobile-approach-focus-active")) return;
 
-    const navItems = getAllMobileNavVisualItems();
+    const activeItem = getMobileActiveNavTextItem(activeToken);
+    const navItems = Array.from(new Set([
+      ...getMobileMainNavTextItems(),
+      ...Array.from(getInstagramNavItems())
+    ])).filter(Boolean);
 
     navItems.forEach((item) => {
-      setNavItemResting(item);
+      item.style.transition = "none";
+      item.style.transitionDelay = "0ms";
+      item.style.opacity = "0.5";
+      item.style.filter = "blur(0)";
+      item.style.transform = "scale(1)";
       item.style.visibility = "visible";
       item.style.pointerEvents = "auto";
     });
 
-    if (activeButton && !mobileElementLooksLikeNavContainer(activeButton)) {
-      setNavItemFocused(activeButton);
-      activeButton.style.visibility = "visible";
-      activeButton.style.pointerEvents = "auto";
+    if (activeItem) {
+      activeItem.style.transition = "none";
+      activeItem.style.transitionDelay = "0ms";
+      activeItem.style.opacity = "1";
+      activeItem.style.filter = "blur(0)";
+      activeItem.style.transform = "scale(1)";
+      activeItem.style.visibility = "visible";
+      activeItem.style.pointerEvents = "auto";
     }
   }
 
-  function clearMobileStickyNavHoverSoon(activeButton) {
-    [0, 120, 520].forEach((delay) => {
+  function clearMobileStickyNavHoverSoon(activeToken) {
+    [0, 80, 220, 520, 1000].forEach((delay) => {
       setTimeout(() => {
-        if (activeButton && activeMainNavButton !== activeButton) return;
-        clearMobileStickyNavHover(activeButton);
+        applyMobileNavTapStaticState(activeToken);
       }, delay);
     });
   }
@@ -3326,7 +3382,7 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("colour");
-      clearMobileStickyNavHoverSoon(colourLink);
+      clearMobileStickyNavHoverSoon("colour");
     });
   }
 
@@ -3349,7 +3405,7 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("direction");
-      clearMobileStickyNavHoverSoon(directionLink);
+      clearMobileStickyNavHoverSoon("direction");
     });
   }
 
@@ -3390,7 +3446,7 @@ const videos = {
       event.stopImmediatePropagation();
 
       showContactAnimated();
-      clearMobileStickyNavHoverSoon(contactLink);
+      clearMobileStickyNavHoverSoon("contact");
     });
   }
 
