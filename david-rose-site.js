@@ -505,119 +505,10 @@ const videos = {
     );
   }
 
-  function normalizeMainNavText(text) {
-    return (text || "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLowerCase();
-  }
-
-  function mainNavTextMatches(text, sectionName) {
-    const normalizedText = normalizeMainNavText(text);
-
-    if (sectionName === "colour") {
-      return (
-        normalizedText === "colour" ||
-        normalizedText === "color" ||
-        normalizedText === "post production"
-      );
-    }
-
-    if (sectionName === "direction") {
-      return normalizedText === "direction";
-    }
-
-    if (sectionName === "approach") {
-      return (
-        normalizedText === "my approach" ||
-        normalizedText === "approach" ||
-        normalizedText === "my philosophy"
-      );
-    }
-
-    if (sectionName === "contact") {
-      return normalizedText === "contact";
-    }
-
-    return false;
-  }
-
-  function elementLooksLikeWholeNavContainer(element) {
-    const text = normalizeMainNavText(element && element.textContent);
-
-    return (
-      text.includes("colour") &&
-      text.includes("direction") &&
-      (text.includes("approach") || text.includes("my approach")) &&
-      text.includes("contact")
-    );
-  }
-
-  function getMainNavCandidateElements() {
-    return Array.from(document.querySelectorAll(
-      "[data-main-nav], " +
-      ".side-nav .nav-text, " +
-      ".side-nav a, " +
-      ".side-nav *"
-    ));
-  }
-
-  function findMainNavButton(sectionName) {
-    const attributeCandidates = getMainNavCandidateElements().filter((element) => {
-      if (!element || !element.getAttribute) return false;
-
-      const attributeValue = normalizeMainNavText(element.getAttribute("data-main-nav"));
-
-      if (!attributeValue) return false;
-      if (elementLooksLikeWholeNavContainer(element)) return false;
-
-      return mainNavTextMatches(attributeValue, sectionName) ||
-        mainNavTextMatches(element.textContent, sectionName);
-    });
-
-    const textCandidates = getMainNavCandidateElements().filter((element) => {
-      if (!element || !element.textContent) return false;
-      if (elementLooksLikeWholeNavContainer(element)) return false;
-
-      return mainNavTextMatches(element.textContent, sectionName);
-    });
-
-    const candidates = [...attributeCandidates, ...textCandidates];
-
-    if (!candidates.length) return null;
-
-    candidates.sort((a, b) => {
-      const aChildren = a.querySelectorAll ? a.querySelectorAll("*").length : 0;
-      const bChildren = b.querySelectorAll ? b.querySelectorAll("*").length : 0;
-
-      if (aChildren !== bChildren) return aChildren - bChildren;
-
-      const aTextLength = normalizeMainNavText(a.textContent).length;
-      const bTextLength = normalizeMainNavText(b.textContent).length;
-
-      return aTextLength - bTextLength;
-    });
-
-    const exactCandidate = candidates[0];
-    const clickableParent = exactCandidate.closest && exactCandidate.closest("a");
-
-    if (
-      clickableParent &&
-      !elementLooksLikeWholeNavContainer(clickableParent) &&
-      mainNavTextMatches(clickableParent.textContent, sectionName)
-    ) {
-      return clickableParent;
-    }
-
-    return exactCandidate;
-  }
-
   function getLeftNavButtons() {
-    const orderedButtons = ["colour", "direction", "approach", "contact"]
-      .map((sectionName) => findMainNavButton(sectionName))
-      .filter(Boolean);
-
-    return Array.from(new Set(orderedButtons));
+    return document.querySelectorAll(
+      ".side-nav .nav-text, .side-nav a"
+    );
   }
 
   function getInstagramNavItems() {
@@ -800,8 +691,6 @@ const videos = {
     const supportsFinePointer =
       window.matchMedia && window.matchMedia("(pointer: fine)").matches;
 
-    if (!supportsFinePointer) return;
-
     let frameId = null;
     let lastEvent = null;
 
@@ -839,13 +728,21 @@ const videos = {
       bottomRight.style.opacity = (bottomRightStrength * 0.98).toFixed(3);
     }
 
-    document.addEventListener("mousemove", (event) => {
-      lastEvent = event;
+    if (supportsFinePointer) {
+      document.addEventListener("mousemove", (event) => {
+        lastEvent = event;
 
-      if (!frameId) {
-        frameId = requestAnimationFrame(updateVignettes);
-      }
-    });
+        if (!frameId) {
+          frameId = requestAnimationFrame(updateVignettes);
+        }
+      });
+
+      document.addEventListener("mouseleave", () => {
+        lastEvent = null;
+        topLeft.style.opacity = "0";
+        bottomRight.style.opacity = "0";
+      });
+    }
 
     function holdTouchVignette(event) {
       const touch = event.touches && event.touches.length ? event.touches[0] : event;
@@ -869,12 +766,6 @@ const videos = {
     window.addEventListener("resize", updateNameShadowSpotPosition);
     window.addEventListener("orientationchange", () => {
       setTimeout(updateNameShadowSpotPosition, 300);
-    });
-
-    document.addEventListener("mouseleave", () => {
-      lastEvent = null;
-      topLeft.style.opacity = "0";
-      bottomRight.style.opacity = "0";
     });
   }
 
@@ -1077,20 +968,9 @@ const videos = {
     const focusIsActive =
       document.documentElement.classList.contains("dcr-mobile-approach-focus-active");
 
-    const exitDelay = typeof delay === "number" ? delay : 0;
-
-    if (mobileApproachFocusIsExiting && exitDelay <= 0) {
-      document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
-
-      const clearExistingExitStateTimeout = setTimeout(() => {
-        mobileApproachFocusIsExiting = false;
-      }, 3600);
-
-      mobileApproachNavTimeouts.push(clearExistingExitStateTimeout);
-      return;
-    }
-
     if (!focusIsActive && mobileApproachFocusIsExiting) return;
+
+    const exitDelay = typeof delay === "number" ? delay : 0;
 
     mobileApproachFocusIsExiting = true;
     clearMobileApproachNavTimeouts();
@@ -1105,31 +985,23 @@ const videos = {
       item.style.pointerEvents = "none";
     });
 
-    const runNavReturn = () => {
-      animateMobileNavIn(120);
-    };
-
-    const runFinalExit = () => {
+    const runExit = () => {
       document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
+      animateMobileNavIn(360);
 
       const clearExitStateTimeout = setTimeout(() => {
         mobileApproachFocusIsExiting = false;
-      }, 3600);
+      }, 5200);
 
       mobileApproachNavTimeouts.push(clearExitStateTimeout);
     };
 
     if (exitDelay > 0) {
-      const navReturnDelay = Math.min(1450, Math.max(650, exitDelay - 3200));
-
-      const navReturnTimeout = setTimeout(runNavReturn, navReturnDelay);
-      const finalExitTimeout = setTimeout(runFinalExit, exitDelay);
-
-      mobileApproachNavTimeouts.push(navReturnTimeout, finalExitTimeout);
-      approachTimeouts.push(finalExitTimeout);
+      const exitTimeout = setTimeout(runExit, exitDelay);
+      mobileApproachNavTimeouts.push(exitTimeout);
+      approachTimeouts.push(exitTimeout);
     } else {
-      runFinalExit();
-      runNavReturn();
+      runExit();
     }
   }
 
@@ -1139,6 +1011,23 @@ const videos = {
     const style = document.createElement("style");
     style.id = "dcr-mobile-layout-fixes";
     style.textContent = `
+      video::-webkit-media-controls,
+      video::-webkit-media-controls-panel,
+      video::-webkit-media-controls-play-button,
+      video::-webkit-media-controls-start-playback-button,
+      video::-webkit-media-controls-overlay-play-button,
+      video::-webkit-media-controls-enclosure {
+        display: none !important;
+        opacity: 0 !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+      }
+
+      video {
+        -webkit-user-select: none !important;
+        user-select: none !important;
+      }
+
       .dcr-video-still-fallback {
         position: fixed !important;
         inset: 0 !important;
@@ -1193,9 +1082,9 @@ const videos = {
       .dcr-name-shadow-spot {
         position: fixed !important;
         left: 50vw !important;
-        top: calc(var(--dcr-mobile-vh, 100vh) * 0.545) !important;
-        width: min(46vw, 560px) !important;
-        height: min(14vw, 155px) !important;
+        top: 50vh !important;
+        width: 260px !important;
+        height: 46px !important;
         transform: translate(-50%, -50%) scale(0.96);
         transform-origin: 50% 50%;
         background:
@@ -1225,28 +1114,8 @@ const videos = {
 
       @media (max-width: 1024px) {
         .dcr-name-shadow-spot {
-          top: calc(var(--dcr-mobile-vh, 100svh) * 0.552) !important;
-          width: 62vw !important;
-          height: 18vw !important;
           filter: blur(15px);
         }
-      }
-
-      video::-webkit-media-controls,
-      video::-webkit-media-controls-panel,
-      video::-webkit-media-controls-play-button,
-      video::-webkit-media-controls-start-playback-button,
-      video::-webkit-media-controls-overlay-play-button,
-      video::-webkit-media-controls-enclosure {
-        display: none !important;
-        opacity: 0 !important;
-        -webkit-appearance: none !important;
-        appearance: none !important;
-      }
-
-      video {
-        -webkit-user-select: none !important;
-        user-select: none !important;
       }
 
       @media (max-width: 1024px) {
@@ -1544,16 +1413,6 @@ const videos = {
     ensureNameShadowSpot();
     document.documentElement.classList.add("dcr-name-shadow-spot-on");
 
-    const pageLoadSideNav = document.querySelector(".side-nav");
-
-    if (isMobileLayoutViewport() && pageLoadSideNav) {
-      pageLoadSideNav.style.transition = "none";
-      pageLoadSideNav.style.visibility = "visible";
-      pageLoadSideNav.style.opacity = "0";
-      pageLoadSideNav.style.pointerEvents = "none";
-      pageLoadSideNav.style.willChange = "opacity";
-    }
-
     getLeftNavButtons().forEach((item) => {
       item.style.transformOrigin = "0% 50%";
       item.style.transition = "none";
@@ -1616,22 +1475,8 @@ const videos = {
 
         showNameShadowSpot(0);
 
-        const introNavItems = Array.from(getLeftNavButtons());
-        const firstIntroNavDelay = 2850;
-        const mobileIntroSideNav = document.querySelector(".side-nav");
-
-        if (isMobileLayoutViewport() && mobileIntroSideNav) {
-          const mobileCurtainTimeout = setTimeout(() => {
-            mobileIntroSideNav.style.transition = "none";
-            mobileIntroSideNav.style.opacity = "1";
-            mobileIntroSideNav.style.pointerEvents = "auto";
-          }, firstIntroNavDelay);
-
-          revealTimeouts.push(mobileCurtainTimeout);
-        }
-
-        introNavItems.forEach((item, index) => {
-          const delay = firstIntroNavDelay + index * 115;
+        getLeftNavButtons().forEach((item, index) => {
+          const delay = 2850 + index * 115;
 
           item.style.transition =
             "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
@@ -1655,15 +1500,6 @@ const videos = {
         const cleanupTimeout = setTimeout(() => {
           document.documentElement.classList.remove("custom-page-load-intro-active");
 
-          const cleanupSideNav = document.querySelector(".side-nav");
-
-          if (cleanupSideNav) {
-            cleanupSideNav.style.transition = "";
-            cleanupSideNav.style.opacity = "";
-            cleanupSideNav.style.pointerEvents = "";
-            cleanupSideNav.style.willChange = "";
-          }
-
           getLeftNavButtons().forEach((item) => {
             item.style.transitionDelay = "";
             item.style.willChange = "";
@@ -1685,15 +1521,48 @@ const videos = {
   }
 
   function getAllHoverButtons() {
-    return Array.from(new Set([
-      ...Array.from(getLeftNavButtons()),
-      ...Array.from(getInstagramNavItems()),
-      ...Array.from(getProjectButtons())
-    ]));
+    return document.querySelectorAll(
+      ".side-nav .nav-text, " +
+      ".side-nav a, " +
+      ".approach-ig-link, " +
+      "[data-approach-ig], " +
+      "[data-instagram-link], " +
+      ".post-production-projects-panel .nav-text, " +
+      ".post-production-projects-panel a, " +
+      ".direction-projects-panel .nav-text, " +
+      ".direction-projects-panel a, " +
+      ".colour-projects-panel .nav-text, " +
+      ".colour-projects-panel a, " +
+      ".color-projects-panel .nav-text, " +
+      ".color-projects-panel a"
+    );
   }
 
   function getMainNavButton(sectionName) {
-    return findMainNavButton(sectionName);
+    const buttonByAttribute = document.querySelector("[data-main-nav='" + sectionName + "']");
+    if (buttonByAttribute) return buttonByAttribute;
+
+    return Array.from(getLeftNavButtons()).find((button) => {
+      const text = button.textContent.trim().toLowerCase();
+
+      if (sectionName === "colour") {
+        return text === "colour" || text === "color" || text === "post production";
+      }
+
+      if (sectionName === "direction") {
+        return text === "direction";
+      }
+
+      if (sectionName === "approach") {
+        return text === "my approach" || text === "approach" || text === "my philosophy";
+      }
+
+      if (sectionName === "contact") {
+        return text === "contact";
+      }
+
+      return false;
+    });
   }
 
   function getSectionPanels(sectionName) {
@@ -1733,11 +1602,21 @@ const videos = {
   }
 
   function getElementsToDim() {
-    return Array.from(new Set([
-      ...Array.from(getLeftNavButtons()),
-      ...Array.from(getInstagramNavItems()),
-      ...Array.from(getProjectButtons())
-    ])).filter((element) => {
+    return Array.from(document.querySelectorAll(
+      ".side-nav .nav-text, " +
+      ".side-nav a, " +
+      ".approach-ig-link, " +
+      "[data-approach-ig], " +
+      "[data-instagram-link], " +
+      ".post-production-projects-panel .nav-text, " +
+      ".post-production-projects-panel a, " +
+      ".direction-projects-panel .nav-text, " +
+      ".direction-projects-panel a, " +
+      ".colour-projects-panel .nav-text, " +
+      ".colour-projects-panel a, " +
+      ".color-projects-panel .nav-text, " +
+      ".color-projects-panel a"
+    )).filter((element) => {
       return !elementBelongsToInactiveProjectPanel(element);
     });
   }
