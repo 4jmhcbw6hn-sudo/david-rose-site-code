@@ -511,6 +511,10 @@ const videos = {
     );
   }
 
+  function getSideNavWrapper() {
+    return document.querySelector(".side-nav");
+  }
+
   function getInstagramNavItems() {
     return document.querySelectorAll(
       ".approach-ig-link, " +
@@ -1406,16 +1410,41 @@ const videos = {
     ensureNameShadowSpot();
     document.documentElement.classList.add("dcr-name-shadow-spot-on");
 
-    getLeftNavButtons().forEach((item) => {
-      item.style.transformOrigin = "0% 50%";
-      item.style.transition = "none";
-      item.style.visibility = "visible";
-      item.style.opacity = "0";
-      item.style.filter = "blur(8px)";
-      item.style.transform = "translateX(-18px) scale(0.988)";
-      item.style.pointerEvents = "none";
-      item.style.willChange = "opacity, filter, transform";
-    });
+    const sideNavWrapper = getSideNavWrapper();
+    const mobileIntroNav = isMobileLayoutViewport();
+
+    if (mobileIntroNav && sideNavWrapper) {
+      sideNavWrapper.style.transition = "none";
+      sideNavWrapper.style.visibility = "visible";
+      sideNavWrapper.style.opacity = "0";
+      sideNavWrapper.style.filter = "blur(8px)";
+      sideNavWrapper.style.transform = "translateX(-18px) scale(0.988)";
+      sideNavWrapper.style.pointerEvents = "none";
+      sideNavWrapper.style.willChange = "opacity, filter, transform";
+
+      getLeftNavButtons().forEach((item) => {
+        item.style.transformOrigin = "0% 50%";
+        item.style.transition = "none";
+        item.style.transitionDelay = "0ms";
+        item.style.visibility = "visible";
+        item.style.opacity = "1";
+        item.style.filter = "blur(0)";
+        item.style.transform = "translateX(0) scale(1)";
+        item.style.pointerEvents = "none";
+        item.style.willChange = "";
+      });
+    } else {
+      getLeftNavButtons().forEach((item) => {
+        item.style.transformOrigin = "0% 50%";
+        item.style.transition = "none";
+        item.style.visibility = "visible";
+        item.style.opacity = "0";
+        item.style.filter = "blur(8px)";
+        item.style.transform = "translateX(-18px) scale(0.988)";
+        item.style.pointerEvents = "none";
+        item.style.willChange = "opacity, filter, transform";
+      });
+    }
 
     if (videos.main) {
       videos.main.style.transition = "none";
@@ -1468,37 +1497,75 @@ const videos = {
 
         showNameShadowSpot(0);
 
-        const introNavItems = Array.from(getLeftNavButtons());
         const mobileIntroNav = isMobileLayoutViewport();
-        const introNavBaseDelay = mobileIntroNav ? 4450 : 3350;
-        const introNavStagger = mobileIntroNav ? 38 : 72;
-        const introNavSettleBase = mobileIntroNav ? 6950 : 6100;
-        const introNavSettleStagger = mobileIntroNav ? 72 : 92;
 
-        introNavItems.forEach((item, index) => {
-          const delay = introNavBaseDelay + index * introNavStagger;
+        if (mobileIntroNav && getSideNavWrapper()) {
+          const sideNavWrapper = getSideNavWrapper();
+          const navDelay = 3350;
 
-          item.style.transition =
+          sideNavWrapper.style.transition =
             "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
             "filter 3100ms cubic-bezier(0.16, 1, 0.3, 1), " +
             "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          item.style.transitionDelay = delay + "ms";
-          item.style.visibility = "visible";
-          item.style.opacity = "1";
-          item.style.filter = "blur(0)";
-          item.style.transform = "translateX(0) scale(1)";
-          item.style.pointerEvents = "auto";
+          sideNavWrapper.style.transitionDelay = navDelay + "ms";
+          sideNavWrapper.style.visibility = "visible";
+          sideNavWrapper.style.opacity = "1";
+          sideNavWrapper.style.filter = "blur(0)";
+          sideNavWrapper.style.transform = "translateX(0) scale(1)";
+          sideNavWrapper.style.pointerEvents = "auto";
+
+          getLeftNavButtons().forEach((item) => {
+            item.style.transition = "none";
+            item.style.transitionDelay = "0ms";
+            item.style.visibility = "visible";
+            item.style.opacity = "1";
+            item.style.filter = "blur(0)";
+            item.style.transform = "translateX(0) scale(1)";
+            item.style.pointerEvents = "auto";
+          });
 
           const navSettleTimeout = setTimeout(() => {
-            settleNavItemAfterArrival(item);
-          }, introNavSettleBase + index * introNavSettleStagger);
+            getLeftNavButtons().forEach((item) => {
+              settleNavItemAfterArrival(item);
+            });
+          }, navDelay + 2850);
 
           revealTimeouts.push(navSettleTimeout);
-        });
+        } else {
+          getLeftNavButtons().forEach((item, index) => {
+            const delay = 2850 + index * 115;
+
+            item.style.transition =
+              "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
+              "filter 3100ms cubic-bezier(0.16, 1, 0.3, 1), " +
+              "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
+
+            item.style.transitionDelay = delay + "ms";
+            item.style.visibility = "visible";
+            item.style.opacity = "1";
+            item.style.filter = "blur(0)";
+            item.style.transform = "translateX(0) scale(1)";
+            item.style.pointerEvents = "auto";
+
+            const navSettleTimeout = setTimeout(() => {
+              settleNavItemAfterArrival(item);
+            }, delay + 2700 + index * 65);
+
+            revealTimeouts.push(navSettleTimeout);
+          });
+        }
 
         const cleanupTimeout = setTimeout(() => {
           document.documentElement.classList.remove("custom-page-load-intro-active");
+
+          const sideNavWrapper = getSideNavWrapper();
+
+          if (sideNavWrapper) {
+            sideNavWrapper.style.transitionDelay = "";
+            sideNavWrapper.style.willChange = "";
+            sideNavWrapper.style.pointerEvents = "";
+          }
 
           getLeftNavButtons().forEach((item) => {
             item.style.transitionDelay = "";
