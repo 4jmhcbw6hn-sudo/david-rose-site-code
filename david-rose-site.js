@@ -106,11 +106,18 @@ const videos = {
       captureVideoStill(video);
 
       const stillUrl = videoStillUrls.get(video);
-
-      if (!stillUrl) return;
-
       const fallback = getVideoStillFallbackElement();
-      fallback.style.backgroundImage = "url('" + stillUrl + "')";
+
+      if (stillUrl) {
+        fallback.style.backgroundImage = "url('" + stillUrl + "')";
+        fallback.style.backgroundColor = "transparent";
+      } else {
+        fallback.style.backgroundImage = "";
+        fallback.style.backgroundColor = "rgba(0, 0, 0, 0.16)";
+        fallback.style.backdropFilter = "blur(0px)";
+        fallback.style.webkitBackdropFilter = "blur(0px)";
+      }
+
       document.documentElement.classList.add("dcr-video-fallback-active");
     }
 
@@ -137,6 +144,12 @@ const videos = {
             showVideoStillFallback(video);
           });
       }
+
+      setTimeout(() => {
+        if (video.paused || video.readyState < 2) {
+          showVideoStillFallback(video);
+        }
+      }, 650);
 
       setTimeout(() => {
         if (video.paused || video.readyState < 2) {
@@ -586,13 +599,39 @@ const videos = {
     return spot;
   }
 
+  function updateNameShadowSpotPosition() {
+    const spot = ensureNameShadowSpot();
+    const centerName = Array.from(getCenterNameElements()).find((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    });
+
+    if (!centerName) return;
+
+    const rect = centerName.getBoundingClientRect();
+    const spotWidth = Math.min(Math.max(rect.width * 1.18, 210), window.innerWidth * 0.64);
+    const spotHeight = Math.min(Math.max(rect.height * 1.35, 70), window.innerHeight * 0.18);
+    const spotX = rect.left + rect.width / 2;
+    const spotY = rect.top + rect.height * 0.72;
+
+    spot.style.left = spotX + "px";
+    spot.style.top = spotY + "px";
+    spot.style.width = spotWidth + "px";
+    spot.style.height = spotHeight + "px";
+  }
+
   function showNameShadowSpot(delay) {
     const spot = ensureNameShadowSpot();
     const revealDelay = typeof delay === "number" ? delay : 0;
 
     const revealSpot = () => {
+      updateNameShadowSpotPosition();
       document.documentElement.classList.add("dcr-name-shadow-spot-on");
       spot.style.visibility = "visible";
+
+      requestAnimationFrame(updateNameShadowSpotPosition);
+      setTimeout(updateNameShadowSpotPosition, 650);
+      setTimeout(updateNameShadowSpotPosition, 1800);
     };
 
     if (revealDelay > 0) {
@@ -659,7 +698,7 @@ const videos = {
       );
 
       topLeft.style.opacity = (topLeftStrength * 0.72).toFixed(3);
-      bottomRight.style.opacity = (bottomRightStrength * 0.68).toFixed(3);
+      bottomRight.style.opacity = (bottomRightStrength * 0.98).toFixed(3);
     }
 
     document.addEventListener("mousemove", (event) => {
@@ -668,6 +707,30 @@ const videos = {
       if (!frameId) {
         frameId = requestAnimationFrame(updateVignettes);
       }
+    });
+
+    function holdTouchVignette(event) {
+      const touch = event.touches && event.touches.length ? event.touches[0] : event;
+      const width = window.innerWidth || 1;
+      const height = window.innerHeight || 1;
+
+      if (touch.clientX > width * 0.55 && touch.clientY > height * 0.55) {
+        bottomRight.style.opacity = "0.92";
+
+        clearTimeout(bottomRight._dcrTouchFadeTimeout);
+        bottomRight._dcrTouchFadeTimeout = setTimeout(() => {
+          bottomRight.style.opacity = "0";
+        }, 1800);
+      }
+    }
+
+    ["touchstart", "touchmove", "pointerdown", "click"].forEach((eventName) => {
+      document.addEventListener(eventName, holdTouchVignette, { passive: true });
+    });
+
+    window.addEventListener("resize", updateNameShadowSpotPosition);
+    window.addEventListener("orientationchange", () => {
+      setTimeout(updateNameShadowSpotPosition, 300);
     });
 
     document.addEventListener("mouseleave", () => {
@@ -981,11 +1044,11 @@ const videos = {
       .dcr-corner-vignette-br {
         background:
           radial-gradient(
-            ellipse 72vw 68vh at 100% 100%,
-            rgba(0, 0, 0, 0.30) 0%,
-            rgba(0, 0, 0, 0.17) 30%,
-            rgba(0, 0, 0, 0.07) 50%,
-            rgba(0, 0, 0, 0) 76%
+            ellipse 76vw 72vh at 100% 100%,
+            rgba(0, 0, 0, 0.48) 0%,
+            rgba(0, 0, 0, 0.30) 28%,
+            rgba(0, 0, 0, 0.13) 52%,
+            rgba(0, 0, 0, 0) 78%
           );
       }
 
@@ -1033,8 +1096,12 @@ const videos = {
 
       video::-webkit-media-controls,
       video::-webkit-media-controls-panel,
-      video::-webkit-media-controls-start-playback-button {
+      video::-webkit-media-controls-play-button,
+      video::-webkit-media-controls-start-playback-button,
+      video::-webkit-media-controls-overlay-play-button,
+      video::-webkit-media-controls-enclosure {
         display: none !important;
+        opacity: 0 !important;
         -webkit-appearance: none !important;
         appearance: none !important;
       }
@@ -1329,9 +1396,9 @@ const videos = {
       element.style.transformOrigin = "50% 50%";
       element.style.transition = "none";
       element.style.visibility = "visible";
-      element.style.opacity = "0.97";
-      element.style.filter = "blur(0.45px)";
-      element.style.transform = "translateY(1px) scale(0.984)";
+      element.style.opacity = "0.94";
+      element.style.filter = "blur(1.15px)";
+      element.style.transform = "translateY(1.5px) scale(0.98)";
       element.style.pointerEvents = "none";
       element.style.willChange = "opacity, filter, transform";
     });
@@ -1387,9 +1454,9 @@ const videos = {
 
         getCenterNameElements().forEach((element) => {
           element.style.transition =
-            "opacity 1800ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 2200ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 7600ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "opacity 1500ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 4200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
           element.style.transitionDelay = "20ms";
           element.style.visibility = "visible";
@@ -1402,9 +1469,14 @@ const videos = {
         showNameShadowSpot(0);
 
         const introNavItems = Array.from(getLeftNavButtons());
+        const mobileIntroNav = isMobileLayoutViewport();
+        const introNavBaseDelay = mobileIntroNav ? 4450 : 3350;
+        const introNavStagger = mobileIntroNav ? 38 : 72;
+        const introNavSettleBase = mobileIntroNav ? 6950 : 6100;
+        const introNavSettleStagger = mobileIntroNav ? 72 : 92;
 
         introNavItems.forEach((item, index) => {
-          const delay = 3350 + index * 72;
+          const delay = introNavBaseDelay + index * introNavStagger;
 
           item.style.transition =
             "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
@@ -1420,7 +1492,7 @@ const videos = {
 
           const navSettleTimeout = setTimeout(() => {
             settleNavItemAfterArrival(item);
-          }, 6100 + index * 92);
+          }, introNavSettleBase + index * introNavSettleStagger);
 
           revealTimeouts.push(navSettleTimeout);
         });
