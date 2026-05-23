@@ -505,39 +505,119 @@ const videos = {
     );
   }
 
-  function getLeftNavButtons() {
-    return document.querySelectorAll(
-      ".side-nav .nav-text, .side-nav a"
+  function normalizeMainNavText(text) {
+    return (text || "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  }
+
+  function mainNavTextMatches(text, sectionName) {
+    const normalizedText = normalizeMainNavText(text);
+
+    if (sectionName === "colour") {
+      return (
+        normalizedText === "colour" ||
+        normalizedText === "color" ||
+        normalizedText === "post production"
+      );
+    }
+
+    if (sectionName === "direction") {
+      return normalizedText === "direction";
+    }
+
+    if (sectionName === "approach") {
+      return (
+        normalizedText === "my approach" ||
+        normalizedText === "approach" ||
+        normalizedText === "my philosophy"
+      );
+    }
+
+    if (sectionName === "contact") {
+      return normalizedText === "contact";
+    }
+
+    return false;
+  }
+
+  function elementLooksLikeWholeNavContainer(element) {
+    const text = normalizeMainNavText(element && element.textContent);
+
+    return (
+      text.includes("colour") &&
+      text.includes("direction") &&
+      (text.includes("approach") || text.includes("my approach")) &&
+      text.includes("contact")
     );
   }
 
-  function getMainNavButtonsOrdered() {
-    return ["colour", "direction", "approach", "contact"]
-      .map((sectionName) => getMainNavButton(sectionName))
-      .filter(Boolean);
+  function getMainNavCandidateElements() {
+    return Array.from(document.querySelectorAll(
+      "[data-main-nav], " +
+      ".side-nav .nav-text, " +
+      ".side-nav a, " +
+      ".side-nav *"
+    ));
   }
 
-  function getPageLoadNavItems() {
-    const baseItems = Array.from(getLeftNavButtons());
+  function findMainNavButton(sectionName) {
+    const attributeCandidates = getMainNavCandidateElements().filter((element) => {
+      if (!element || !element.getAttribute) return false;
 
-    if (!isMobileLayoutViewport()) {
-      return baseItems;
+      const attributeValue = normalizeMainNavText(element.getAttribute("data-main-nav"));
+
+      if (!attributeValue) return false;
+      if (elementLooksLikeWholeNavContainer(element)) return false;
+
+      return mainNavTextMatches(attributeValue, sectionName) ||
+        mainNavTextMatches(element.textContent, sectionName);
+    });
+
+    const textCandidates = getMainNavCandidateElements().filter((element) => {
+      if (!element || !element.textContent) return false;
+      if (elementLooksLikeWholeNavContainer(element)) return false;
+
+      return mainNavTextMatches(element.textContent, sectionName);
+    });
+
+    const candidates = [...attributeCandidates, ...textCandidates];
+
+    if (!candidates.length) return null;
+
+    candidates.sort((a, b) => {
+      const aChildren = a.querySelectorAll ? a.querySelectorAll("*").length : 0;
+      const bChildren = b.querySelectorAll ? b.querySelectorAll("*").length : 0;
+
+      if (aChildren !== bChildren) return aChildren - bChildren;
+
+      const aTextLength = normalizeMainNavText(a.textContent).length;
+      const bTextLength = normalizeMainNavText(b.textContent).length;
+
+      return aTextLength - bTextLength;
+    });
+
+    const exactCandidate = candidates[0];
+    const clickableParent = exactCandidate.closest && exactCandidate.closest("a");
+
+    if (
+      clickableParent &&
+      !elementLooksLikeWholeNavContainer(clickableParent) &&
+      mainNavTextMatches(clickableParent.textContent, sectionName)
+    ) {
+      return clickableParent;
     }
 
-    const combinedItems = [
-      ...getMainNavButtonsOrdered(),
-      ...baseItems
-    ].filter(Boolean);
+    return exactCandidate;
+  }
 
-    const uniqueItems = Array.from(new Set(combinedItems));
+  function getLeftNavButtons() {
+    const orderedButtons = ["colour", "direction", "approach", "contact"]
+      .map((sectionName) => findMainNavButton(sectionName))
+      .filter(Boolean);
 
-    return uniqueItems.filter((item) => {
-      return !uniqueItems.some((otherItem) => {
-        return otherItem !== item &&
-          otherItem.contains &&
-          otherItem.contains(item);
-      });
-    });
+    return Array.from(new Set(orderedButtons));
   }
 
   function getInstagramNavItems() {
@@ -1464,7 +1544,17 @@ const videos = {
     ensureNameShadowSpot();
     document.documentElement.classList.add("dcr-name-shadow-spot-on");
 
-    getPageLoadNavItems().forEach((item) => {
+    const pageLoadSideNav = document.querySelector(".side-nav");
+
+    if (isMobileLayoutViewport() && pageLoadSideNav) {
+      pageLoadSideNav.style.transition = "none";
+      pageLoadSideNav.style.visibility = "visible";
+      pageLoadSideNav.style.opacity = "0";
+      pageLoadSideNav.style.pointerEvents = "none";
+      pageLoadSideNav.style.willChange = "opacity";
+    }
+
+    getLeftNavButtons().forEach((item) => {
       item.style.transformOrigin = "0% 50%";
       item.style.transition = "none";
       item.style.visibility = "visible";
@@ -1526,10 +1616,22 @@ const videos = {
 
         showNameShadowSpot(0);
 
-        const introNavItems = Array.from(getPageLoadNavItems());
+        const introNavItems = Array.from(getLeftNavButtons());
+        const firstIntroNavDelay = 2850;
+        const mobileIntroSideNav = document.querySelector(".side-nav");
+
+        if (isMobileLayoutViewport() && mobileIntroSideNav) {
+          const mobileCurtainTimeout = setTimeout(() => {
+            mobileIntroSideNav.style.transition = "none";
+            mobileIntroSideNav.style.opacity = "1";
+            mobileIntroSideNav.style.pointerEvents = "auto";
+          }, firstIntroNavDelay);
+
+          revealTimeouts.push(mobileCurtainTimeout);
+        }
 
         introNavItems.forEach((item, index) => {
-          const delay = 2850 + index * 115;
+          const delay = firstIntroNavDelay + index * 115;
 
           item.style.transition =
             "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
@@ -1553,7 +1655,16 @@ const videos = {
         const cleanupTimeout = setTimeout(() => {
           document.documentElement.classList.remove("custom-page-load-intro-active");
 
-          getPageLoadNavItems().forEach((item) => {
+          const cleanupSideNav = document.querySelector(".side-nav");
+
+          if (cleanupSideNav) {
+            cleanupSideNav.style.transition = "";
+            cleanupSideNav.style.opacity = "";
+            cleanupSideNav.style.pointerEvents = "";
+            cleanupSideNav.style.willChange = "";
+          }
+
+          getLeftNavButtons().forEach((item) => {
             item.style.transitionDelay = "";
             item.style.willChange = "";
           });
@@ -1574,48 +1685,15 @@ const videos = {
   }
 
   function getAllHoverButtons() {
-    return document.querySelectorAll(
-      ".side-nav .nav-text, " +
-      ".side-nav a, " +
-      ".approach-ig-link, " +
-      "[data-approach-ig], " +
-      "[data-instagram-link], " +
-      ".post-production-projects-panel .nav-text, " +
-      ".post-production-projects-panel a, " +
-      ".direction-projects-panel .nav-text, " +
-      ".direction-projects-panel a, " +
-      ".colour-projects-panel .nav-text, " +
-      ".colour-projects-panel a, " +
-      ".color-projects-panel .nav-text, " +
-      ".color-projects-panel a"
-    );
+    return Array.from(new Set([
+      ...Array.from(getLeftNavButtons()),
+      ...Array.from(getInstagramNavItems()),
+      ...Array.from(getProjectButtons())
+    ]));
   }
 
   function getMainNavButton(sectionName) {
-    const buttonByAttribute = document.querySelector("[data-main-nav='" + sectionName + "']");
-    if (buttonByAttribute) return buttonByAttribute;
-
-    return Array.from(getLeftNavButtons()).find((button) => {
-      const text = button.textContent.trim().toLowerCase();
-
-      if (sectionName === "colour") {
-        return text === "colour" || text === "color" || text === "post production";
-      }
-
-      if (sectionName === "direction") {
-        return text === "direction";
-      }
-
-      if (sectionName === "approach") {
-        return text === "my approach" || text === "approach" || text === "my philosophy";
-      }
-
-      if (sectionName === "contact") {
-        return text === "contact";
-      }
-
-      return false;
-    });
+    return findMainNavButton(sectionName);
   }
 
   function getSectionPanels(sectionName) {
@@ -1655,21 +1733,11 @@ const videos = {
   }
 
   function getElementsToDim() {
-    return Array.from(document.querySelectorAll(
-      ".side-nav .nav-text, " +
-      ".side-nav a, " +
-      ".approach-ig-link, " +
-      "[data-approach-ig], " +
-      "[data-instagram-link], " +
-      ".post-production-projects-panel .nav-text, " +
-      ".post-production-projects-panel a, " +
-      ".direction-projects-panel .nav-text, " +
-      ".direction-projects-panel a, " +
-      ".colour-projects-panel .nav-text, " +
-      ".colour-projects-panel a, " +
-      ".color-projects-panel .nav-text, " +
-      ".color-projects-panel a"
-    )).filter((element) => {
+    return Array.from(new Set([
+      ...Array.from(getLeftNavButtons()),
+      ...Array.from(getInstagramNavItems()),
+      ...Array.from(getProjectButtons())
+    ])).filter((element) => {
       return !elementBelongsToInactiveProjectPanel(element);
     });
   }
