@@ -505,10 +505,106 @@ const videos = {
     );
   }
 
+  function normalizeMainNavText(text) {
+    return (text || "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  function mainNavTextMatches(text, sectionName) {
+    const normalizedText = normalizeMainNavText(text);
+
+    if (sectionName === "colour") {
+      return (
+        normalizedText === "colour" ||
+        normalizedText === "color" ||
+        normalizedText === "post production"
+      );
+    }
+
+    if (sectionName === "direction") {
+      return normalizedText === "direction";
+    }
+
+    if (sectionName === "approach") {
+      return (
+        normalizedText === "my approach" ||
+        normalizedText === "approach" ||
+        normalizedText === "my philosophy"
+      );
+    }
+
+    if (sectionName === "contact") {
+      return normalizedText === "contact";
+    }
+
+    return false;
+  }
+
+  function elementContainsMultipleMainNavLabels(element) {
+    if (!element) return false;
+
+    const text = normalizeMainNavText(element.textContent);
+    let matches = 0;
+
+    ["colour", "direction", "approach", "contact"].forEach((sectionName) => {
+      if (sectionName === "colour") {
+        if (text.includes("colour") || text.includes("color") || text.includes("post production")) {
+          matches += 1;
+        }
+        return;
+      }
+
+      if (sectionName === "direction" && text.includes("direction")) matches += 1;
+      if (sectionName === "approach" && text.includes("approach")) matches += 1;
+      if (sectionName === "contact" && text.includes("contact")) matches += 1;
+    });
+
+    return matches > 1;
+  }
+
+  function findVisibleMainNavButton(sectionName) {
+    const sideNav = document.querySelector(".side-nav") || document;
+    const candidates = Array.from(sideNav.querySelectorAll(".nav-text, a, [data-main-nav]"))
+      .filter((element) => {
+        if (!element || !element.textContent) return false;
+        if (elementContainsMultipleMainNavLabels(element)) return false;
+
+        const attrValue =
+          element.getAttribute && element.getAttribute("data-main-nav")
+            ? element.getAttribute("data-main-nav")
+            : "";
+
+        return (
+          mainNavTextMatches(element.textContent, sectionName) ||
+          mainNavTextMatches(attrValue, sectionName)
+        );
+      });
+
+    if (!candidates.length) return null;
+
+    candidates.sort((a, b) => {
+      const aChildren = a.querySelectorAll ? a.querySelectorAll("*").length : 0;
+      const bChildren = b.querySelectorAll ? b.querySelectorAll("*").length : 0;
+
+      if (aChildren !== bChildren) return aChildren - bChildren;
+
+      return normalizeMainNavText(a.textContent).length -
+        normalizeMainNavText(b.textContent).length;
+    });
+
+    return candidates[0];
+  }
+
   function getLeftNavButtons() {
-    return document.querySelectorAll(
-      ".side-nav .nav-text, .side-nav a"
-    );
+    const exactMainNavButtons = ["colour", "direction", "approach", "contact"]
+      .map((sectionName) => findVisibleMainNavButton(sectionName))
+      .filter(Boolean);
+
+    if (exactMainNavButtons.length) {
+      return exactMainNavButtons;
+    }
+
+    return Array.from(document.querySelectorAll(".side-nav .nav-text, .side-nav a"))
+      .filter((element) => !elementContainsMultipleMainNavLabels(element));
   }
 
   function getInstagramNavItems() {
@@ -1538,120 +1634,10 @@ const videos = {
     );
   }
 
-  function normalizeMainNavText(text) {
-    return (text || "").replace(/\s+/g, " ").trim().toLowerCase();
-  }
-
-  function mainNavTextMatches(text, sectionName) {
-    const normalizedText = normalizeMainNavText(text);
-
-    if (sectionName === "colour") {
-      return (
-        normalizedText === "colour" ||
-        normalizedText === "color" ||
-        normalizedText === "post production"
-      );
-    }
-
-    if (sectionName === "direction") {
-      return normalizedText === "direction";
-    }
-
-    if (sectionName === "approach") {
-      return (
-        normalizedText === "my approach" ||
-        normalizedText === "approach" ||
-        normalizedText === "my philosophy"
-      );
-    }
-
-    if (sectionName === "contact") {
-      return normalizedText === "contact";
-    }
-
-    return false;
-  }
-
-  function mainNavContainerLooksTooBroad(element) {
-    if (!element) return false;
-
-    const text = normalizeMainNavText(element.textContent);
-    let matchedSections = 0;
-
-    ["colour", "direction", "approach", "contact"].forEach((sectionName) => {
-      if (mainNavTextMatches(text, sectionName)) {
-        matchedSections += 1;
-        return;
-      }
-
-      if (sectionName === "colour" && (
-        text.includes("colour") ||
-        text.includes("color") ||
-        text.includes("post production")
-      )) matchedSections += 1;
-
-      if (sectionName === "direction" && text.includes("direction")) matchedSections += 1;
-      if (sectionName === "approach" && text.includes("approach")) matchedSections += 1;
-      if (sectionName === "contact" && text.includes("contact")) matchedSections += 1;
-    });
-
-    return matchedSections > 1;
-  }
-
-  function findExactMainNavTextInside(root, sectionName) {
-    const searchRoot = root || document;
-    const candidates = Array.from(searchRoot.querySelectorAll(
-      ".nav-text, a, [data-main-nav], span, div"
-    )).filter((element) => {
-      if (!element || !element.textContent) return false;
-      if (mainNavContainerLooksTooBroad(element)) return false;
-
-      return mainNavTextMatches(element.textContent, sectionName);
-    });
-
-    if (!candidates.length) return null;
-
-    candidates.sort((a, b) => {
-      const aChildren = a.querySelectorAll ? a.querySelectorAll("*").length : 0;
-      const bChildren = b.querySelectorAll ? b.querySelectorAll("*").length : 0;
-
-      if (aChildren !== bChildren) return aChildren - bChildren;
-
-      return normalizeMainNavText(a.textContent).length -
-        normalizeMainNavText(b.textContent).length;
-    });
-
-    const exact = candidates[0];
-    const clickableParent = exact.closest && exact.closest("a");
-
-    if (
-      clickableParent &&
-      !mainNavContainerLooksTooBroad(clickableParent) &&
-      mainNavTextMatches(clickableParent.textContent, sectionName)
-    ) {
-      return clickableParent;
-    }
-
-    return exact;
-  }
-
   function getMainNavButton(sectionName) {
-    const attributeButton = document.querySelector("[data-main-nav='" + sectionName + "']");
+    const visibleButton = findVisibleMainNavButton(sectionName);
 
-    if (attributeButton && !mainNavContainerLooksTooBroad(attributeButton)) {
-      return attributeButton;
-    }
-
-    const attributeChildButton = attributeButton
-      ? findExactMainNavTextInside(attributeButton, sectionName)
-      : null;
-
-    if (attributeChildButton) return attributeChildButton;
-
-    const sideNav = document.querySelector(".side-nav");
-    const exactSideNavButton = findExactMainNavTextInside(sideNav || document, sectionName);
-
-    if (exactSideNavButton) return exactSideNavButton;
+    if (visibleButton) return visibleButton;
 
     return Array.from(getLeftNavButtons()).find((button) => {
       return mainNavTextMatches(button.textContent, sectionName);
@@ -3226,47 +3212,33 @@ const videos = {
   const approachLink = getMainNavButton("approach");
   const contactLink = getMainNavButton("contact");
 
-  function getMobileStickyVisualNavItems() {
-    const items = Array.from(new Set([
-      ...Array.from(getLeftNavButtons()),
-      ...Array.from(getInstagramNavItems())
-    ])).filter(Boolean);
-
-    return items.filter((item) => {
-      return !items.some((otherItem) => {
-        return otherItem !== item &&
-          otherItem.contains &&
-          otherItem.contains(item);
-      });
-    });
-  }
-
-  function clearMobileStickyNavHover(activeButton) {
+  function settleMobileDesktopNavAfterTap(activeButton) {
     if (!isMobileLayoutViewport()) return;
     if (isApproachOpen) return;
     if (document.documentElement.classList.contains("dcr-mobile-approach-focus-active")) return;
 
-    getMobileStickyVisualNavItems().forEach((item) => {
-      if (item !== activeButton) {
+    const navItems = Array.from(new Set([
+      ...Array.from(getLeftNavButtons()),
+      ...Array.from(getInstagramNavItems())
+    ])).filter(Boolean);
+
+    navItems.forEach((item) => {
+      if (item === activeButton) {
+        setNavItemFocused(item);
+      } else {
         setNavItemResting(item);
       }
 
       item.style.visibility = "visible";
       item.style.pointerEvents = "auto";
     });
-
-    if (activeButton) {
-      focusElement(activeButton);
-      activeButton.style.visibility = "visible";
-      activeButton.style.pointerEvents = "auto";
-    }
   }
 
-  function clearMobileStickyNavHoverSoon(activeButton) {
-    [0, 120, 520].forEach((delay) => {
+  function settleMobileDesktopNavAfterTapSoon(activeButton) {
+    [0, 140, 520].forEach((delay) => {
       setTimeout(() => {
-        if (activeButton && activeMainNavButton !== activeButton) return;
-        clearMobileStickyNavHover(activeButton);
+        if (activeButton && activeMainNavButton !== activeButton && activeButton !== contactLink) return;
+        settleMobileDesktopNavAfterTap(activeButton);
       }, delay);
     });
   }
@@ -3396,13 +3368,11 @@ const videos = {
 
   if (colourLink) {
     colourLink.addEventListener("mouseenter", () => {
-      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(colourLink);
     });
 
     colourLink.addEventListener("mouseleave", () => {
-      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== colourLink) {
         resetElement(colourLink);
@@ -3413,19 +3383,17 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("colour");
-      clearMobileStickyNavHoverSoon(colourLink);
+      settleMobileDesktopNavAfterTapSoon(colourLink);
     });
   }
 
   if (directionLink) {
     directionLink.addEventListener("mouseenter", () => {
-      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(directionLink);
     });
 
     directionLink.addEventListener("mouseleave", () => {
-      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== directionLink) {
         resetElement(directionLink);
@@ -3436,19 +3404,17 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       toggleSection("direction");
-      clearMobileStickyNavHoverSoon(directionLink);
+      settleMobileDesktopNavAfterTapSoon(directionLink);
     });
   }
 
   if (approachLink) {
     approachLink.addEventListener("mouseenter", () => {
-      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(approachLink);
     });
 
     approachLink.addEventListener("mouseleave", () => {
-      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== approachLink) {
         resetElement(approachLink);
@@ -3458,13 +3424,11 @@ const videos = {
 
   if (contactLink) {
     contactLink.addEventListener("mouseenter", () => {
-      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       focusElement(contactLink);
     });
 
     contactLink.addEventListener("mouseleave", () => {
-      if (isMobileLayoutViewport()) return;
       if (isContactOpen) return;
       if (activeMainNavButton !== contactLink) {
         resetElement(contactLink);
@@ -3477,7 +3441,7 @@ const videos = {
       event.stopImmediatePropagation();
 
       showContactAnimated();
-      clearMobileStickyNavHoverSoon(contactLink);
+      settleMobileDesktopNavAfterTapSoon(contactLink);
     });
   }
 
@@ -3495,14 +3459,12 @@ const videos = {
 
   allHoverButtons.forEach((button) => {
     button.addEventListener("mouseenter", () => {
-      if (isMobileLayoutViewport() && isNavAnimationItem(button)) return;
       if (isContactOpen) return;
       if (elementBelongsToInactiveProjectPanel(button)) return;
       focusElement(button);
     });
 
     button.addEventListener("mouseleave", () => {
-      if (isMobileLayoutViewport() && isNavAnimationItem(button)) return;
       if (isContactOpen) return;
       if (elementBelongsToInactiveProjectPanel(button)) return;
 
