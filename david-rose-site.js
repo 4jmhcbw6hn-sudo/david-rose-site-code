@@ -63,6 +63,65 @@ const videos = {
     }
   }
 
+  function configureVideoAutoplayFallbacks() {
+    Object.values(videos).forEach((video) => {
+      if (!video) return;
+
+      try {
+        video.controls = false;
+        video.removeAttribute("controls");
+        video.muted = true;
+        video.defaultMuted = true;
+        video.setAttribute("muted", "");
+        video.setAttribute("playsinline", "");
+        video.setAttribute("webkit-playsinline", "");
+        video.setAttribute("preload", "auto");
+        video.setAttribute("autoplay", "");
+        video.disablePictureInPicture = true;
+        video.setAttribute("disablepictureinpicture", "");
+        video.setAttribute("controlslist", "nodownload noplaybackrate nofullscreen");
+      } catch (error) {}
+
+      video.addEventListener("loadeddata", () => {
+        playVideo(video);
+      });
+    });
+
+    function kickstartCurrentVideo() {
+      const currentVideo = videos[current] || videos.main;
+
+      if (currentVideo) {
+        if (currentVideo !== videos["tom-ford"]) {
+          safelySetMuted(currentVideo, true);
+        }
+
+        playVideo(currentVideo);
+      }
+
+      if (videos.main && currentVideo !== videos.main) {
+        playVideo(videos.main);
+      }
+    }
+
+    window.addEventListener("pageshow", kickstartCurrentVideo);
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        kickstartCurrentVideo();
+      }
+    });
+
+    ["touchstart", "pointerdown"].forEach((eventName) => {
+      document.addEventListener(eventName, kickstartCurrentVideo, {
+        once: true,
+        passive: true
+      });
+    });
+
+    setTimeout(kickstartCurrentVideo, 250);
+    setTimeout(kickstartCurrentVideo, 1200);
+  }
+
   function safelySetPlaybackRate(video, rate) {
     try {
       video.playbackRate = rate;
@@ -272,7 +331,7 @@ const videos = {
 
   function dimElement(element) {
     if (isNavAnimationItem(element)) {
-      setNavItemResting(element);
+      setNavItemDimmed(element);
       return;
     }
 
@@ -404,6 +463,20 @@ const videos = {
     element.style.opacity = "0.5";
     element.style.filter = "blur(0)";
     element.style.transform = "scale(1)";
+  }
+
+  function setNavItemDimmed(element) {
+    if (!element) return;
+
+    element.style.transition =
+      "opacity 1350ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 1550ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 1550ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+    element.style.transitionDelay = "";
+    element.style.opacity = "0.42";
+    element.style.filter = "blur(1.4px)";
+    element.style.transform = "scale(0.994)";
   }
 
   function settleNavItemAfterArrival(element) {
@@ -613,9 +686,20 @@ const videos = {
     const focusIsActive =
       document.documentElement.classList.contains("dcr-mobile-approach-focus-active");
 
-    if (!focusIsActive && mobileApproachFocusIsExiting) return;
-
     const exitDelay = typeof delay === "number" ? delay : 0;
+
+    if (mobileApproachFocusIsExiting && exitDelay <= 0) {
+      document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
+
+      const clearExistingExitStateTimeout = setTimeout(() => {
+        mobileApproachFocusIsExiting = false;
+      }, 3600);
+
+      mobileApproachNavTimeouts.push(clearExistingExitStateTimeout);
+      return;
+    }
+
+    if (!focusIsActive && mobileApproachFocusIsExiting) return;
 
     mobileApproachFocusIsExiting = true;
     clearMobileApproachNavTimeouts();
@@ -630,23 +714,31 @@ const videos = {
       item.style.pointerEvents = "none";
     });
 
-    const runExit = () => {
+    const runNavReturn = () => {
+      animateMobileNavIn(120);
+    };
+
+    const runFinalExit = () => {
       document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
-      animateMobileNavIn(360);
 
       const clearExitStateTimeout = setTimeout(() => {
         mobileApproachFocusIsExiting = false;
-      }, 5200);
+      }, 3600);
 
       mobileApproachNavTimeouts.push(clearExitStateTimeout);
     };
 
     if (exitDelay > 0) {
-      const exitTimeout = setTimeout(runExit, exitDelay);
-      mobileApproachNavTimeouts.push(exitTimeout);
-      approachTimeouts.push(exitTimeout);
+      const navReturnDelay = Math.min(1450, Math.max(650, exitDelay - 3200));
+
+      const navReturnTimeout = setTimeout(runNavReturn, navReturnDelay);
+      const finalExitTimeout = setTimeout(runFinalExit, exitDelay);
+
+      mobileApproachNavTimeouts.push(navReturnTimeout, finalExitTimeout);
+      approachTimeouts.push(finalExitTimeout);
     } else {
-      runExit();
+      runFinalExit();
+      runNavReturn();
     }
   }
 
@@ -656,6 +748,19 @@ const videos = {
     const style = document.createElement("style");
     style.id = "dcr-mobile-layout-fixes";
     style.textContent = `
+      video::-webkit-media-controls,
+      video::-webkit-media-controls-panel,
+      video::-webkit-media-controls-start-playback-button {
+        display: none !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+      }
+
+      video {
+        -webkit-user-select: none !important;
+        user-select: none !important;
+      }
+
       @media (max-width: 1024px) {
         html,
         body {
@@ -716,6 +821,20 @@ const videos = {
         .center-name-wrapper .name-stack,
         .center-name-wrapper .subheadline {
           text-align: center !important;
+        }
+
+        .center-name-wrapper .name-stack {
+          line-height: 0.88 !important;
+        }
+
+        .center-name-wrapper .name-stack > * {
+          margin-top: 0 !important;
+          margin-bottom: clamp(0px, 0.55vh, 5px) !important;
+          line-height: 0.88 !important;
+        }
+
+        .center-name-wrapper .name-stack > *:last-child {
+          margin-bottom: 0 !important;
         }
 
         .side-nav {
@@ -834,9 +953,9 @@ const videos = {
           padding: 0;
           color: rgba(255, 255, 255, 0.92);
           font: inherit;
-          font-size: clamp(13px, 3.05vw, 17px);
+          font-size: clamp(11px, 2.45vw, 14px);
           line-height: 1;
-          letter-spacing: 0.38em;
+          letter-spacing: 0.34em;
           text-transform: uppercase;
           cursor: pointer;
           filter: blur(6px);
@@ -927,9 +1046,9 @@ const videos = {
       element.style.transformOrigin = "50% 50%";
       element.style.transition = "none";
       element.style.visibility = "visible";
-      element.style.opacity = "0.72";
-      element.style.filter = "blur(7px)";
-      element.style.transform = "translateY(8px) scale(0.94)";
+      element.style.opacity = "0.94";
+      element.style.filter = "blur(1.2px)";
+      element.style.transform = "translateY(2px) scale(0.972)";
       element.style.pointerEvents = "none";
       element.style.willChange = "opacity, filter, transform";
     });
@@ -982,11 +1101,11 @@ const videos = {
 
         getCenterNameElements().forEach((element) => {
           element.style.transition =
-            "opacity 4200ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 6200ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 8200ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "opacity 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 3200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 7600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          element.style.transitionDelay = "120ms";
+          element.style.transitionDelay = "40ms";
           element.style.visibility = "visible";
           element.style.opacity = "1";
           element.style.filter = "blur(0)";
@@ -2652,6 +2771,7 @@ const videos = {
   const approachLink = getMainNavButton("approach");
   const contactLink = getMainNavButton("contact");
 
+  configureVideoAutoplayFallbacks();
   prepareClientOneShotVideo(videos["tom-ford"]);
 
   installMobileLayoutFixes();
