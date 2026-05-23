@@ -506,9 +506,32 @@ const videos = {
   }
 
   function getLeftNavButtons() {
-    return document.querySelectorAll(
-      ".side-nav .nav-text, .side-nav a"
-    );
+    const candidates = Array.from(document.querySelectorAll(
+      ".side-nav [data-main-nav], " +
+      ".side-nav .nav-text, " +
+      ".side-nav a, " +
+      "[data-main-nav]"
+    ));
+
+    const seen = new Set();
+    const items = [];
+
+    candidates.forEach((candidate) => {
+      if (!candidate || !candidate.closest) return;
+
+      const navRoot = candidate.closest("[data-main-nav]") || candidate;
+      const key =
+        navRoot.getAttribute && navRoot.getAttribute("data-main-nav")
+          ? "main-nav:" + navRoot.getAttribute("data-main-nav")
+          : navRoot;
+
+      if (seen.has(key)) return;
+
+      seen.add(key);
+      items.push(navRoot);
+    });
+
+    return items;
   }
 
   function getInstagramNavItems() {
@@ -642,21 +665,27 @@ const videos = {
 
     if (!centerName) return;
 
-    const rect = centerName.getBoundingClientRect();
+    const nameStack =
+      centerName.querySelector(".name-stack") ||
+      centerName.querySelector("[class*='name-stack']") ||
+      centerName.querySelector("h1") ||
+      centerName;
+
+    const rect = nameStack.getBoundingClientRect();
     const mobileSpot = isMobileLayoutViewport();
 
     const spotWidth = Math.min(
-      Math.max(rect.width * (mobileSpot ? 0.98 : 0.92), mobileSpot ? 180 : 240),
-      window.innerWidth * (mobileSpot ? 0.72 : 0.46)
+      Math.max(rect.width * (mobileSpot ? 0.92 : 0.86), mobileSpot ? 150 : 210),
+      window.innerWidth * (mobileSpot ? 0.66 : 0.42)
     );
 
     const spotHeight = Math.min(
-      Math.max(rect.height * (mobileSpot ? 0.34 : 0.28), mobileSpot ? 34 : 44),
-      window.innerHeight * 0.12
+      Math.max(rect.height * (mobileSpot ? 0.24 : 0.22), mobileSpot ? 26 : 36),
+      window.innerHeight * 0.09
     );
 
     const spotX = rect.left + rect.width / 2;
-    const spotY = rect.bottom + (mobileSpot ? 8 : 12);
+    const spotY = rect.bottom + (mobileSpot ? 3 : 7);
 
     spot.style.left = spotX + "px";
     spot.style.top = spotY + "px";
@@ -2792,19 +2821,6 @@ const videos = {
 
     if (navButton) {
       focusElement(navButton);
-      applyActiveMainNavContrast();
-
-      setTimeout(() => {
-        if (activeMainNavButton === navButton) {
-          applyActiveMainNavContrast();
-        }
-      }, 80);
-
-      setTimeout(() => {
-        if (activeMainNavButton === navButton) {
-          applyActiveMainNavContrast();
-        }
-      }, 420);
     }
 
     const linkedRevealDelayMap = isSwitchingBetweenProjectMenus
