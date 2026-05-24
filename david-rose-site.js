@@ -1452,24 +1452,18 @@ const videos = {
           will-change: opacity, filter, transform;
         }
 
-        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(1) {
+        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(3) {
           transition-delay: 0ms !important;
         }
 
-        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(2) {
-          transition-delay: 120ms !important;
-        }
-
-        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(3) {
-          transition-delay: 240ms !important;
-        }
-
+        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(2),
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(4) {
-          transition-delay: 360ms !important;
+          transition-delay: 130ms !important;
         }
 
+        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(1),
         html.dcr-phase2b-mobile-approach-active .side-nav > .ig-link {
-          transition-delay: 480ms !important;
+          transition-delay: 260ms !important;
         }
       }
 
