@@ -1395,7 +1395,7 @@ const videos = {
 
         .center-name-wrapper .name-stack,
         .center-name-wrapper-opening .name-stack {
-          word-spacing: -0.10em !important;
+          word-spacing: -0.22em !important;
         }
       }
 
