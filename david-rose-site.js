@@ -457,19 +457,6 @@ const videos = {
   }
 
   function focusElement(element) {
-    if (
-      isMobileLayoutViewport() &&
-      isMobileMainNavButton(element) &&
-      !document.documentElement.classList.contains("custom-page-load-intro-active") &&
-      !document.documentElement.classList.contains("dcr-mobile-approach-focus-active")
-    ) {
-      element.style.transition = "none";
-      element.style.transitionDelay = "0ms";
-      setNavItemFocused(element);
-      element.style.transition = "none";
-      return;
-    }
-
     if (isNavAnimationItem(element)) {
       setNavItemFocused(element);
       return;
@@ -486,21 +473,6 @@ const videos = {
   }
 
   function resetElement(element) {
-    if (
-      isMobileLayoutViewport() &&
-      isMobileMainNavButton(element) &&
-      !document.documentElement.classList.contains("custom-page-load-intro-active") &&
-      !document.documentElement.classList.contains("dcr-mobile-approach-focus-active")
-    ) {
-      element.style.transition = "none";
-      element.style.transitionDelay = "0ms";
-      element.style.visibility = "visible";
-      element.style.pointerEvents = "auto";
-      setNavItemResting(element);
-      element.style.transition = "none";
-      return;
-    }
-
     if (isNavAnimationItem(element)) {
       setNavItemResting(element);
       element.style.visibility = "";
@@ -745,10 +717,6 @@ const videos = {
   }
 
   function getLeftNavButtons() {
-    if (isMobileLayoutViewport()) {
-      return getMobileMainNavButtons();
-    }
-
     return document.querySelectorAll(
       ".side-nav .nav-text, .side-nav a"
     );
@@ -1009,7 +977,7 @@ const videos = {
   let mobileApproachFocusIsExiting = false;
 
   function isMobileLayoutViewport() {
-    return window.matchMedia("(max-width: 1024px)").matches;
+    return false;
   }
 
   function clearMobileApproachNavTimeouts() {
@@ -1248,10 +1216,10 @@ const videos = {
   }
 
   function installMobileLayoutFixes() {
-    if (document.getElementById("dcr-mobile-layout-fixes")) return;
+    if (document.getElementById("dcr-global-visual-fixes")) return;
 
     const style = document.createElement("style");
-    style.id = "dcr-mobile-layout-fixes";
+    style.id = "dcr-global-visual-fixes";
     style.textContent = `
       video::-webkit-media-controls,
       video::-webkit-media-controls-panel,
@@ -1274,7 +1242,7 @@ const videos = {
         position: fixed !important;
         inset: 0 !important;
         width: 100vw !important;
-        height: var(--dcr-mobile-vh, 100vh) !important;
+        height: 100vh !important;
         background-size: cover !important;
         background-position: center center !important;
         background-repeat: no-repeat !important;
@@ -1353,280 +1321,9 @@ const videos = {
         visibility: visible;
         transform: translate(-50%, -50%) scale(1);
       }
-
-      @media (max-width: 1024px) {
-        .dcr-name-shadow-spot {
-          width: 92vw !important;
-          height: 34vh !important;
-          filter: blur(32px);
-        }
-      }
-
-      @media (max-width: 1024px) {
-        html,
-        body {
-          width: 100% !important;
-          height: var(--dcr-mobile-vh, 100svh) !important;
-          min-height: var(--dcr-mobile-vh, 100svh) !important;
-          max-height: var(--dcr-mobile-vh, 100svh) !important;
-          overflow: hidden !important;
-          overscroll-behavior: none !important;
-          margin: 0 !important;
-          padding: 0 !important;
-        }
-
-        body {
-          position: relative !important;
-          touch-action: manipulation;
-        }
-
-        .hero-section {
-          position: fixed !important;
-          inset: 0 !important;
-          width: 100vw !important;
-          height: var(--dcr-mobile-vh, 100svh) !important;
-          min-height: var(--dcr-mobile-vh, 100svh) !important;
-          max-height: var(--dcr-mobile-vh, 100svh) !important;
-          overflow: hidden !important;
-        }
-
-        #main-reel,
-        #commercial-reel,
-        #narrative-reel,
-        #tom-ford-reel {
-          position: fixed !important;
-          inset: 0 !important;
-          width: 100vw !important;
-          height: var(--dcr-mobile-vh, 100svh) !important;
-          min-height: var(--dcr-mobile-vh, 100svh) !important;
-          max-height: var(--dcr-mobile-vh, 100svh) !important;
-          object-fit: cover !important;
-          object-position: center center !important;
-        }
-
-        .center-name-wrapper,
-        .center-name-wrapper-opening {
-          position: fixed !important;
-          left: 50vw !important;
-          top: calc(var(--dcr-mobile-vh, 100svh) * 0.5) !important;
-          right: auto !important;
-          bottom: auto !important;
-          transform: translate(-50%, -50%) !important;
-          translate: none !important;
-          width: max-content !important;
-          max-width: 86vw !important;
-          text-align: center !important;
-          z-index: 45 !important;
-        }
-
-        .center-name-wrapper .name-stack,
-        .center-name-wrapper .subheadline {
-          text-align: center !important;
-        }
-
-        .center-name-wrapper .name-stack {
-          line-height: 0.82 !important;
-        }
-
-        .center-name-wrapper .name-stack > * {
-          margin-top: 0 !important;
-          margin-bottom: clamp(0px, 0.22vh, 2px) !important;
-          line-height: 0.82 !important;
-        }
-
-        .center-name-wrapper .name-stack > *:last-child {
-          margin-bottom: 0 !important;
-        }
-
-        .side-nav {
-          position: fixed !important;
-          left: 8.5vw !important;
-          top: calc(var(--dcr-mobile-vh, 100svh) * 0.058) !important;
-          right: auto !important;
-          bottom: auto !important;
-          z-index: 110 !important;
-        }
-
-        .side-nav .nav-text,
-        .side-nav a {
-          max-width: 76vw !important;
-        }
-
-        .approach-overlay {
-          position: fixed !important;
-          inset: 0 !important;
-          width: 100vw !important;
-          height: var(--dcr-mobile-vh, 100svh) !important;
-          min-height: var(--dcr-mobile-vh, 100svh) !important;
-          max-height: var(--dcr-mobile-vh, 100svh) !important;
-          overflow: hidden !important;
-          z-index: 32 !important;
-        }
-
-        .approach-overlay {
-          display: flex !important;
-          flex-direction: column !important;
-          justify-content: center !important;
-          align-items: flex-start !important;
-          box-sizing: border-box !important;
-          padding: calc(var(--dcr-mobile-vh, 100svh) * 0.18) 7vw calc(var(--dcr-mobile-vh, 100svh) * 0.10) 8vw !important;
-        }
-
-        .approach-container {
-          position: fixed !important;
-          left: 11.8vw !important;
-          right: 7vw !important;
-          top: 50% !important;
-          transform: translateY(-50%) !important;
-          width: auto !important;
-          max-width: none !important;
-          height: auto !important;
-          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.62) !important;
-          overflow: hidden !important;
-          z-index: 36 !important;
-        }
-
-        .approach-txt,
-        .approach-text,
-        .approach-copy {
-          position: relative !important;
-          left: auto !important;
-          top: auto !important;
-          right: auto !important;
-          bottom: auto !important;
-          width: 100% !important;
-          max-width: none !important;
-          transform: none !important;
-          font-size: clamp(12px, 2.9vw, 16px) !important;
-          line-height: 1.5 !important;
-          letter-spacing: 0.11em !important;
-          z-index: 36 !important;
-        }
-
-        .approach-txt {
-          align-self: center !important;
-          text-align: center !important;
-          margin: 0 0 calc(var(--dcr-mobile-vh, 100svh) * 0.035) 0 !important;
-        }
-
-        .approach-copy {
-          margin: 0 !important;
-        }
-
-        .approach-copy + .approach-copy {
-          margin-top: calc(var(--dcr-mobile-vh, 100svh) * 0.035) !important;
-        }
-
-        .approach-reveal-line {
-          max-width: 100% !important;
-        }
-
-        .approach-ig-link {
-          position: fixed !important;
-          right: 6.8vw !important;
-          bottom: calc(var(--dcr-mobile-vh, 100svh) * 0.075) !important;
-          z-index: 120 !important;
-        }
-
-        .post-production-projects-panel,
-        .direction-projects-panel,
-        .colour-projects-panel,
-        .color-projects-panel,
-        .contact-overlay {
-          max-height: var(--dcr-mobile-vh, 100svh) !important;
-          overflow: hidden !important;
-        }
-
-        .dcr-mobile-approach-back {
-          position: fixed !important;
-          left: 8.5vw !important;
-          top: calc(var(--dcr-mobile-vh, 100svh) * 0.058) !important;
-          z-index: 160 !important;
-          display: block !important;
-          visibility: hidden;
-          opacity: 0;
-          pointer-events: none;
-          appearance: none;
-          -webkit-appearance: none;
-          background: transparent;
-          border: 0;
-          margin: 0;
-          padding: 0;
-          color: rgba(255, 255, 255, 0.92);
-          font: inherit;
-          font-size: clamp(11px, 2.45vw, 14px);
-          line-height: 1;
-          letter-spacing: 0.34em;
-          text-transform: uppercase;
-          cursor: pointer;
-          filter: blur(6px);
-          transform: translateX(-16px) scale(0.986);
-          transition:
-            opacity 2100ms cubic-bezier(0.16, 1, 0.3, 1),
-            filter 2600ms cubic-bezier(0.16, 1, 0.3, 1),
-            transform 3200ms cubic-bezier(0.13, 1, 0.22, 1);
-        }
-
-        html.dcr-mobile-approach-focus-active .side-nav {
-          pointer-events: none !important;
-        }
-
-        html.dcr-mobile-approach-focus-active .approach-container {
-          left: 8vw !important;
-          right: 8vw !important;
-          top: 34.5% !important;
-          transform: translateY(-50%) !important;
-          max-height: calc(var(--dcr-mobile-vh, 100svh) * 0.72) !important;
-        }
-
-        html.dcr-mobile-approach-focus-active .approach-txt {
-          margin-bottom: calc(var(--dcr-mobile-vh, 100svh) * 0.04) !important;
-        }
-
-        html.dcr-mobile-approach-focus-active .approach-txt,
-        html.dcr-mobile-approach-focus-active .approach-text,
-        html.dcr-mobile-approach-focus-active .approach-copy {
-          transform: translateY(calc(var(--dcr-mobile-vh, 100svh) * -0.095)) !important;
-        }
-
-        html.dcr-mobile-approach-focus-active .approach-ig-link,
-        html.dcr-mobile-approach-focus-active .ig-link,
-        html.dcr-mobile-approach-focus-active [data-approach-ig],
-        html.dcr-mobile-approach-focus-active [data-instagram-link] {
-          opacity: 0 !important;
-          filter: blur(6px) !important;
-          pointer-events: none !important;
-          transition:
-            opacity 1200ms cubic-bezier(0.22, 1, 0.36, 1),
-            filter 1600ms cubic-bezier(0.22, 1, 0.36, 1) !important;
-        }
-      }
     `;
 
     document.head.appendChild(style);
-
-    function setMobileViewportHeight() {
-      const viewportHeight =
-        window.visualViewport && window.visualViewport.height
-          ? window.visualViewport.height
-          : window.innerHeight;
-
-      document.documentElement.style.setProperty(
-        "--dcr-mobile-vh",
-        viewportHeight + "px"
-      );
-    }
-
-    setMobileViewportHeight();
-
-    window.addEventListener("resize", setMobileViewportHeight);
-    window.addEventListener("orientationchange", () => {
-      setTimeout(setMobileViewportHeight, 250);
-    });
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", setMobileViewportHeight);
-    }
   }
 
   let customPageLoadIntroHasRun = false;
@@ -1657,20 +1354,16 @@ const videos = {
     ensureNameShadowSpot();
     document.documentElement.classList.add("dcr-name-shadow-spot-on");
 
-    if (isMobileLayoutViewport()) {
-      prepareMobileMainNavIntroTargets();
-    } else {
-      getLeftNavButtons().forEach((item) => {
-        item.style.transformOrigin = "0% 50%";
-        item.style.transition = "none";
-        item.style.visibility = "visible";
-        item.style.opacity = "0";
-        item.style.filter = "blur(8px)";
-        item.style.transform = "translateX(-18px) scale(0.988)";
-        item.style.pointerEvents = "none";
-        item.style.willChange = "opacity, filter, transform";
-      });
-    }
+    getLeftNavButtons().forEach((item) => {
+      item.style.transformOrigin = "0% 50%";
+      item.style.transition = "none";
+      item.style.visibility = "visible";
+      item.style.opacity = "0";
+      item.style.filter = "blur(8px)";
+      item.style.transform = "translateX(-18px) scale(0.988)";
+      item.style.pointerEvents = "none";
+      item.style.willChange = "opacity, filter, transform";
+    });
 
     if (videos.main) {
       videos.main.style.transition = "none";
@@ -1753,10 +1446,6 @@ const videos = {
             item.style.willChange = "";
           });
 
-          if (isMobileLayoutViewport() && !activeSection && !isApproachOpen) {
-            applyMobileMainNavStaticState(null);
-          }
-
           getCenterNameElements().forEach((element) => {
             element.style.transitionDelay = "";
             element.style.willChange = "";
@@ -1791,12 +1480,6 @@ const videos = {
   }
 
   function getMainNavButton(sectionName) {
-    if (isMobileLayoutViewport()) {
-      const mobileButton = getMobileMainNavButton(sectionName);
-
-      if (mobileButton) return mobileButton;
-    }
-
     const buttonByAttribute = document.querySelector("[data-main-nav='" + sectionName + "']");
     if (buttonByAttribute) return buttonByAttribute;
 
@@ -1842,24 +1525,6 @@ const videos = {
   }
 
   function getElementsToDim() {
-    if (isMobileLayoutViewport()) {
-      return Array.from(new Set([
-        ...getMobileMainNavButtons(),
-        ...Array.from(document.querySelectorAll(
-          ".post-production-projects-panel .nav-text, " +
-          ".post-production-projects-panel a, " +
-          ".direction-projects-panel .nav-text, " +
-          ".direction-projects-panel a, " +
-          ".colour-projects-panel .nav-text, " +
-          ".colour-projects-panel a, " +
-          ".color-projects-panel .nav-text, " +
-          ".color-projects-panel a"
-        ))
-      ])).filter((element) => {
-        return !elementBelongsToInactiveProjectPanel(element);
-      });
-    }
-
     return Array.from(document.querySelectorAll(
       ".side-nav .nav-text, " +
       ".side-nav a, " +
@@ -1979,20 +1644,6 @@ const videos = {
 
   function clearProjectFocus() {
     activeProjectButton = null;
-
-    if (isMobileLayoutViewport()) {
-      getElementsToDim().forEach((element) => {
-        if (isMobileMainNavButton(element)) {
-          return;
-        }
-
-        resetElement(element);
-      });
-
-      applyMobileMainNavStaticState(activeSection);
-      forceInactiveProjectPanelsHidden();
-      return;
-    }
 
     getElementsToDim().forEach((element) => {
       resetElement(element);
@@ -3019,11 +2670,7 @@ const videos = {
     forceInactiveProjectPanelsHidden();
 
     if (navButton) {
-      if (isMobileLayoutViewport()) {
-        applyMobileMainNavStaticState(sectionName);
-      } else {
-        focusElement(navButton);
-      }
+      focusElement(navButton);
     }
 
     const linkedRevealDelayMap = isSwitchingBetweenProjectMenus
@@ -3624,7 +3271,6 @@ const videos = {
       event.stopImmediatePropagation();
 
       showContactAnimated();
-      clearMobileStickyNavHoverSoon("contact");
     });
   }
 
