@@ -1088,28 +1088,43 @@ const videos = {
   }
 
   function enterMobileApproachFocus() {
-    if (!isPhase2AMobileViewport()) return;
+    if (!isPhase2AMobileViewport()) {
+      document.documentElement.classList.remove("dcr-phase2b-mobile-approach-active");
+      return;
+    }
 
     clearMobileApproachNavTimeouts();
     mobileApproachFocusIsExiting = false;
 
+    document.documentElement.classList.add("dcr-phase2b-mobile-approach-active");
+
     revealMobileApproachBackButton(900);
   }
 
-  function exitMobileApproachFocus() {
+  function exitMobileApproachFocus(delay) {
+    document.documentElement.classList.remove("dcr-phase2b-mobile-approach-entering");
+
     if (!isPhase2AMobileViewport()) {
+      document.documentElement.classList.remove("dcr-phase2b-mobile-approach-active");
       mobileApproachFocusIsExiting = false;
       return;
     }
+
+    const navReturnDelay = typeof delay === "number" ? delay : 0;
 
     mobileApproachFocusIsExiting = true;
     clearMobileApproachNavTimeouts();
     hideMobileApproachBackButton();
 
+    const navReturnTimeout = setTimeout(() => {
+      document.documentElement.classList.remove("dcr-phase2b-mobile-approach-active");
+    }, Math.max(0, navReturnDelay));
+
     const clearStateTimeout = setTimeout(() => {
       mobileApproachFocusIsExiting = false;
-    }, 1200);
+    }, Math.max(1200, navReturnDelay + 1200));
 
+    mobileApproachNavTimeouts.push(navReturnTimeout);
     mobileApproachNavTimeouts.push(clearStateTimeout);
   }
 
@@ -1366,6 +1381,34 @@ const videos = {
           background-color: transparent !important;
           outline: none !important;
           box-shadow: none !important;
+        }
+
+        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text {
+          transition:
+            opacity 1650ms cubic-bezier(0.22, 1, 0.36, 1),
+            filter 2150ms cubic-bezier(0.22, 1, 0.36, 1),
+            transform 2450ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+          opacity: 0 !important;
+          filter: blur(8px) !important;
+          transform: translateX(-28px) scale(0.988) !important;
+          pointer-events: none !important;
+          will-change: opacity, filter, transform;
+        }
+
+        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(1) {
+          transition-delay: 0ms !important;
+        }
+
+        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(2) {
+          transition-delay: 120ms !important;
+        }
+
+        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(3) {
+          transition-delay: 240ms !important;
+        }
+
+        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(4) {
+          transition-delay: 360ms !important;
         }
       }
 
