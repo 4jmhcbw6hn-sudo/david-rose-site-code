@@ -5,6 +5,9 @@ const videos = {
     "tom-ford": document.getElementById("tom-ford-reel")
   };
 
+  const mainReelPosterUrl =
+    "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-poster.jpg";
+
   let current = "main";
   let hasHoveredNarrative = false;
   let audioFadeAnimation = null;
@@ -38,6 +41,146 @@ const videos = {
     video.style.filter = "blur(0) brightness(1)";
     video.style.transform = "scale(1)";
   });
+
+  let mainReelPosterLayer = null;
+  let mainReelHasStartedPlaying = false;
+  let mainReelPosterCleanupTimeout = null;
+
+  function shouldGateMainReelPlayback() {
+    return Boolean(
+      videos.main &&
+        window.matchMedia &&
+        window.matchMedia("(max-width: 1024px)").matches
+    );
+  }
+
+  function ensureMainReelPosterLayer() {
+    if (!shouldGateMainReelPlayback()) return null;
+
+    if (!mainReelPosterLayer) {
+      mainReelPosterLayer = document.createElement("div");
+      mainReelPosterLayer.className = "dcr-main-reel-poster-gate";
+      mainReelPosterLayer.setAttribute("aria-hidden", "true");
+
+      Object.assign(mainReelPosterLayer.style, {
+        position: "fixed",
+        inset: "0",
+        zIndex: "2",
+        pointerEvents: "none",
+        backgroundImage: 'url("' + mainReelPosterUrl + '")',
+        backgroundSize: "cover",
+        backgroundPosition: "center center",
+        backgroundRepeat: "no-repeat",
+        opacity: "1",
+        visibility: "visible",
+        filter: "blur(0) brightness(1)",
+        transform: "scale(1)",
+        transformOrigin: "50% 50%",
+        willChange: "opacity, filter, transform"
+      });
+
+      const videoParent = videos.main && videos.main.parentElement;
+
+      if (videoParent) {
+        videoParent.appendChild(mainReelPosterLayer);
+      } else {
+        document.body.appendChild(mainReelPosterLayer);
+      }
+    }
+
+    return mainReelPosterLayer;
+  }
+
+  function applyMainReelPosterVisualState(filter, transform, transition) {
+    const posterLayer = ensureMainReelPosterLayer();
+
+    if (!posterLayer) return;
+
+    if (transition) {
+      posterLayer.style.transition = transition;
+    }
+
+    posterLayer.style.visibility = "visible";
+    posterLayer.style.opacity = mainReelHasStartedPlaying ? "0" : "1";
+    posterLayer.style.filter = filter;
+    posterLayer.style.transform = transform;
+  }
+
+  function revealMainReelAfterPlayback() {
+    if (!shouldGateMainReelPlayback()) return;
+
+    mainReelHasStartedPlaying = true;
+
+    if (mainReelPosterCleanupTimeout) {
+      clearTimeout(mainReelPosterCleanupTimeout);
+      mainReelPosterCleanupTimeout = null;
+    }
+
+    if (videos.main) {
+      videos.main.style.opacity = "1";
+      videos.main.style.pointerEvents = "none";
+      videos.main.controls = false;
+      videos.main.removeAttribute("controls");
+    }
+
+    const posterLayer = ensureMainReelPosterLayer();
+
+    if (!posterLayer) return;
+
+    posterLayer.style.transition =
+      "opacity 1200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+      "filter 1800ms cubic-bezier(0.16, 1, 0.3, 1), " +
+      "transform 2200ms cubic-bezier(0.13, 1, 0.22, 1)";
+    posterLayer.style.opacity = "0";
+
+    mainReelPosterCleanupTimeout = setTimeout(() => {
+      posterLayer.style.visibility = "hidden";
+      posterLayer.style.willChange = "";
+    }, 1400);
+  }
+
+  function prepareMainReelPlaybackGate() {
+    if (!shouldGateMainReelPlayback()) return;
+
+    const mainReel = videos.main;
+
+    ensureMainReelPosterLayer();
+
+    mainReel.muted = true;
+    mainReel.defaultMuted = true;
+    mainReel.autoplay = true;
+    mainReel.loop = true;
+    mainReel.playsInline = true;
+    mainReel.setAttribute("muted", "");
+    mainReel.setAttribute("autoplay", "");
+    mainReel.setAttribute("loop", "");
+    mainReel.setAttribute("playsinline", "");
+    mainReel.setAttribute("webkit-playsinline", "");
+    mainReel.setAttribute("preload", "auto");
+    mainReel.setAttribute("disablepictureinpicture", "");
+    mainReel.setAttribute("disableremoteplayback", "");
+    mainReel.controls = false;
+    mainReel.removeAttribute("controls");
+    mainReel.style.pointerEvents = "none";
+
+    if (!mainReelHasStartedPlaying) {
+      mainReel.style.opacity = "0";
+    }
+
+    ["playing", "timeupdate"].forEach((eventName) => {
+      mainReel.addEventListener(eventName, revealMainReelAfterPlayback, {
+        once: true
+      });
+    });
+
+    const playAttempt = mainReel.play();
+
+    if (playAttempt && typeof playAttempt.catch === "function") {
+      playAttempt.catch(() => {});
+    }
+  }
+
+  prepareMainReelPlaybackGate();
 
   function easeInOutCubic(t) {
     return t < 0.5
@@ -1658,10 +1801,17 @@ const videos = {
 
     if (videos.main) {
       videos.main.style.transition = "none";
-      videos.main.style.opacity = "1";
+      videos.main.style.opacity =
+        shouldGateMainReelPlayback() && !mainReelHasStartedPlaying ? "0" : "1";
       videos.main.style.filter = "blur(18px) brightness(0.68) saturate(0.92)";
       videos.main.style.transform = "scale(1.026)";
       videos.main.style.willChange = "filter, transform";
+
+      applyMainReelPosterVisualState(
+        "blur(18px) brightness(0.68) saturate(0.92)",
+        "scale(1.026)",
+        "none"
+      );
     }
 
     const introOverlay = document.querySelector(".intro-overlay");
@@ -1684,13 +1834,29 @@ const videos = {
         runIntroAtmosphere();
 
         if (videos.main) {
-          videos.main.style.transition =
+          const mainReelResolveTransition =
             "filter 8200ms cubic-bezier(0.16, 1, 0.3, 1), " +
             "transform 8600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          videos.main.style.opacity = "1";
+          videos.main.style.transition = mainReelResolveTransition;
+          videos.main.style.opacity =
+            shouldGateMainReelPlayback() && !mainReelHasStartedPlaying ? "0" : "1";
           videos.main.style.filter = "blur(0) brightness(1) saturate(1)";
           videos.main.style.transform = "scale(1)";
+
+          applyMainReelPosterVisualState(
+            "blur(0) brightness(1) saturate(1)",
+            "scale(1)",
+            mainReelResolveTransition
+          );
+
+          if (shouldGateMainReelPlayback() && videos.main.paused) {
+            const playAttempt = videos.main.play();
+
+            if (playAttempt && typeof playAttempt.catch === "function") {
+              playAttempt.catch(() => {});
+            }
+          }
         }
 
         getIntroNameElements().forEach((element, index) => {
