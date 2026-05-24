@@ -1513,12 +1513,18 @@ const videos = {
         showNameShadowSpot(0);
 
         getLeftNavButtons().forEach((item, index) => {
-          const delay = 2850 + index * 115;
+          const isMobileIntro = isPhase2AMobileViewport();
+          const delay = (isMobileIntro ? 3150 : 2850) + index * (isMobileIntro ? 140 : 115);
+          const opacityDuration = isMobileIntro ? 2700 : 2300;
+          const filterDuration = isMobileIntro ? 3600 : 3100;
+          const transformDuration = isMobileIntro ? 4300 : 3600;
+          const settleDelay = isMobileIntro ? 3300 : 2700;
+          const settleStagger = isMobileIntro ? 80 : 65;
 
           item.style.transition =
-            "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 3100ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "opacity " + opacityDuration + "ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter " + filterDuration + "ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform " + transformDuration + "ms cubic-bezier(0.13, 1, 0.22, 1)";
 
           item.style.transitionDelay = delay + "ms";
           item.style.visibility = "visible";
@@ -1529,7 +1535,7 @@ const videos = {
 
           const navSettleTimeout = setTimeout(() => {
             settleNavItemAfterArrival(item);
-          }, delay + 2700 + index * 65);
+          }, delay + settleDelay + index * settleStagger);
 
           revealTimeouts.push(navSettleTimeout);
         });
