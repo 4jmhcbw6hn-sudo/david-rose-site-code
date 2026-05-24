@@ -1442,9 +1442,9 @@ const videos = {
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text,
         html.dcr-phase2b-mobile-approach-active .side-nav > .ig-link {
           transition:
-            opacity 1650ms cubic-bezier(0.22, 1, 0.36, 1),
-            filter 2150ms cubic-bezier(0.22, 1, 0.36, 1),
-            transform 2450ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+            opacity 2050ms cubic-bezier(0.22, 1, 0.36, 1),
+            filter 2700ms cubic-bezier(0.22, 1, 0.36, 1),
+            transform 3200ms cubic-bezier(0.22, 1, 0.36, 1) !important;
           opacity: 0 !important;
           filter: blur(8px) !important;
           transform: translateX(-28px) scale(0.988) !important;
@@ -1458,12 +1458,12 @@ const videos = {
 
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(2),
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(4) {
-          transition-delay: 130ms !important;
+          transition-delay: 170ms !important;
         }
 
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(1),
         html.dcr-phase2b-mobile-approach-active .side-nav > .ig-link {
-          transition-delay: 260ms !important;
+          transition-delay: 340ms !important;
         }
       }
 
@@ -2375,13 +2375,15 @@ const videos = {
     const igLinks = Array.from(document.querySelectorAll(".approach-ig-link"));
 
     const isMobileApproachFocus =
-      isMobileLayoutViewport() &&
-      document.documentElement.classList.contains("dcr-mobile-approach-focus-active");
+      (isMobileLayoutViewport() &&
+        document.documentElement.classList.contains("dcr-mobile-approach-focus-active")) ||
+      (isPhase2AMobileViewport() &&
+        document.documentElement.classList.contains("dcr-phase2b-mobile-approach-active"));
 
-    const textStartDelay = isMobileApproachFocus ? 420 : 1550;
-    const lineStagger = isMobileApproachFocus ? 135 : 170;
-    const groupPause = isMobileApproachFocus ? 360 : 460;
-    const fadeInDuration = isMobileApproachFocus ? 3000 : 3600;
+    const textStartDelay = isMobileApproachFocus ? 1050 : 1550;
+    const lineStagger = isMobileApproachFocus ? 145 : 170;
+    const groupPause = isMobileApproachFocus ? 410 : 460;
+    const fadeInDuration = isMobileApproachFocus ? 3400 : 3600;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     let delay = textStartDelay;
