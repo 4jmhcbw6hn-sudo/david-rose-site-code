@@ -1580,10 +1580,20 @@ const videos = {
   }
 
   function getIntroNameElements() {
-    const nameElements = document.querySelectorAll(".center-name-wrapper .name-stack");
+    const namePieces = document.querySelectorAll(
+      ".center-name-wrapper .center-name-text-3, .center-name-wrapper-opening .center-name-text-3"
+    );
 
-    if (nameElements.length) {
-      return nameElements;
+    if (namePieces.length) {
+      return namePieces;
+    }
+
+    const nameStacks = document.querySelectorAll(
+      ".center-name-wrapper .name-stack, .center-name-wrapper-opening .name-stack"
+    );
+
+    if (nameStacks.length) {
+      return nameStacks;
     }
 
     return getCenterNameElements();
@@ -1608,24 +1618,26 @@ const videos = {
       openingName.style.pointerEvents = "none";
     }
 
-    getIntroNameElements().forEach((element) => {
-      element.style.transformOrigin = "50% 50%";
+    getIntroNameElements().forEach((element, index) => {
+      element.style.transformOrigin = "50% 52%";
       element.style.transition = "none";
+      element.style.transitionDelay = "0ms";
       element.style.visibility = "visible";
-      element.style.opacity = "0.54";
-      element.style.filter = "blur(4.8px)";
-      element.style.transform = "translateY(4px) scale(1.006)";
+      element.style.opacity = "0.38";
+      element.style.filter = "blur(6.2px)";
+      element.style.transform = "translateY(8px) scale(1.018)";
       element.style.pointerEvents = "none";
       element.style.willChange = "opacity, filter, transform";
+      element.dataset.dcrIntroNameIndex = String(index);
     });
 
     getIntroSubtitleElements().forEach((element) => {
       element.style.transformOrigin = "50% 50%";
       element.style.transition = "none";
       element.style.visibility = "visible";
-      element.style.opacity = "0.16";
-      element.style.filter = "blur(5.2px)";
-      element.style.transform = "translateY(5px) scale(1.004)";
+      element.style.opacity = "0.10";
+      element.style.filter = "blur(5.4px)";
+      element.style.transform = "translateY(5px) scale(1.003)";
       element.style.pointerEvents = "none";
       element.style.willChange = "opacity, filter, transform";
     });
@@ -1681,13 +1693,13 @@ const videos = {
           videos.main.style.transform = "scale(1)";
         }
 
-        getIntroNameElements().forEach((element) => {
+        getIntroNameElements().forEach((element, index) => {
           element.style.transition =
-            "opacity 2700ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 4300ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 6400ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "opacity 3200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 5200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 7200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          element.style.transitionDelay = "120ms";
+          element.style.transitionDelay = 120 + index * 105 + "ms";
           element.style.visibility = "visible";
           element.style.opacity = "1";
           element.style.filter = "blur(0)";
@@ -1697,11 +1709,11 @@ const videos = {
 
         getIntroSubtitleElements().forEach((element) => {
           element.style.transition =
-            "opacity 3900ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 5200ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 6600ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "opacity 4700ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 6200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 7200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          element.style.transitionDelay = "560ms";
+          element.style.transitionDelay = "980ms";
           element.style.visibility = "visible";
           element.style.opacity = "1";
           element.style.filter = "blur(0)";
@@ -1709,7 +1721,7 @@ const videos = {
           element.style.pointerEvents = "";
         });
 
-        showNameShadowSpot(180);
+        showNameShadowSpot(220);
 
         getLeftNavButtons().forEach((item, index) => {
           const isMobileIntro = isPhase2AMobileViewport();
