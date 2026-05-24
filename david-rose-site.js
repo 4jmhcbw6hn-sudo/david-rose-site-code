@@ -1392,6 +1392,11 @@ const videos = {
         .center-name-wrapper-opening .subheadline {
           text-align: center !important;
         }
+
+        .center-name-wrapper .name-stack,
+        .center-name-wrapper-opening .name-stack {
+          word-spacing: -0.10em !important;
+        }
       }
 
     `;
