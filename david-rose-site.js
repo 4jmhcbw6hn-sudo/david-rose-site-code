@@ -1612,9 +1612,9 @@ const videos = {
       element.style.transformOrigin = "50% 50%";
       element.style.transition = "none";
       element.style.visibility = "visible";
-      element.style.opacity = "0.68";
-      element.style.filter = "blur(3.8px)";
-      element.style.transform = "translateY(2px) scale(0.992)";
+      element.style.opacity = "0.54";
+      element.style.filter = "blur(4.8px)";
+      element.style.transform = "translateY(4px) scale(1.006)";
       element.style.pointerEvents = "none";
       element.style.willChange = "opacity, filter, transform";
     });
@@ -1623,9 +1623,9 @@ const videos = {
       element.style.transformOrigin = "50% 50%";
       element.style.transition = "none";
       element.style.visibility = "visible";
-      element.style.opacity = "0";
-      element.style.filter = "blur(3.2px)";
-      element.style.transform = "translateY(3px) scale(0.992)";
+      element.style.opacity = "0.16";
+      element.style.filter = "blur(5.2px)";
+      element.style.transform = "translateY(5px) scale(1.004)";
       element.style.pointerEvents = "none";
       element.style.willChange = "opacity, filter, transform";
     });
@@ -1683,11 +1683,11 @@ const videos = {
 
         getIntroNameElements().forEach((element) => {
           element.style.transition =
-            "opacity 2200ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 3200ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 5200ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "opacity 2700ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 4300ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 6400ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          element.style.transitionDelay = "180ms";
+          element.style.transitionDelay = "120ms";
           element.style.visibility = "visible";
           element.style.opacity = "1";
           element.style.filter = "blur(0)";
@@ -1697,11 +1697,11 @@ const videos = {
 
         getIntroSubtitleElements().forEach((element) => {
           element.style.transition =
-            "opacity 1900ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 2800ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 4300ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "opacity 3900ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 5200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 6600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          element.style.transitionDelay = "980ms";
+          element.style.transitionDelay = "560ms";
           element.style.visibility = "visible";
           element.style.opacity = "1";
           element.style.filter = "blur(0)";
@@ -1709,7 +1709,7 @@ const videos = {
           element.style.pointerEvents = "";
         });
 
-        showNameShadowSpot(140);
+        showNameShadowSpot(180);
 
         getLeftNavButtons().forEach((item, index) => {
           const isMobileIntro = isPhase2AMobileViewport();
