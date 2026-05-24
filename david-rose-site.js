@@ -977,70 +977,12 @@ const videos = {
   let mobileApproachFocusIsExiting = false;
 
   function isMobileLayoutViewport() {
-    return window.matchMedia("(max-width: 1024px)").matches;
+    return false;
   }
 
   function clearMobileApproachNavTimeouts() {
     mobileApproachNavTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
     mobileApproachNavTimeouts = [];
-  }
-
-  function normalizeMobileNavLabel(text) {
-    return (text || "").replace(/\s+/g, " ").trim().toLowerCase();
-  }
-
-  function mobileMainNavSectionFromElement(element) {
-    if (!element) return "";
-
-    const attributeValue =
-      element.getAttribute && element.getAttribute("data-main-nav")
-        ? normalizeMobileNavLabel(element.getAttribute("data-main-nav"))
-        : "";
-
-    if (
-      attributeValue === "colour" ||
-      attributeValue === "color" ||
-      attributeValue === "post production"
-    ) {
-      return "colour";
-    }
-
-    if (attributeValue === "direction") return "direction";
-    if (attributeValue === "approach" || attributeValue === "my approach" || attributeValue === "my philosophy") return "approach";
-    if (attributeValue === "contact") return "contact";
-
-    const text = normalizeMobileNavLabel(element.textContent);
-
-    if (text === "colour" || text === "color" || text === "post production") return "colour";
-    if (text === "direction") return "direction";
-    if (text === "my approach" || text === "approach" || text === "my philosophy") return "approach";
-    if (text === "contact") return "contact";
-
-    return "";
-  }
-
-  function getMobileMainNavItems() {
-    const sections = ["colour", "direction", "approach", "contact"];
-    const byAttribute = sections
-      .map((sectionName) => document.querySelector("[data-main-nav='" + sectionName + "']"))
-      .filter(Boolean);
-
-    if (byAttribute.length) {
-      return Array.from(new Set(byAttribute));
-    }
-
-    const candidates = Array.from(document.querySelectorAll(".side-nav .nav-text, .side-nav a"));
-    const orderedItems = [];
-
-    sections.forEach((sectionName) => {
-      const exactItem = candidates.find((item) => {
-        return mobileMainNavSectionFromElement(item) === sectionName;
-      });
-
-      if (exactItem) orderedItems.push(exactItem);
-    });
-
-    return Array.from(new Set(orderedItems));
   }
 
   function getMobileApproachBackButton() {
@@ -1065,18 +1007,22 @@ const videos = {
     prepareMobileApproachBackButton(button);
 
     const revealTimeout = setTimeout(() => {
-      if (!isMobileLayoutViewport()) return;
-
       button.style.visibility = "visible";
       button.style.pointerEvents = "auto";
       button.style.transition =
-        "opacity 1450ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "filter 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 2200ms cubic-bezier(0.13, 1, 0.22, 1)";
+        "opacity 2100ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 3200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
       button.style.opacity = "1";
       button.style.filter = "blur(0)";
       button.style.transform = "translateX(0) scale(1)";
+
+      const settleTimeout = setTimeout(() => {
+        settleNavItemAfterArrival(button);
+      }, 2600);
+
+      mobileApproachNavTimeouts.push(settleTimeout);
     }, revealDelay);
 
     mobileApproachNavTimeouts.push(revealTimeout);
@@ -1088,9 +1034,9 @@ const videos = {
     if (!button) return;
 
     button.style.transition =
-      "opacity 750ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "filter 950ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 1050ms cubic-bezier(0.22, 1, 0.36, 1)";
+      "opacity 1150ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 1500ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 1700ms cubic-bezier(0.22, 1, 0.36, 1)";
 
     button.style.opacity = "0";
     button.style.filter = "blur(6px)";
@@ -1099,13 +1045,13 @@ const videos = {
 
     const hideTimeout = setTimeout(() => {
       button.style.visibility = "hidden";
-    }, 1050);
+    }, 1750);
 
     mobileApproachNavTimeouts.push(hideTimeout);
   }
 
   function animateMobileNavOut() {
-    const items = getMobileMainNavItems();
+    const items = Array.from(getLeftNavButtons());
 
     items.forEach((item, index) => {
       item.style.transitionDelay = "0ms";
@@ -1113,14 +1059,14 @@ const videos = {
 
       const outTimeout = setTimeout(() => {
         item.style.transition =
-          "opacity 1550ms cubic-bezier(0.22, 1, 0.36, 1), " +
-          "filter 1950ms cubic-bezier(0.22, 1, 0.36, 1), " +
-          "transform 2200ms cubic-bezier(0.22, 1, 0.36, 1)";
+          "opacity 2400ms cubic-bezier(0.22, 1, 0.36, 1), " +
+          "filter 3000ms cubic-bezier(0.22, 1, 0.36, 1), " +
+          "transform 3400ms cubic-bezier(0.22, 1, 0.36, 1)";
 
         item.style.opacity = "0";
-        item.style.filter = "blur(8px)";
-        item.style.transform = "translateX(-26px) scale(0.988)";
-      }, index * 115);
+        item.style.filter = "blur(9px)";
+        item.style.transform = "translateX(-30px) scale(0.986)";
+      }, 180 + index * 145);
 
       mobileApproachNavTimeouts.push(outTimeout);
     });
@@ -1128,22 +1074,22 @@ const videos = {
 
   function animateMobileNavIn(delay) {
     const introDelay = typeof delay === "number" ? delay : 0;
-    const items = getMobileMainNavItems();
+    const items = Array.from(getLeftNavButtons());
 
     items.forEach((item, index) => {
       item.style.transition = "none";
       item.style.transitionDelay = "0ms";
       item.style.visibility = "visible";
       item.style.opacity = "0";
-      item.style.filter = "blur(8px)";
-      item.style.transform = "translateX(-18px) scale(0.988)";
+      item.style.filter = "blur(7px)";
+      item.style.transform = "translateX(-18px) scale(0.99)";
       item.style.pointerEvents = "none";
 
       const inTimeout = setTimeout(() => {
         item.style.transition =
-          "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "filter 3100ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
+          "opacity 1550ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "filter 2050ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "transform 2550ms cubic-bezier(0.13, 1, 0.22, 1)";
 
         item.style.opacity = "1";
         item.style.filter = "blur(0)";
@@ -1152,10 +1098,10 @@ const videos = {
 
         const settleTimeout = setTimeout(() => {
           settleNavItemAfterArrival(item);
-        }, 2700 + index * 65);
+        }, 1850 + index * 45);
 
         mobileApproachNavTimeouts.push(settleTimeout);
-      }, introDelay + index * 115);
+      }, introDelay + index * 78);
 
       mobileApproachNavTimeouts.push(inTimeout);
     });
@@ -1173,13 +1119,25 @@ const videos = {
       document.body.appendChild(button);
     }
 
-    if (!button.dataset.dcrFreshBackReady) {
-      button.dataset.dcrFreshBackReady = "true";
+    if (!button.dataset.dcrBackReady) {
+      button.dataset.dcrBackReady = "true";
+
+      button.addEventListener("mouseenter", () => {
+        if (!isMobileLayoutViewport()) return;
+        setNavItemFocused(button);
+      });
+
+      button.addEventListener("mouseleave", () => {
+        if (!isMobileLayoutViewport()) return;
+        settleNavItemAfterArrival(button);
+      });
 
       button.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
+
+        setNavItemFocused(button);
 
         if (isApproachOpen) {
           hideApproachAnimated(true);
@@ -1196,12 +1154,12 @@ const videos = {
     if (!isMobileLayoutViewport()) return;
 
     clearMobileApproachNavTimeouts();
+    mobileApproachFocusIsExiting = false;
     ensureMobileApproachBackButton();
-
     document.documentElement.classList.add("dcr-mobile-approach-focus-active");
 
     animateMobileNavOut();
-    revealMobileApproachBackButton(1250);
+    revealMobileApproachBackButton(5200);
   }
 
   function exitMobileApproachFocus(delay) {
@@ -1211,25 +1169,50 @@ const videos = {
       return;
     }
 
+    const focusIsActive =
+      document.documentElement.classList.contains("dcr-mobile-approach-focus-active");
+
+    if (!focusIsActive && mobileApproachFocusIsExiting) return;
+
     const exitDelay = typeof delay === "number" ? delay : 0;
-    const navReturnDelay = exitDelay > 0 ? Math.min(exitDelay, 3650) : 0;
 
     mobileApproachFocusIsExiting = true;
     clearMobileApproachNavTimeouts();
     hideMobileApproachBackButton();
 
-    const returnTimeout = setTimeout(() => {
+    getLeftNavButtons().forEach((item) => {
+      item.style.transition = "none";
+      item.style.transitionDelay = "0ms";
+      item.style.opacity = "0";
+      item.style.filter = "blur(7px)";
+      item.style.transform = "translateX(-18px) scale(0.99)";
+      item.style.pointerEvents = "none";
+    });
+
+    const runNavReturn = () => {
+      animateMobileNavIn(120);
+    };
+
+    const runFinalExit = () => {
       document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
-      animateMobileNavIn(0);
 
-      const clearStateTimeout = setTimeout(() => {
+      const clearExitStateTimeout = setTimeout(() => {
         mobileApproachFocusIsExiting = false;
-      }, 4200);
+      }, 3000);
 
-      mobileApproachNavTimeouts.push(clearStateTimeout);
-    }, navReturnDelay);
+      mobileApproachNavTimeouts.push(clearExitStateTimeout);
+    };
 
-    mobileApproachNavTimeouts.push(returnTimeout);
+    if (exitDelay > 0) {
+      const navReturnTimeout = setTimeout(runNavReturn, 1550);
+      const finalExitTimeout = setTimeout(runFinalExit, exitDelay);
+
+      mobileApproachNavTimeouts.push(navReturnTimeout, finalExitTimeout);
+      approachTimeouts.push(finalExitTimeout);
+    } else {
+      runFinalExit();
+      runNavReturn();
+    }
   }
 
   function installMobileLayoutFixes() {
@@ -1353,7 +1336,8 @@ const videos = {
         .post-production-projects-panel *,
         .direction-projects-panel *,
         .colour-projects-panel *,
-        .color-projects-panel * {
+        .color-projects-panel *,
+        .contact-overlay * {
           -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
           tap-highlight-color: rgba(0, 0, 0, 0) !important;
         }
@@ -1408,54 +1392,8 @@ const videos = {
         .center-name-wrapper-opening .subheadline {
           text-align: center !important;
         }
-
-        html.dcr-mobile-approach-focus-active .side-nav {
-          pointer-events: none !important;
-        }
-
-        .dcr-mobile-approach-back {
-          position: fixed !important;
-          left: 8.5vw !important;
-          top: 5.8vh !important;
-          top: 5.8svh !important;
-          z-index: 160 !important;
-          display: block !important;
-          visibility: hidden;
-          opacity: 0;
-          pointer-events: none;
-          appearance: none;
-          -webkit-appearance: none;
-          background: transparent !important;
-          border: 0 !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          color: rgba(255, 255, 255, 0.92);
-          font: inherit;
-          font-size: clamp(11px, 2.45vw, 14px);
-          line-height: 1;
-          letter-spacing: 0.34em;
-          text-transform: uppercase;
-          cursor: pointer;
-          filter: blur(6px);
-          transform: translateX(-16px) scale(0.986);
-          -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
-          outline: none !important;
-          box-shadow: none !important;
-        }
-
-        .approach-overlay {
-          position: fixed !important;
-          inset: 0 !important;
-          width: 100vw !important;
-          height: 100vh !important;
-          height: 100svh !important;
-          overflow: hidden !important;
-        }
-
-        .approach-container {
-          max-width: 86vw !important;
-        }
       }
+
     `;
 
     document.head.appendChild(style);
@@ -2463,7 +2401,7 @@ const videos = {
 
     isApproachOpen = false;
 
-    exitMobileApproachFocus(isMobileLayoutViewport() ? 3650 : 5200);
+    exitMobileApproachFocus(5200);
 
     resumeApproachVideoPlayback();
     showCenterNameAnimated(1500);
@@ -2771,10 +2709,6 @@ const videos = {
       hideApproachAnimated(true);
     } else {
       hideApproachImmediate(true);
-      if (isMobileLayoutViewport()) {
-        document.documentElement.classList.remove("dcr-mobile-approach-focus-active");
-        mobileApproachFocusIsExiting = false;
-      }
     }
 
     const previousSection = activeSection;
@@ -2853,7 +2787,7 @@ const videos = {
     if (wasApproachOpen) {
       hideSectionPanelsImmediately(sectionName);
 
-      const approachToProjectRevealDelay = isMobileLayoutViewport() ? 4300 : 1750;
+      const approachToProjectRevealDelay = 1750;
 
       const delayedRevealTimeout = setTimeout(() => {
         revealChosenSectionPanels();
