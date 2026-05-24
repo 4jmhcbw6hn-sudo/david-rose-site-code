@@ -1579,6 +1579,20 @@ const videos = {
     document.documentElement.classList.remove("dcr-intro-atmosphere-live");
   }
 
+  function getIntroNameElements() {
+    const nameElements = document.querySelectorAll(".center-name-wrapper .name-stack");
+
+    if (nameElements.length) {
+      return nameElements;
+    }
+
+    return getCenterNameElements();
+  }
+
+  function getIntroSubtitleElements() {
+    return document.querySelectorAll(".center-name-wrapper .subheadline");
+  }
+
   let customPageLoadIntroHasRun = false;
 
   function prepareCustomPageLoadIntro() {
@@ -1594,13 +1608,24 @@ const videos = {
       openingName.style.pointerEvents = "none";
     }
 
-    getCenterNameElements().forEach((element) => {
+    getIntroNameElements().forEach((element) => {
       element.style.transformOrigin = "50% 50%";
       element.style.transition = "none";
       element.style.visibility = "visible";
-      element.style.opacity = "0.94";
-      element.style.filter = "blur(1.15px)";
-      element.style.transform = "translateY(1.5px) scale(0.98)";
+      element.style.opacity = "0.68";
+      element.style.filter = "blur(3.8px)";
+      element.style.transform = "translateY(2px) scale(0.992)";
+      element.style.pointerEvents = "none";
+      element.style.willChange = "opacity, filter, transform";
+    });
+
+    getIntroSubtitleElements().forEach((element) => {
+      element.style.transformOrigin = "50% 50%";
+      element.style.transition = "none";
+      element.style.visibility = "visible";
+      element.style.opacity = "0";
+      element.style.filter = "blur(3.2px)";
+      element.style.transform = "translateY(3px) scale(0.992)";
       element.style.pointerEvents = "none";
       element.style.willChange = "opacity, filter, transform";
     });
@@ -1656,13 +1681,13 @@ const videos = {
           videos.main.style.transform = "scale(1)";
         }
 
-        getCenterNameElements().forEach((element) => {
+        getIntroNameElements().forEach((element) => {
           element.style.transition =
-            "opacity 1500ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "filter 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
-            "transform 4200ms cubic-bezier(0.13, 1, 0.22, 1)";
+            "opacity 2200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 3200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 5200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          element.style.transitionDelay = "20ms";
+          element.style.transitionDelay = "180ms";
           element.style.visibility = "visible";
           element.style.opacity = "1";
           element.style.filter = "blur(0)";
@@ -1670,7 +1695,21 @@ const videos = {
           element.style.pointerEvents = "";
         });
 
-        showNameShadowSpot(0);
+        getIntroSubtitleElements().forEach((element) => {
+          element.style.transition =
+            "opacity 1900ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "filter 2800ms cubic-bezier(0.16, 1, 0.3, 1), " +
+            "transform 4300ms cubic-bezier(0.13, 1, 0.22, 1)";
+
+          element.style.transitionDelay = "980ms";
+          element.style.visibility = "visible";
+          element.style.opacity = "1";
+          element.style.filter = "blur(0)";
+          element.style.transform = "translateY(0) scale(1)";
+          element.style.pointerEvents = "";
+        });
+
+        showNameShadowSpot(140);
 
         getLeftNavButtons().forEach((item, index) => {
           const isMobileIntro = isPhase2AMobileViewport();
