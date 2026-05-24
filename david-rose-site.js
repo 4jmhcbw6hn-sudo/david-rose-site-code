@@ -980,23 +980,13 @@ const videos = {
     return false;
   }
 
-  function isPhase2MobileViewport() {
+  function isPhase2AMobileViewport() {
     return window.matchMedia("(max-width: 1024px)").matches;
   }
 
   function clearMobileApproachNavTimeouts() {
     mobileApproachNavTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
     mobileApproachNavTimeouts = [];
-  }
-
-  function getPhase2MobileMainNavItems() {
-    const directItems = Array.from(document.querySelectorAll(".side-nav > .nav-text"));
-
-    if (directItems.length) {
-      return directItems.slice(0, 4);
-    }
-
-    return Array.from(document.querySelectorAll(".side-nav .nav-text")).slice(0, 4);
   }
 
   function getMobileApproachBackButton() {
@@ -1010,12 +1000,12 @@ const videos = {
     button.style.visibility = "hidden";
     button.style.opacity = "0";
     button.style.filter = "blur(6px)";
-    button.style.transform = "translateX(-16px) scale(0.986)";
+    button.style.transform = "translateX(-14px) scale(0.988)";
     button.style.pointerEvents = "none";
   }
 
   function revealMobileApproachBackButton(delay) {
-    if (!isPhase2MobileViewport()) return;
+    if (!isPhase2AMobileViewport()) return;
 
     const button = ensureMobileApproachBackButton();
     const revealDelay = typeof delay === "number" ? delay : 0;
@@ -1023,14 +1013,14 @@ const videos = {
     prepareMobileApproachBackButton(button);
 
     const revealTimeout = setTimeout(() => {
-      if (!isPhase2MobileViewport()) return;
+      if (!isPhase2AMobileViewport()) return;
 
       button.style.visibility = "visible";
       button.style.pointerEvents = "auto";
       button.style.transition =
-        "opacity 1550ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "filter 2050ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 2450ms cubic-bezier(0.13, 1, 0.22, 1)";
+        "opacity 1450ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 2200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
       button.style.opacity = "1";
       button.style.filter = "blur(0)";
@@ -1046,82 +1036,25 @@ const videos = {
     if (!button) return;
 
     button.style.transition =
-      "opacity 850ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "filter 1050ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 1150ms cubic-bezier(0.22, 1, 0.36, 1)";
+      "opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 900ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 1000ms cubic-bezier(0.22, 1, 0.36, 1)";
 
     button.style.opacity = "0";
     button.style.filter = "blur(6px)";
-    button.style.transform = "translateX(-16px) scale(0.986)";
+    button.style.transform = "translateX(-14px) scale(0.988)";
     button.style.pointerEvents = "none";
 
     const hideTimeout = setTimeout(() => {
       button.style.visibility = "hidden";
-    }, 1150);
+    }, 1000);
 
     mobileApproachNavTimeouts.push(hideTimeout);
   }
 
-  function animateMobileNavOut() {
-    if (!isPhase2MobileViewport()) return;
+  function animateMobileNavOut() {}
 
-    const items = getPhase2MobileMainNavItems();
-
-    items.forEach((item, index) => {
-      item.style.transitionDelay = "0ms";
-      item.style.pointerEvents = "none";
-
-      const outTimeout = setTimeout(() => {
-        item.style.transition =
-          "opacity 1700ms cubic-bezier(0.22, 1, 0.36, 1), " +
-          "filter 2150ms cubic-bezier(0.22, 1, 0.36, 1), " +
-          "transform 2450ms cubic-bezier(0.22, 1, 0.36, 1)";
-
-        item.style.opacity = "0";
-        item.style.filter = "blur(8px)";
-        item.style.transform = "translateX(-28px) scale(0.988)";
-      }, index * 125);
-
-      mobileApproachNavTimeouts.push(outTimeout);
-    });
-  }
-
-  function animateMobileNavIn(delay) {
-    if (!isPhase2MobileViewport()) return;
-
-    const introDelay = typeof delay === "number" ? delay : 0;
-    const items = getPhase2MobileMainNavItems();
-
-    items.forEach((item, index) => {
-      item.style.transition = "none";
-      item.style.transitionDelay = "0ms";
-      item.style.visibility = "visible";
-      item.style.opacity = "0";
-      item.style.filter = "blur(8px)";
-      item.style.transform = "translateX(-18px) scale(0.988)";
-      item.style.pointerEvents = "none";
-
-      const inTimeout = setTimeout(() => {
-        item.style.transition =
-          "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "filter 3100ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
-
-        item.style.opacity = "1";
-        item.style.filter = "blur(0)";
-        item.style.transform = "translateX(0) scale(1)";
-        item.style.pointerEvents = "auto";
-
-        const settleTimeout = setTimeout(() => {
-          settleNavItemAfterArrival(item);
-        }, 2700 + index * 65);
-
-        mobileApproachNavTimeouts.push(settleTimeout);
-      }, introDelay + index * 115);
-
-      mobileApproachNavTimeouts.push(inTimeout);
-    });
-  }
+  function animateMobileNavIn() {}
 
   function ensureMobileApproachBackButton() {
     let button = getMobileApproachBackButton();
@@ -1135,8 +1068,8 @@ const videos = {
       document.body.appendChild(button);
     }
 
-    if (!button.dataset.dcrPhase2BackReady) {
-      button.dataset.dcrPhase2BackReady = "true";
+    if (!button.dataset.dcrPhase2ABackReady) {
+      button.dataset.dcrPhase2ABackReady = "true";
 
       button.addEventListener("click", (event) => {
         event.preventDefault();
@@ -1146,7 +1079,7 @@ const videos = {
         if (isApproachOpen) {
           hideApproachAnimated(true);
         } else {
-          exitMobileApproachFocus(0);
+          hideMobileApproachBackButton();
         }
       });
     }
@@ -1155,59 +1088,29 @@ const videos = {
   }
 
   function enterMobileApproachFocus() {
-    if (!isPhase2MobileViewport()) return;
+    if (!isPhase2AMobileViewport()) return;
 
     clearMobileApproachNavTimeouts();
     mobileApproachFocusIsExiting = false;
-    ensureMobileApproachBackButton();
 
-    document.documentElement.classList.add("dcr-phase2-mobile-approach-active");
-
-    animateMobileNavOut();
-    revealMobileApproachBackButton(1150);
+    revealMobileApproachBackButton(900);
   }
 
-  function exitMobileApproachFocus(delay) {
-    if (!isPhase2MobileViewport()) {
-      document.documentElement.classList.remove("dcr-phase2-mobile-approach-active");
+  function exitMobileApproachFocus() {
+    if (!isPhase2AMobileViewport()) {
       mobileApproachFocusIsExiting = false;
       return;
     }
-
-    const focusIsActive =
-      document.documentElement.classList.contains("dcr-phase2-mobile-approach-active");
-
-    if (!focusIsActive && mobileApproachFocusIsExiting) return;
-    if (mobileApproachFocusIsExiting) return;
-
-    const exitDelay = typeof delay === "number" ? delay : 0;
 
     mobileApproachFocusIsExiting = true;
     clearMobileApproachNavTimeouts();
     hideMobileApproachBackButton();
 
-    getPhase2MobileMainNavItems().forEach((item) => {
-      item.style.transition = "none";
-      item.style.transitionDelay = "0ms";
-      item.style.opacity = "0";
-      item.style.filter = "blur(8px)";
-      item.style.transform = "translateX(-18px) scale(0.988)";
-      item.style.pointerEvents = "none";
-      item.style.visibility = "visible";
-    });
+    const clearStateTimeout = setTimeout(() => {
+      mobileApproachFocusIsExiting = false;
+    }, 1200);
 
-    const navReturnTimeout = setTimeout(() => {
-      document.documentElement.classList.remove("dcr-phase2-mobile-approach-active");
-      animateMobileNavIn(0);
-
-      const clearExitStateTimeout = setTimeout(() => {
-        mobileApproachFocusIsExiting = false;
-      }, 4300);
-
-      mobileApproachNavTimeouts.push(clearExitStateTimeout);
-    }, exitDelay);
-
-    mobileApproachNavTimeouts.push(navReturnTimeout);
+    mobileApproachNavTimeouts.push(clearStateTimeout);
   }
 
   function installMobileLayoutFixes() {
@@ -1451,7 +1354,7 @@ const videos = {
           text-transform: uppercase;
           cursor: pointer;
           filter: blur(6px);
-          transform: translateX(-16px) scale(0.986);
+          transform: translateX(-14px) scale(0.988);
           -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
           outline: none !important;
           box-shadow: none !important;
@@ -2431,9 +2334,8 @@ const videos = {
     isApproachOpen = false;
 
     const isMobileApproachReturn =
-      (isMobileLayoutViewport() || isPhase2MobileViewport()) &&
-      (document.documentElement.classList.contains("dcr-phase2-mobile-approach-active") ||
-        document.documentElement.classList.contains("dcr-mobile-approach-focus-active") ||
+      isMobileLayoutViewport() &&
+      (document.documentElement.classList.contains("dcr-mobile-approach-focus-active") ||
         mobileApproachFocusIsExiting);
 
     getApproachElements().forEach((element) => {
@@ -2474,16 +2376,15 @@ const videos = {
 
     isApproachOpen = false;
 
-    exitMobileApproachFocus(isPhase2MobileViewport() ? 4300 : 5200);
+    exitMobileApproachFocus(5200);
 
     resumeApproachVideoPlayback();
     showCenterNameAnimated(1500);
 
     if (shouldResetButton && activeMainNavButton === approachLink) {
       const isMobileApproachReturn =
-        (isMobileLayoutViewport() || isPhase2MobileViewport()) &&
-        (document.documentElement.classList.contains("dcr-phase2-mobile-approach-active") ||
-          document.documentElement.classList.contains("dcr-mobile-approach-focus-active") ||
+        isMobileLayoutViewport() &&
+        (document.documentElement.classList.contains("dcr-mobile-approach-focus-active") ||
           mobileApproachFocusIsExiting);
 
       if (approachLink && !isMobileApproachReturn) {
