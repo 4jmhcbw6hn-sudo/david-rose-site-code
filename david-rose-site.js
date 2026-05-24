@@ -1383,7 +1383,8 @@ const videos = {
           box-shadow: none !important;
         }
 
-        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text {
+        html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text,
+        html.dcr-phase2b-mobile-approach-active .side-nav > .ig-link {
           transition:
             opacity 1650ms cubic-bezier(0.22, 1, 0.36, 1),
             filter 2150ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -1409,6 +1410,10 @@ const videos = {
 
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(4) {
           transition-delay: 360ms !important;
+        }
+
+        html.dcr-phase2b-mobile-approach-active .side-nav > .ig-link {
+          transition-delay: 480ms !important;
         }
       }
 
@@ -2419,7 +2424,7 @@ const videos = {
 
     isApproachOpen = false;
 
-    exitMobileApproachFocus(5200);
+    exitMobileApproachFocus(isPhase2AMobileViewport() ? 1800 : 5200);
 
     resumeApproachVideoPlayback();
     showCenterNameAnimated(1500);
