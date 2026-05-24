@@ -1395,7 +1395,22 @@ const videos = {
 
         .center-name-wrapper .name-stack,
         .center-name-wrapper-opening .name-stack {
-          word-spacing: -0.22em !important;
+          word-spacing: normal !important;
+          display: inline-flex !important;
+          align-items: baseline !important;
+          justify-content: center !important;
+          column-gap: clamp(28px, 9.2vw, 52px) !important;
+          gap: clamp(28px, 9.2vw, 52px) !important;
+          width: auto !important;
+          max-width: 86vw !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+        }
+
+        .center-name-wrapper .name-stack > *,
+        .center-name-wrapper-opening .name-stack > * {
+          margin-left: 0 !important;
+          margin-right: 0 !important;
         }
       }
 
