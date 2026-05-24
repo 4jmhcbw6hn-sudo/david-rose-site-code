@@ -1056,6 +1056,41 @@ const videos = {
 
   function animateMobileNavIn() {}
 
+  function getPhase2BEMobileReturnItems() {
+    const items = Array.from(
+      document.querySelectorAll(".side-nav > .nav-text, .side-nav > .ig-link")
+    );
+
+    return items.slice(0, 5);
+  }
+
+  function preparePhase2BEMobileNavReturn() {
+    if (!isPhase2AMobileViewport()) return;
+
+    getPhase2BEMobileReturnItems().forEach((item, index) => {
+      item.style.visibility = "visible";
+      item.style.pointerEvents = "auto";
+      item.style.willChange = "opacity, filter, transform";
+      item.style.transition =
+        "opacity 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 2450ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 2900ms cubic-bezier(0.13, 1, 0.22, 1)";
+      item.style.transitionDelay = index * 115 + "ms";
+      item.style.opacity = "0.5";
+      item.style.filter = "blur(0)";
+      item.style.transform = "translateX(0) scale(1)";
+    });
+  }
+
+  function clearPhase2BEMobileNavReturn() {
+    getPhase2BEMobileReturnItems().forEach((item) => {
+      item.style.transitionDelay = "";
+      item.style.willChange = "";
+      item.style.pointerEvents = "";
+      settleNavItemAfterArrival(item);
+    });
+  }
+
   function ensureMobileApproachBackButton() {
     let button = getMobileApproachBackButton();
 
@@ -1102,10 +1137,21 @@ const videos = {
   }
 
   function exitMobileApproachFocus(delay) {
-    document.documentElement.classList.remove("dcr-phase2b-mobile-approach-entering");
+    const root = document.documentElement;
+
+    root.classList.remove("dcr-phase2b-mobile-approach-entering");
 
     if (!isPhase2AMobileViewport()) {
-      document.documentElement.classList.remove("dcr-phase2b-mobile-approach-active");
+      root.classList.remove("dcr-phase2b-mobile-approach-active");
+      mobileApproachFocusIsExiting = false;
+      return;
+    }
+
+    const hadMobileApproachActive =
+      root.classList.contains("dcr-phase2b-mobile-approach-active");
+
+    if (!hadMobileApproachActive) {
+      hideMobileApproachBackButton();
       mobileApproachFocusIsExiting = false;
       return;
     }
@@ -1117,12 +1163,22 @@ const videos = {
     hideMobileApproachBackButton();
 
     const navReturnTimeout = setTimeout(() => {
-      document.documentElement.classList.remove("dcr-phase2b-mobile-approach-active");
+      preparePhase2BEMobileNavReturn();
+
+      requestAnimationFrame(() => {
+        root.classList.remove("dcr-phase2b-mobile-approach-active");
+      });
+
+      const navReturnCleanupTimeout = setTimeout(() => {
+        clearPhase2BEMobileNavReturn();
+      }, 3600);
+
+      mobileApproachNavTimeouts.push(navReturnCleanupTimeout);
     }, Math.max(0, navReturnDelay));
 
     const clearStateTimeout = setTimeout(() => {
       mobileApproachFocusIsExiting = false;
-    }, Math.max(1200, navReturnDelay + 1200));
+    }, Math.max(4200, navReturnDelay + 4200));
 
     mobileApproachNavTimeouts.push(navReturnTimeout);
     mobileApproachNavTimeouts.push(clearStateTimeout);
