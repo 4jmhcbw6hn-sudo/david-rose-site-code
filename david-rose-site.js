@@ -6,8 +6,9 @@ const videos = {
   };
 
   let current = "main";
-  let mainReelHasConfirmedPlayback = false;
-  let mainReelPosterHideTimeout = null;
+  let mainReelMobileMotionReady = false;
+  let mainReelMobileMotionTimer = null;
+  let mainReelMobileMotionAttempts = 0;
   let hasHoveredNarrative = false;
   let audioFadeAnimation = null;
   let activeProjectButton = null;
@@ -36,143 +37,14 @@ const videos = {
       "filter 1.4s cubic-bezier(0.8, 0, 0.2, 1), " +
       "transform 1.4s ease";
 
-    video.style.opacity = key === "main" ? "1" : "0";
+    video.style.opacity =
+      key === "main" &&
+      !(window.matchMedia && window.matchMedia("(max-width: 1024px)").matches)
+        ? "1"
+        : "0";
     video.style.filter = "blur(0) brightness(1)";
     video.style.transform = "scale(1)";
   });
-
-  function shouldUseMainReelPosterFallback() {
-    return Boolean(
-      videos.main &&
-        window.matchMedia &&
-        window.matchMedia("(max-width: 1024px)").matches
-    );
-  }
-
-  function getMainReelPosterFallback() {
-    return document.querySelector(".dcr-main-reel-poster-fallback");
-  }
-
-  function forceMainReelDecorativeAttributes() {
-    if (!videos.main) return;
-
-    videos.main.muted = true;
-    videos.main.defaultMuted = true;
-    videos.main.loop = true;
-    videos.main.playsInline = true;
-    videos.main.controls = false;
-    videos.main.setAttribute("muted", "");
-    videos.main.setAttribute("loop", "");
-    videos.main.setAttribute("playsinline", "");
-    videos.main.setAttribute("webkit-playsinline", "");
-    videos.main.setAttribute("preload", "auto");
-    videos.main.setAttribute("disablepictureinpicture", "");
-    videos.main.setAttribute("disableremoteplayback", "");
-    videos.main.removeAttribute("controls");
-    videos.main.style.pointerEvents = "none";
-  }
-
-  function setMainReelPosterVisualState(filter, transform, transition) {
-    const poster = getMainReelPosterFallback();
-
-    if (!poster) return;
-
-    if (transition !== undefined) {
-      poster.style.transition = transition;
-    }
-
-    poster.style.visibility = "visible";
-    poster.style.opacity = mainReelHasConfirmedPlayback ? "0" : "1";
-    poster.style.filter = filter;
-    poster.style.transform = transform;
-  }
-
-  function revealMainReelAndHidePoster() {
-    if (!videos.main || mainReelHasConfirmedPlayback) return;
-
-    mainReelHasConfirmedPlayback = true;
-
-    if (mainReelPosterHideTimeout) {
-      clearTimeout(mainReelPosterHideTimeout);
-      mainReelPosterHideTimeout = null;
-    }
-
-    videos.main.style.transition =
-      "opacity 900ms cubic-bezier(0.16, 1, 0.3, 1), " +
-      "filter 1800ms cubic-bezier(0.16, 1, 0.3, 1), " +
-      "transform 2200ms cubic-bezier(0.13, 1, 0.22, 1)";
-    videos.main.style.visibility = "visible";
-    videos.main.style.opacity = "1";
-
-    const poster = getMainReelPosterFallback();
-
-    if (poster) {
-      poster.style.transition =
-        "opacity 1300ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "filter 1800ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 2200ms cubic-bezier(0.13, 1, 0.22, 1)";
-      poster.style.opacity = "0";
-
-      mainReelPosterHideTimeout = setTimeout(() => {
-        poster.style.visibility = "hidden";
-        poster.style.pointerEvents = "none";
-      }, 1400);
-    }
-  }
-
-  function prepareMainReelPosterFallback() {
-    if (!videos.main) return;
-
-    forceMainReelDecorativeAttributes();
-
-    if (!shouldUseMainReelPosterFallback()) {
-      videos.main.style.opacity = "1";
-      return;
-    }
-
-    const poster = getMainReelPosterFallback();
-
-    if (poster) {
-      poster.style.visibility = "visible";
-      poster.style.opacity = "1";
-      poster.style.pointerEvents = "none";
-      poster.style.willChange = "opacity, filter, transform";
-    }
-
-    videos.main.style.opacity = "0";
-    videos.main.style.visibility = "visible";
-
-    ["playing", "timeupdate"].forEach((eventName) => {
-      videos.main.addEventListener(eventName, revealMainReelAndHidePoster, {
-        once: true
-      });
-    });
-  }
-
-  function requestMainReelPlayback() {
-    if (!videos.main) return;
-
-    forceMainReelDecorativeAttributes();
-
-    const playAttempt = videos.main.play();
-
-    if (playAttempt && typeof playAttempt.catch === "function") {
-      playAttempt.catch(() => {
-        if (shouldUseMainReelPosterFallback()) {
-          const poster = getMainReelPosterFallback();
-
-          if (poster && !mainReelHasConfirmedPlayback) {
-            poster.style.visibility = "visible";
-            poster.style.opacity = "1";
-          }
-
-          videos.main.style.opacity = "0";
-        }
-      });
-    }
-  }
-
-  prepareMainReelPosterFallback();
 
   function easeInOutCubic(t) {
     return t < 0.5
@@ -198,161 +70,231 @@ const videos = {
     }
   }
 
-  function configureVideoAutoplayFallbacks() {
-    const videoStillUrls = new WeakMap();
+  function isMobileViewportForMainReel() {
+    return Boolean(
+      window.matchMedia &&
+        window.matchMedia("(max-width: 1024px)").matches
+    );
+  }
 
-    function getVideoStillFallbackElement() {
-      let fallback = document.querySelector(".dcr-video-still-fallback");
+  function getMainReelMobileStill() {
+    return document.querySelector(".dcr-main-reel-mobile-still");
+  }
 
-      if (!fallback) {
-        fallback = document.createElement("div");
-        fallback.className = "dcr-video-still-fallback";
-        document.body.appendChild(fallback);
-      }
+  function configureMainReelAsDecorative() {
+    const mainVideo = videos.main;
 
-      return fallback;
+    if (!mainVideo) return;
+
+    try {
+      mainVideo.muted = true;
+      mainVideo.defaultMuted = true;
+      mainVideo.loop = true;
+      mainVideo.playsInline = true;
+      mainVideo.controls = false;
+      mainVideo.removeAttribute("controls");
+      mainVideo.setAttribute("muted", "");
+      mainVideo.setAttribute("loop", "");
+      mainVideo.setAttribute("playsinline", "");
+      mainVideo.setAttribute("webkit-playsinline", "");
+      mainVideo.setAttribute("preload", "auto");
+      mainVideo.setAttribute("disablepictureinpicture", "");
+      mainVideo.setAttribute("disableremoteplayback", "");
+      mainVideo.disablePictureInPicture = true;
+      mainVideo.style.pointerEvents = "none";
+    } catch (error) {}
+  }
+
+  function keepMobileStillVisible() {
+    const still = getMainReelMobileStill();
+
+    if (!still || !isMobileViewportForMainReel()) return;
+
+    still.style.display = "block";
+    still.style.visibility = "visible";
+    still.style.opacity = "1";
+    still.style.pointerEvents = "none";
+
+    if (videos.main && !mainReelMobileMotionReady) {
+      videos.main.style.opacity = "0";
+      videos.main.style.visibility = "visible";
+      videos.main.style.pointerEvents = "none";
+    }
+  }
+
+  function confirmMobileMainReelMotion() {
+    if (!videos.main || mainReelMobileMotionReady) return;
+
+    mainReelMobileMotionReady = true;
+
+    if (mainReelMobileMotionTimer) {
+      clearTimeout(mainReelMobileMotionTimer);
+      mainReelMobileMotionTimer = null;
     }
 
-    function captureVideoStill(video) {
-      if (!video || videoStillUrls.has(video)) return;
+    const still = getMainReelMobileStill();
 
-      const poster = video.getAttribute("poster");
+    videos.main.style.visibility = "visible";
+    videos.main.style.pointerEvents = "none";
+    videos.main.style.transition =
+      "opacity 1800ms cubic-bezier(0.16, 1, 0.3, 1), " +
+      "filter 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+      "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
+    videos.main.style.opacity = "1";
 
-      if (poster) {
-        videoStillUrls.set(video, poster);
+    if (still) {
+      still.style.transition =
+        "opacity 2200ms cubic-bezier(0.16, 1, 0.3, 1)";
+      still.style.opacity = "0";
+
+      setTimeout(() => {
+        if (mainReelMobileMotionReady) {
+          still.style.visibility = "hidden";
+        }
+      }, 2300);
+    }
+  }
+
+  function watchMobileMainReelMotion(startTime) {
+    if (!videos.main || !isMobileViewportForMainReel() || mainReelMobileMotionReady) {
+      return;
+    }
+
+    const initialTime = typeof startTime === "number" ? startTime : videos.main.currentTime || 0;
+    let checks = 0;
+
+    if (mainReelMobileMotionTimer) {
+      clearTimeout(mainReelMobileMotionTimer);
+    }
+
+    function check() {
+      if (!videos.main || mainReelMobileMotionReady) return;
+
+      checks += 1;
+
+      const hasAdvanced = (videos.main.currentTime || 0) > initialTime + 0.08;
+      const isActuallyPlaying =
+        !videos.main.paused &&
+        !videos.main.ended &&
+        videos.main.readyState >= 2;
+
+      if (hasAdvanced || (isActuallyPlaying && checks >= 3)) {
+        confirmMobileMainReelMotion();
         return;
       }
 
-      try {
-        if (!video.videoWidth || !video.videoHeight) return;
-
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        const context = canvas.getContext("2d");
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        videoStillUrls.set(video, canvas.toDataURL("image/jpeg", 0.78));
-      } catch (error) {}
-    }
-
-    function showVideoStillFallback(video) {
-      captureVideoStill(video);
-
-      const stillUrl = videoStillUrls.get(video);
-      const fallback = getVideoStillFallbackElement();
-
-      if (stillUrl) {
-        fallback.style.backgroundImage = "url('" + stillUrl + "')";
-        fallback.style.backgroundColor = "transparent";
+      if (checks < 12) {
+        mainReelMobileMotionTimer = setTimeout(check, 180);
       } else {
-        fallback.style.backgroundImage = "";
-        fallback.style.backgroundColor = "rgba(0, 0, 0, 0.16)";
-        fallback.style.backdropFilter = "blur(0px)";
-        fallback.style.webkitBackdropFilter = "blur(0px)";
+        keepMobileStillVisible();
       }
-
-      document.documentElement.classList.add("dcr-video-fallback-active");
     }
 
-    function hideVideoStillFallback() {
-      document.documentElement.classList.remove("dcr-video-fallback-active");
+    mainReelMobileMotionTimer = setTimeout(check, 180);
+  }
+
+  function requestMobileMainReelMotion() {
+    if (!videos.main || !isMobileViewportForMainReel() || mainReelMobileMotionReady) {
+      return;
     }
 
-    function attemptAutoplay(video) {
-      if (!video) return;
+    configureMainReelAsDecorative();
+    keepMobileStillVisible();
 
-      try {
-        video.controls = false;
-        video.removeAttribute("controls");
-      } catch (error) {}
+    mainReelMobileMotionAttempts += 1;
 
-      const playPromise = video.play();
+    const startTime = videos.main.currentTime || 0;
 
-      if (playPromise !== undefined) {
+    try {
+      const playPromise = videos.main.play();
+
+      if (playPromise && typeof playPromise.then === "function") {
         playPromise
           .then(() => {
-            hideVideoStillFallback();
+            watchMobileMainReelMotion(startTime);
           })
           .catch(() => {
-            showVideoStillFallback(video);
+            keepMobileStillVisible();
           });
+      } else {
+        watchMobileMainReelMotion(startTime);
       }
-
-      setTimeout(() => {
-        if (video.paused || video.readyState < 2) {
-          showVideoStillFallback(video);
-        }
-      }, 650);
-
-      setTimeout(() => {
-        if (video.paused || video.readyState < 2) {
-          showVideoStillFallback(video);
-        }
-      }, 1550);
+    } catch (error) {
+      keepMobileStillVisible();
     }
+  }
 
-    Object.values(videos).forEach((video) => {
+  function configureVideoAutoplayFallbacks() {
+    Object.entries(videos).forEach(([key, video]) => {
       if (!video) return;
 
       try {
         video.controls = false;
         video.removeAttribute("controls");
-        video.muted = true;
-        video.defaultMuted = true;
-        video.setAttribute("muted", "");
+
+        if (key !== "tom-ford") {
+          video.muted = true;
+          video.defaultMuted = true;
+          video.setAttribute("muted", "");
+        }
+
         video.setAttribute("playsinline", "");
         video.setAttribute("webkit-playsinline", "");
         video.setAttribute("preload", "auto");
-        video.setAttribute("autoplay", "");
         video.disablePictureInPicture = true;
         video.setAttribute("disablepictureinpicture", "");
         video.setAttribute("controlslist", "nodownload noplaybackrate nofullscreen");
+        video.style.pointerEvents = "none";
       } catch (error) {}
-
-      video.addEventListener("loadeddata", () => {
-        captureVideoStill(video);
-        attemptAutoplay(video);
-      });
-
-      video.addEventListener("playing", hideVideoStillFallback);
     });
 
-    function kickstartCurrentVideo() {
-      const currentVideo = videos[current] || videos.main;
+    if (videos.main) {
+      configureMainReelAsDecorative();
 
-      if (currentVideo) {
-        if (currentVideo !== videos["tom-ford"]) {
-          safelySetMuted(currentVideo, true);
-        }
+      if (isMobileViewportForMainReel()) {
+        keepMobileStillVisible();
 
-        attemptAutoplay(currentVideo);
-      }
+        videos.main.addEventListener("playing", () => {
+          watchMobileMainReelMotion(videos.main.currentTime || 0);
+        });
 
-      if (videos.main && currentVideo !== videos.main) {
-        attemptAutoplay(videos.main);
+        videos.main.addEventListener("timeupdate", () => {
+          if (!mainReelMobileMotionReady && videos.main.currentTime > 0.08) {
+            confirmMobileMainReelMotion();
+          }
+        });
+
+        setTimeout(requestMobileMainReelMotion, 350);
+        setTimeout(requestMobileMainReelMotion, 1600);
+        setTimeout(requestMobileMainReelMotion, 3600);
+
+        ["touchstart", "pointerdown"].forEach((eventName) => {
+          document.addEventListener(eventName, requestMobileMainReelMotion, {
+            passive: true
+          });
+        });
+      } else {
+        playVideo(videos.main);
       }
     }
 
-    window.addEventListener("pageshow", kickstartCurrentVideo);
-
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) {
-        kickstartCurrentVideo();
+    window.addEventListener("pageshow", () => {
+      if (isMobileViewportForMainReel()) {
+        requestMobileMainReelMotion();
+      } else if (videos.main) {
+        playVideo(videos.main);
       }
     });
 
-    ["touchstart", "pointerdown"].forEach((eventName) => {
-      document.addEventListener(eventName, kickstartCurrentVideo, {
-        once: true,
-        passive: true
-      });
-    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) return;
 
-    setTimeout(kickstartCurrentVideo, 250);
-    setTimeout(kickstartCurrentVideo, 1200);
-    setTimeout(kickstartCurrentVideo, 2600);
+      if (isMobileViewportForMainReel()) {
+        requestMobileMainReelMotion();
+      } else if (videos.main) {
+        playVideo(videos.main);
+      }
+    });
   }
 
   function safelySetPlaybackRate(video, rate) {
@@ -1794,16 +1736,14 @@ const videos = {
     if (videos.main) {
       videos.main.style.transition = "none";
       videos.main.style.opacity =
-        shouldUseMainReelPosterFallback() && !mainReelHasConfirmedPlayback ? "0" : "1";
+        isMobileViewportForMainReel() && !mainReelMobileMotionReady ? "0" : "1";
       videos.main.style.filter = "blur(18px) brightness(0.68) saturate(0.92)";
       videos.main.style.transform = "scale(1.026)";
       videos.main.style.willChange = "filter, transform";
 
-      setMainReelPosterVisualState(
-        "blur(18px) brightness(0.68) saturate(0.92)",
-        "scale(1.026)",
-        "none"
-      );
+      if (isMobileViewportForMainReel() && !mainReelMobileMotionReady) {
+        keepMobileStillVisible();
+      }
     }
 
     const introOverlay = document.querySelector(".intro-overlay");
@@ -1826,23 +1766,18 @@ const videos = {
         runIntroAtmosphere();
 
         if (videos.main) {
-          const mainReelResolveTransition =
+          videos.main.style.transition =
             "filter 8200ms cubic-bezier(0.16, 1, 0.3, 1), " +
             "transform 8600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-          videos.main.style.transition = mainReelResolveTransition;
           videos.main.style.opacity =
-            shouldUseMainReelPosterFallback() && !mainReelHasConfirmedPlayback ? "0" : "1";
+            isMobileViewportForMainReel() && !mainReelMobileMotionReady ? "0" : "1";
           videos.main.style.filter = "blur(0) brightness(1) saturate(1)";
           videos.main.style.transform = "scale(1)";
 
-          setMainReelPosterVisualState(
-            "blur(0) brightness(1) saturate(1)",
-            "scale(1)",
-            mainReelResolveTransition
-          );
-
-          requestMainReelPlayback();
+          if (isMobileViewportForMainReel()) {
+            requestMobileMainReelMotion();
+          }
         }
 
         getIntroNameElements().forEach((element, index) => {
@@ -2185,11 +2120,16 @@ const videos = {
         "filter 1.4s cubic-bezier(0.8, 0, 0.2, 1), " +
         "transform 1.4s ease";
 
-      mainVideo.style.opacity = "1";
+      mainVideo.style.opacity =
+        isMobileViewportForMainReel() && !mainReelMobileMotionReady ? "0" : "1";
       mainVideo.style.filter = "blur(0) brightness(1)";
       mainVideo.style.transform = "scale(1)";
 
-      playVideo(mainVideo);
+      if (isMobileViewportForMainReel()) {
+        requestMobileMainReelMotion();
+      } else {
+        playVideo(mainVideo);
+      }
     }
 
     current = "main";
@@ -2237,10 +2177,16 @@ const videos = {
     if (mainVideo) {
       safelySetMuted(mainVideo, true);
       safelySetPlaybackRate(mainVideo, 1);
-      mainVideo.style.opacity = "1";
+      mainVideo.style.opacity =
+        isMobileViewportForMainReel() && !mainReelMobileMotionReady ? "0" : "1";
       mainVideo.style.filter = "blur(0) brightness(1)";
       mainVideo.style.transform = "scale(1)";
-      playVideo(mainVideo);
+
+      if (isMobileViewportForMainReel()) {
+        requestMobileMainReelMotion();
+      } else {
+        playVideo(mainVideo);
+      }
     }
 
     current = "main";
