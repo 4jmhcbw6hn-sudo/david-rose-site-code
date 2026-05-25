@@ -206,6 +206,12 @@ const videos = {
     const startTime = videos.main.currentTime || 0;
 
     try {
+      if (videos.main.readyState === 0) {
+        try {
+          videos.main.load();
+        } catch (loadError) {}
+      }
+
       const playPromise = videos.main.play();
 
       if (playPromise && typeof playPromise.then === "function") {
@@ -222,6 +228,25 @@ const videos = {
     } catch (error) {
       keepMobileStillVisible();
     }
+  }
+
+  function scheduleEarliestMobileMainReelMotion() {
+    if (!isMobileViewportForMainReel() || mainReelMobileMotionReady) return;
+
+    requestMobileMainReelMotion();
+
+    if (window.requestAnimationFrame) {
+      requestAnimationFrame(requestMobileMainReelMotion);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(requestMobileMainReelMotion);
+      });
+    }
+
+    setTimeout(requestMobileMainReelMotion, 0);
+    setTimeout(requestMobileMainReelMotion, 60);
+    setTimeout(requestMobileMainReelMotion, 180);
+    setTimeout(requestMobileMainReelMotion, 420);
+    setTimeout(requestMobileMainReelMotion, 900);
   }
 
   function configureVideoAutoplayFallbacks() {
@@ -254,6 +279,9 @@ const videos = {
       if (isMobileViewportForMainReel()) {
         keepMobileStillVisible();
 
+        videos.main.addEventListener("loadedmetadata", scheduleEarliestMobileMainReelMotion);
+        videos.main.addEventListener("loadeddata", scheduleEarliestMobileMainReelMotion);
+        videos.main.addEventListener("canplay", scheduleEarliestMobileMainReelMotion);
         videos.main.addEventListener("playing", () => {
           watchMobileMainReelMotion(videos.main.currentTime || 0);
         });
@@ -264,12 +292,13 @@ const videos = {
           }
         });
 
-        setTimeout(requestMobileMainReelMotion, 350);
-        setTimeout(requestMobileMainReelMotion, 1600);
-        setTimeout(requestMobileMainReelMotion, 3600);
+        scheduleEarliestMobileMainReelMotion();
+        setTimeout(scheduleEarliestMobileMainReelMotion, 1400);
+        setTimeout(scheduleEarliestMobileMainReelMotion, 3200);
 
-        ["touchstart", "pointerdown"].forEach((eventName) => {
+        ["touchstart", "pointerdown", "click"].forEach((eventName) => {
           document.addEventListener(eventName, requestMobileMainReelMotion, {
+            capture: true,
             passive: true
           });
         });
@@ -1776,7 +1805,7 @@ const videos = {
           videos.main.style.transform = "scale(1)";
 
           if (isMobileViewportForMainReel()) {
-            requestMobileMainReelMotion();
+            scheduleEarliestMobileMainReelMotion();
           }
         }
 
