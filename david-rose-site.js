@@ -5,10 +5,9 @@ const videos = {
     "tom-ford": document.getElementById("tom-ford-reel")
   };
 
-  const mainReelPosterUrl =
-    "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-poster.jpg";
-
   let current = "main";
+  let mainReelHasConfirmedPlayback = false;
+  let mainReelPosterHideTimeout = null;
   let hasHoveredNarrative = false;
   let audioFadeAnimation = null;
   let activeProjectButton = null;
@@ -42,11 +41,7 @@ const videos = {
     video.style.transform = "scale(1)";
   });
 
-  let mainReelPosterLayer = null;
-  let mainReelHasStartedPlaying = false;
-  let mainReelPosterCleanupTimeout = null;
-
-  function shouldGateMainReelPlayback() {
+  function shouldUseMainReelPosterFallback() {
     return Boolean(
       videos.main &&
         window.matchMedia &&
@@ -54,133 +49,130 @@ const videos = {
     );
   }
 
-  function ensureMainReelPosterLayer() {
-    if (!shouldGateMainReelPlayback()) return null;
-
-    if (!mainReelPosterLayer) {
-      mainReelPosterLayer = document.createElement("div");
-      mainReelPosterLayer.className = "dcr-main-reel-poster-gate";
-      mainReelPosterLayer.setAttribute("aria-hidden", "true");
-
-      Object.assign(mainReelPosterLayer.style, {
-        position: "fixed",
-        inset: "0",
-        zIndex: "2",
-        pointerEvents: "none",
-        backgroundImage: 'url("' + mainReelPosterUrl + '")',
-        backgroundSize: "cover",
-        backgroundPosition: "center center",
-        backgroundRepeat: "no-repeat",
-        opacity: "1",
-        visibility: "visible",
-        filter: "blur(0) brightness(1)",
-        transform: "scale(1)",
-        transformOrigin: "50% 50%",
-        willChange: "opacity, filter, transform"
-      });
-
-      const videoParent = videos.main && videos.main.parentElement;
-
-      if (videoParent) {
-        videoParent.appendChild(mainReelPosterLayer);
-      } else {
-        document.body.appendChild(mainReelPosterLayer);
-      }
-    }
-
-    return mainReelPosterLayer;
+  function getMainReelPosterFallback() {
+    return document.querySelector(".dcr-main-reel-poster-fallback");
   }
 
-  function applyMainReelPosterVisualState(filter, transform, transition) {
-    const posterLayer = ensureMainReelPosterLayer();
+  function forceMainReelDecorativeAttributes() {
+    if (!videos.main) return;
 
-    if (!posterLayer) return;
-
-    if (transition) {
-      posterLayer.style.transition = transition;
-    }
-
-    posterLayer.style.visibility = "visible";
-    posterLayer.style.opacity = mainReelHasStartedPlaying ? "0" : "1";
-    posterLayer.style.filter = filter;
-    posterLayer.style.transform = transform;
+    videos.main.muted = true;
+    videos.main.defaultMuted = true;
+    videos.main.loop = true;
+    videos.main.playsInline = true;
+    videos.main.controls = false;
+    videos.main.setAttribute("muted", "");
+    videos.main.setAttribute("loop", "");
+    videos.main.setAttribute("playsinline", "");
+    videos.main.setAttribute("webkit-playsinline", "");
+    videos.main.setAttribute("preload", "auto");
+    videos.main.setAttribute("disablepictureinpicture", "");
+    videos.main.setAttribute("disableremoteplayback", "");
+    videos.main.removeAttribute("controls");
+    videos.main.style.pointerEvents = "none";
   }
 
-  function revealMainReelAfterPlayback() {
-    if (!shouldGateMainReelPlayback()) return;
+  function setMainReelPosterVisualState(filter, transform, transition) {
+    const poster = getMainReelPosterFallback();
 
-    mainReelHasStartedPlaying = true;
+    if (!poster) return;
 
-    if (mainReelPosterCleanupTimeout) {
-      clearTimeout(mainReelPosterCleanupTimeout);
-      mainReelPosterCleanupTimeout = null;
+    if (transition !== undefined) {
+      poster.style.transition = transition;
     }
 
-    if (videos.main) {
-      videos.main.style.opacity = "1";
-      videos.main.style.pointerEvents = "none";
-      videos.main.controls = false;
-      videos.main.removeAttribute("controls");
+    poster.style.visibility = "visible";
+    poster.style.opacity = mainReelHasConfirmedPlayback ? "0" : "1";
+    poster.style.filter = filter;
+    poster.style.transform = transform;
+  }
+
+  function revealMainReelAndHidePoster() {
+    if (!videos.main || mainReelHasConfirmedPlayback) return;
+
+    mainReelHasConfirmedPlayback = true;
+
+    if (mainReelPosterHideTimeout) {
+      clearTimeout(mainReelPosterHideTimeout);
+      mainReelPosterHideTimeout = null;
     }
 
-    const posterLayer = ensureMainReelPosterLayer();
-
-    if (!posterLayer) return;
-
-    posterLayer.style.transition =
-      "opacity 1200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+    videos.main.style.transition =
+      "opacity 900ms cubic-bezier(0.16, 1, 0.3, 1), " +
       "filter 1800ms cubic-bezier(0.16, 1, 0.3, 1), " +
       "transform 2200ms cubic-bezier(0.13, 1, 0.22, 1)";
-    posterLayer.style.opacity = "0";
+    videos.main.style.visibility = "visible";
+    videos.main.style.opacity = "1";
 
-    mainReelPosterCleanupTimeout = setTimeout(() => {
-      posterLayer.style.visibility = "hidden";
-      posterLayer.style.willChange = "";
-    }, 1400);
+    const poster = getMainReelPosterFallback();
+
+    if (poster) {
+      poster.style.transition =
+        "opacity 1300ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 1800ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 2200ms cubic-bezier(0.13, 1, 0.22, 1)";
+      poster.style.opacity = "0";
+
+      mainReelPosterHideTimeout = setTimeout(() => {
+        poster.style.visibility = "hidden";
+        poster.style.pointerEvents = "none";
+      }, 1400);
+    }
   }
 
-  function prepareMainReelPlaybackGate() {
-    if (!shouldGateMainReelPlayback()) return;
+  function prepareMainReelPosterFallback() {
+    if (!videos.main) return;
 
-    const mainReel = videos.main;
+    forceMainReelDecorativeAttributes();
 
-    ensureMainReelPosterLayer();
-
-    mainReel.muted = true;
-    mainReel.defaultMuted = true;
-    mainReel.autoplay = true;
-    mainReel.loop = true;
-    mainReel.playsInline = true;
-    mainReel.setAttribute("muted", "");
-    mainReel.setAttribute("autoplay", "");
-    mainReel.setAttribute("loop", "");
-    mainReel.setAttribute("playsinline", "");
-    mainReel.setAttribute("webkit-playsinline", "");
-    mainReel.setAttribute("preload", "auto");
-    mainReel.setAttribute("disablepictureinpicture", "");
-    mainReel.setAttribute("disableremoteplayback", "");
-    mainReel.controls = false;
-    mainReel.removeAttribute("controls");
-    mainReel.style.pointerEvents = "none";
-
-    if (!mainReelHasStartedPlaying) {
-      mainReel.style.opacity = "0";
+    if (!shouldUseMainReelPosterFallback()) {
+      videos.main.style.opacity = "1";
+      return;
     }
 
+    const poster = getMainReelPosterFallback();
+
+    if (poster) {
+      poster.style.visibility = "visible";
+      poster.style.opacity = "1";
+      poster.style.pointerEvents = "none";
+      poster.style.willChange = "opacity, filter, transform";
+    }
+
+    videos.main.style.opacity = "0";
+    videos.main.style.visibility = "visible";
+
     ["playing", "timeupdate"].forEach((eventName) => {
-      mainReel.addEventListener(eventName, revealMainReelAfterPlayback, {
+      videos.main.addEventListener(eventName, revealMainReelAndHidePoster, {
         once: true
       });
     });
+  }
 
-    const playAttempt = mainReel.play();
+  function requestMainReelPlayback() {
+    if (!videos.main) return;
+
+    forceMainReelDecorativeAttributes();
+
+    const playAttempt = videos.main.play();
 
     if (playAttempt && typeof playAttempt.catch === "function") {
-      playAttempt.catch(() => {});
+      playAttempt.catch(() => {
+        if (shouldUseMainReelPosterFallback()) {
+          const poster = getMainReelPosterFallback();
+
+          if (poster && !mainReelHasConfirmedPlayback) {
+            poster.style.visibility = "visible";
+            poster.style.opacity = "1";
+          }
+
+          videos.main.style.opacity = "0";
+        }
+      });
     }
   }
 
-  prepareMainReelPlaybackGate();
+  prepareMainReelPosterFallback();
 
   function easeInOutCubic(t) {
     return t < 0.5
@@ -1802,12 +1794,12 @@ const videos = {
     if (videos.main) {
       videos.main.style.transition = "none";
       videos.main.style.opacity =
-        shouldGateMainReelPlayback() && !mainReelHasStartedPlaying ? "0" : "1";
+        shouldUseMainReelPosterFallback() && !mainReelHasConfirmedPlayback ? "0" : "1";
       videos.main.style.filter = "blur(18px) brightness(0.68) saturate(0.92)";
       videos.main.style.transform = "scale(1.026)";
       videos.main.style.willChange = "filter, transform";
 
-      applyMainReelPosterVisualState(
+      setMainReelPosterVisualState(
         "blur(18px) brightness(0.68) saturate(0.92)",
         "scale(1.026)",
         "none"
@@ -1840,23 +1832,17 @@ const videos = {
 
           videos.main.style.transition = mainReelResolveTransition;
           videos.main.style.opacity =
-            shouldGateMainReelPlayback() && !mainReelHasStartedPlaying ? "0" : "1";
+            shouldUseMainReelPosterFallback() && !mainReelHasConfirmedPlayback ? "0" : "1";
           videos.main.style.filter = "blur(0) brightness(1) saturate(1)";
           videos.main.style.transform = "scale(1)";
 
-          applyMainReelPosterVisualState(
+          setMainReelPosterVisualState(
             "blur(0) brightness(1) saturate(1)",
             "scale(1)",
             mainReelResolveTransition
           );
 
-          if (shouldGateMainReelPlayback() && videos.main.paused) {
-            const playAttempt = videos.main.play();
-
-            if (playAttempt && typeof playAttempt.catch === "function") {
-              playAttempt.catch(() => {});
-            }
-          }
+          requestMainReelPlayback();
         }
 
         getIntroNameElements().forEach((element, index) => {
