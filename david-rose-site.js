@@ -22,8 +22,8 @@ const videos = {
       playbackReady: false
     },
     "mr-porter": {
-      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_16x9.mp4",
-      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_9x16.mp4",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_16x9_WEBSITE_RES.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_9x16_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/STILL_01_HARINGTON_MASTER_BRANDING_CLOSE_16x9_1.3.1.jpg",
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/STILL_01_HARINGTON_MASTER_BRANDING_CLOSE_9x16_1.3.1.jpg",
       activeSourceMode: "",
@@ -38,8 +38,8 @@ const videos = {
       playbackReady: false
     },
     "christies-the-winter-egg": {
-      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG__WITH_TITLES.mp4",
-      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES.mp4",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_WEBSITE_RES.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_1.4.1.jpg",
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_1.4.1.jpg",
       activeSourceMode: "",
