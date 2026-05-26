@@ -73,7 +73,9 @@ const videos = {
   let projectsGradientPeakTimeout = null;
   let clientVideoLoadingHideTimeout = null;
   let clientVideoLoadingWatchTimer = null;
+  let clientVideoLoadingTextDelayTimer = null;
 
+  const CLIENT_VIDEO_PLAYBACK_VOLUME = 0.68;
   Object.keys(videos).forEach((key) => {
     if (!videos[key]) {
       delete videos[key];
@@ -697,24 +699,47 @@ const videos = {
       : config.desktopStillUrl || config.mobileStillUrl || "";
   }
 
+  function clearClientVideoLoadingTextDelay() {
+    if (clientVideoLoadingTextDelayTimer) {
+      clearTimeout(clientVideoLoadingTextDelayTimer);
+      clientVideoLoadingTextDelayTimer = null;
+    }
+  }
+
   function showClientVideoLoadingState(key, includeStill) {
     if (!isClientVideoKey(key) || shouldSuppressClientVideoLoading(key)) return;
 
     const layer = ensureClientVideoLoadingLayer();
     const root = document.documentElement;
     const stillUrl = getClientStillUrlForViewport(key);
+    const config = clientVideoSourceConfig[key];
 
     if (clientVideoLoadingHideTimeout) {
       clearTimeout(clientVideoLoadingHideTimeout);
       clientVideoLoadingHideTimeout = null;
     }
 
-    root.classList.add("dcr-client-video-loading-active");
+    root.classList.remove("dcr-client-video-loading-active");
+    clearClientVideoLoadingTextDelay();
 
     if (includeStill && stillUrl) {
       layer.still.style.backgroundImage = "url(\"" + stillUrl.replace(/"/g, "%22") + "\")";
       root.classList.add("dcr-client-video-loading-still-on");
-    } else if (!includeStill) {
+
+      clientVideoLoadingTextDelayTimer = setTimeout(() => {
+        clientVideoLoadingTextDelayTimer = null;
+
+        if (
+          current === key &&
+          config &&
+          !config.playbackReady &&
+          !shouldSuppressClientVideoLoading(key) &&
+          root.classList.contains("dcr-client-video-loading-still-on")
+        ) {
+          root.classList.add("dcr-client-video-loading-active");
+        }
+      }, 2000);
+    } else {
       root.classList.remove("dcr-client-video-loading-still-on");
     }
   }
@@ -726,6 +751,8 @@ const videos = {
       clearTimeout(clientVideoLoadingWatchTimer);
       clientVideoLoadingWatchTimer = null;
     }
+
+    clearClientVideoLoadingTextDelay();
 
     root.classList.remove("dcr-client-video-loading-active");
     root.classList.remove("dcr-client-video-loading-still-on");
@@ -797,15 +824,23 @@ const videos = {
 
   function handleClientVideoWaiting(key) {
     const config = clientVideoSourceConfig[key];
+    const video = videos[key];
 
-    if (!config || current !== key) return;
+    if (!config || !video || current !== key) return;
 
     if (shouldSuppressClientVideoLoading(key)) {
       hideClientVideoLoadingState();
       return;
     }
 
-    showClientVideoLoadingState(key, !config.playbackReady);
+    // Only use the loading treatment before the client video has actually begun.
+    // Once playback has started, browser buffering/stall events should not bring
+    // the loading text back over the film.
+    if (config.playbackReady || (video.currentTime || 0) > 0.08) {
+      return;
+    }
+
+    showClientVideoLoadingState(key, true);
   }
 
   function setClientVideoFullBrightness(video) {
@@ -1014,7 +1049,7 @@ const videos = {
 
     safelySetPlaybackRate(video, 1);
     safelySetMuted(video, false);
-    safelySetVolume(video, 1);
+    safelySetVolume(video, CLIENT_VIDEO_PLAYBACK_VOLUME);
 
     let startTime = 0;
 
@@ -2931,7 +2966,7 @@ const videos = {
       }
 
       safelySetMuted(videos[target], false);
-      safelySetVolume(videos[target], 1);
+      safelySetVolume(videos[target], CLIENT_VIDEO_PLAYBACK_VOLUME);
       videos[target].loop = false;
       videos[target].removeAttribute("loop");
     } else {
