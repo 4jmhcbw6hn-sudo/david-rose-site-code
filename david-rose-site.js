@@ -94,6 +94,26 @@ const videos = {
     return document.querySelector(".dcr-main-reel-mobile-still");
   }
 
+  function hideMainReelMobileStillOnDesktop() {
+    const still = getMainReelMobileStill();
+
+    if (!still || isMobileViewportForMainReel()) return;
+
+    still.style.display = "none";
+    still.style.visibility = "hidden";
+    still.style.opacity = "0";
+    still.style.pointerEvents = "none";
+
+    if (videos.main) {
+      videos.main.style.visibility = "visible";
+      videos.main.style.pointerEvents = "none";
+
+      if (current === "main") {
+        videos.main.style.opacity = "1";
+      }
+    }
+  }
+
   function configureMainReelAsDecorative() {
     const mainVideo = videos.main;
 
@@ -261,6 +281,8 @@ const videos = {
       } catch (error) {}
     });
 
+    hideMainReelMobileStillOnDesktop();
+
     if (videos.main) {
       configureMainReelAsDecorative();
 
@@ -287,6 +309,7 @@ const videos = {
           });
         });
       } else {
+        hideMainReelMobileStillOnDesktop();
         playVideo(videos.main);
       }
     }
@@ -295,6 +318,7 @@ const videos = {
       if (isMobileViewportForMainReel()) {
         requestMobileMainReelMotion();
       } else if (videos.main) {
+        hideMainReelMobileStillOnDesktop();
         playVideo(videos.main);
       }
     });
@@ -305,6 +329,7 @@ const videos = {
       if (isMobileViewportForMainReel()) {
         requestMobileMainReelMotion();
       } else if (videos.main) {
+        hideMainReelMobileStillOnDesktop();
         playVideo(videos.main);
       }
 
@@ -314,6 +339,8 @@ const videos = {
     });
 
     window.addEventListener("resize", () => {
+      hideMainReelMobileStillOnDesktop();
+
       if (current !== "tom-ford") {
         prepareTomFordSourceForViewport();
       }
@@ -1854,6 +1881,8 @@ const videos = {
       item.style.willChange = "opacity, filter, transform";
     });
 
+    hideMainReelMobileStillOnDesktop();
+
     if (videos.main) {
       videos.main.style.transition = "none";
       videos.main.style.opacity =
@@ -1898,6 +1927,9 @@ const videos = {
 
           if (isMobileViewportForMainReel()) {
             requestMobileMainReelMotion();
+          } else {
+            hideMainReelMobileStillOnDesktop();
+            playVideo(videos.main);
           }
         }
 
@@ -3608,6 +3640,7 @@ const videos = {
     applyMobileMainNavStaticState(sectionName);
   }
 
+  hideMainReelMobileStillOnDesktop();
   configureVideoAutoplayFallbacks();
   prepareClientOneShotVideo(videos["tom-ford"]);
 
