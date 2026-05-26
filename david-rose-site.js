@@ -338,8 +338,9 @@ const videos = {
     } catch (error) {}
   }
 
-  function showProjectsGradient() {
+  function showProjectsGradient(options) {
     const root = document.documentElement;
+    const shouldPeak = !options || options.peak !== false;
 
     root.classList.add("projects-gradient-on");
 
@@ -350,6 +351,8 @@ const videos = {
 
     root.classList.remove("projects-gradient-peak");
 
+    if (!shouldPeak) return;
+
     requestAnimationFrame(() => {
       if (!root.classList.contains("projects-gradient-on")) return;
 
@@ -358,7 +361,7 @@ const videos = {
       projectsGradientPeakTimeout = setTimeout(() => {
         root.classList.remove("projects-gradient-peak");
         projectsGradientPeakTimeout = null;
-      }, 1100);
+      }, 1750);
     });
   }
 
@@ -3202,7 +3205,7 @@ const videos = {
       });
     }
 
-    showProjectsGradient();
+    showProjectsGradient({ peak: !isSwitchingBetweenProjectMenus });
 
     clearProjectFocus();
     forceInactiveProjectPanelsHidden();
