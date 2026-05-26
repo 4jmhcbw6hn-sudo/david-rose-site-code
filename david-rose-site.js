@@ -42,7 +42,7 @@ const videos = {
       playbackReady: false
     },
     "christies-the-winter-egg": {
-      creditTitle: "EDITOR + COLOURIST",
+      creditTitle: "EDITOR + COMPOSER",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_1.4.1.jpg",
@@ -866,7 +866,7 @@ const videos = {
       clientVideoCreditHideTimeout = setTimeout(() => {
         clientVideoCreditHideTimeout = null;
         document.documentElement.classList.remove("dcr-client-video-credit-on");
-      }, 3000);
+      }, 5000);
     }, 2000);
   }
 
