@@ -135,6 +135,57 @@ html.projects-gradient-on.projects-gradient-peak .hero-section::after {
     transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+@media (max-width: 1024px) {
+  html,
+  body {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    background: #000;
+  }
+
+  .hero-section {
+    height: 100vh;
+    height: 100svh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
+    overflow: hidden;
+    background: #000;
+  }
+
+  #main-reel,
+  .dcr-main-reel-mobile-still {
+    position: fixed !important;
+    top: -10vh !important;
+    right: -10vw !important;
+    bottom: -10vh !important;
+    left: -10vw !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 120vw !important;
+    min-height: 120vh !important;
+    min-height: 120svh !important;
+    min-height: 120dvh !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  .hero-section::before,
+  .hero-section::after {
+    top: -18vh;
+    right: -18vw;
+    bottom: -18vh;
+    left: -18vw;
+  }
+}
+
 .side-nav {
   z-index: 100 !important;
 }
