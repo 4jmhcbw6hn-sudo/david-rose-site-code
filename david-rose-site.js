@@ -2,16 +2,26 @@ const videos = {
     main: document.getElementById("main-reel"),
     commercial: document.getElementById("commercial-reel"),
     narrative: document.getElementById("narrative-reel"),
-    "tom-ford": document.getElementById("tom-ford-reel")
+    "tom-ford": document.getElementById("tom-ford-reel"),
+    "mr-porter": document.getElementById("mr-porter-reel")
   };
 
   let current = "main";
   let mainReelMobileMotionReady = false;
   let mainReelMobileMotionTimer = null;
   let mainReelMobileMotionAttempts = 0;
-  const tomFordMobileSourceUrl = "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1080x1920.mp4";
-  let tomFordDesktopSourceUrl = "";
-  let tomFordActiveSourceMode = "";
+  const clientVideoSourceConfig = {
+    "tom-ford": {
+      desktopUrl: "",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1080x1920.mp4",
+      activeSourceMode: ""
+    },
+    "mr-porter": {
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_16x9.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_9x16.mp4",
+      activeSourceMode: ""
+    }
+  };
   let hasHoveredNarrative = false;
   let audioFadeAnimation = null;
   let activeProjectButton = null;
@@ -35,14 +45,25 @@ const videos = {
     }
   });
 
-  if (videos["tom-ford"]) {
-    const tomFordInitialSource = videos["tom-ford"].querySelector("source");
-
-    tomFordDesktopSourceUrl =
-      (tomFordInitialSource && tomFordInitialSource.getAttribute("src")) ||
-      videos["tom-ford"].getAttribute("src") ||
-      "";
+  function isClientVideoKey(key) {
+    return Boolean(clientVideoSourceConfig[key]);
   }
+
+  Object.keys(clientVideoSourceConfig).forEach((key) => {
+    const video = videos[key];
+
+    if (!video) return;
+
+    const initialSource = video.querySelector("source");
+    const initialSourceUrl =
+      (initialSource && initialSource.getAttribute("src")) ||
+      video.getAttribute("src") ||
+      "";
+
+    if (initialSourceUrl) {
+      clientVideoSourceConfig[key].desktopUrl = initialSourceUrl;
+    }
+  });
 
   Object.entries(videos).forEach(([key, video]) => {
     video.style.transition =
@@ -265,7 +286,7 @@ const videos = {
         video.controls = false;
         video.removeAttribute("controls");
 
-        if (key !== "tom-ford") {
+        if (!isClientVideoKey(key)) {
           video.muted = true;
           video.defaultMuted = true;
           video.setAttribute("muted", "");
@@ -333,16 +354,16 @@ const videos = {
         playVideo(videos.main);
       }
 
-      if (current !== "tom-ford") {
-        prepareTomFordSourceForViewport();
+      if (!isClientVideoKey(current)) {
+        prepareAllClientSourcesForViewport();
       }
     });
 
     window.addEventListener("resize", () => {
       hideMainReelMobileStillOnDesktop();
 
-      if (current !== "tom-ford") {
-        prepareTomFordSourceForViewport();
+      if (!isClientVideoKey(current)) {
+        prepareAllClientSourcesForViewport();
       }
     });
   }
@@ -507,7 +528,7 @@ const videos = {
     video.style.transform = "scale(1)";
   }
 
-  function prepareClientOneShotVideo(video) {
+  function prepareClientOneShotVideo(video, key) {
     if (!video) return;
 
     video.loop = false;
@@ -530,7 +551,7 @@ const videos = {
       } catch (error) {}
 
       setTimeout(() => {
-        if (current === "tom-ford" && !isApproachOpen && !isContactOpen) {
+        if (current === key && !isApproachOpen && !isContactOpen) {
           settleClientVideoStill(video);
           showCenterNameAnimated(250);
         }
@@ -578,30 +599,41 @@ const videos = {
     } catch (error) {}
   }
 
-  function prepareTomFordSourceForViewport() {
-    const video = videos["tom-ford"];
+  function prepareClientSourceForViewport(key) {
+    const video = videos[key];
+    const config = clientVideoSourceConfig[key];
 
-    if (!video) return;
+    if (!video || !config) return;
 
-    if (!tomFordDesktopSourceUrl) {
-      tomFordDesktopSourceUrl = getVideoSourceUrl(video);
+    if (!config.desktopUrl) {
+      config.desktopUrl = getVideoSourceUrl(video);
     }
 
     const sourceMode = isMobileClientVideoViewport() ? "mobile" : "desktop";
     const nextSource =
-      sourceMode === "mobile" ? tomFordMobileSourceUrl : tomFordDesktopSourceUrl;
+      sourceMode === "mobile" ? config.mobileUrl : config.desktopUrl;
 
-    if (!nextSource || tomFordActiveSourceMode === sourceMode) return;
+    if (!nextSource || config.activeSourceMode === sourceMode) return;
 
-    tomFordActiveSourceMode = sourceMode;
+    config.activeSourceMode = sourceMode;
     setVideoSourceUrl(video, nextSource);
+  }
+
+  function prepareAllClientSourcesForViewport() {
+    Object.keys(clientVideoSourceConfig).forEach((key) => {
+      if (current !== key) {
+        prepareClientSourceForViewport(key);
+      }
+    });
   }
 
   function resetClientVideoToStartFrame(video) {
     if (!video) return;
 
-    if (video === videos["tom-ford"]) {
-      prepareTomFordSourceForViewport();
+    const clientKey = Object.keys(clientVideoSourceConfig).find((key) => videos[key] === video);
+
+    if (clientKey) {
+      prepareClientSourceForViewport(clientKey);
     }
 
     video.loop = false;
@@ -627,8 +659,10 @@ const videos = {
   function playClientVideoFromStart(video) {
     if (!video) return;
 
-    if (video === videos["tom-ford"]) {
-      prepareTomFordSourceForViewport();
+    const clientKey = Object.keys(clientVideoSourceConfig).find((key) => videos[key] === video);
+
+    if (clientKey) {
+      prepareClientSourceForViewport(clientKey);
     }
 
     hideCenterNameAnimated();
@@ -2240,29 +2274,36 @@ const videos = {
     forceInactiveProjectPanelsHidden();
   }
 
+  function hideAndResetClientVideos() {
+    Object.keys(clientVideoSourceConfig).forEach((key) => {
+      const video = videos[key];
+
+      if (!video) return;
+
+      safelySetMuted(video, true);
+      safelySetVolume(video, 0);
+      safelySetPlaybackRate(video, 1);
+      resetClientVideoToStartFrame(video);
+
+      video.style.transition =
+        "opacity 1.4s cubic-bezier(0.66, 0, 0.2, 1), " +
+        "filter 1.4s cubic-bezier(0.8, 0, 0.2, 1), " +
+        "transform 1.4s ease";
+
+      video.style.opacity = "0";
+      video.style.filter = "blur(2px) brightness(1)";
+      video.style.transform = "scale(1.02)";
+    });
+  }
+
   function returnToMainWebsiteVideo() {
-    const tomFordVideo = videos["tom-ford"];
     const mainVideo = videos.main;
 
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
     }
 
-    if (tomFordVideo) {
-      safelySetMuted(tomFordVideo, true);
-      safelySetVolume(tomFordVideo, 0);
-      safelySetPlaybackRate(tomFordVideo, 1);
-      resetClientVideoToStartFrame(tomFordVideo);
-
-      tomFordVideo.style.transition =
-        "opacity 1.4s cubic-bezier(0.66, 0, 0.2, 1), " +
-        "filter 1.4s cubic-bezier(0.8, 0, 0.2, 1), " +
-        "transform 1.4s ease";
-
-      tomFordVideo.style.opacity = "0";
-      tomFordVideo.style.filter = "blur(2px) brightness(1)";
-      tomFordVideo.style.transform = "scale(1.02)";
-    }
+    hideAndResetClientVideos();
 
     if (mainVideo) {
       safelySetMuted(mainVideo, true);
@@ -2309,23 +2350,13 @@ const videos = {
   }
 
   function moveToMainVideoBehindContact() {
-    const tomFordVideo = videos["tom-ford"];
     const mainVideo = videos.main;
 
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
     }
 
-    if (tomFordVideo) {
-      safelySetMuted(tomFordVideo, true);
-      safelySetVolume(tomFordVideo, 0);
-      safelySetPlaybackRate(tomFordVideo, 1);
-      resetClientVideoToStartFrame(tomFordVideo);
-
-      tomFordVideo.style.opacity = "0";
-      tomFordVideo.style.filter = "blur(2px) brightness(1)";
-      tomFordVideo.style.transform = "scale(1.02)";
-    }
+    hideAndResetClientVideos();
 
     if (mainVideo) {
       safelySetMuted(mainVideo, true);
@@ -2506,7 +2537,7 @@ const videos = {
     if (!videos[target]) return;
 
     if (current === target) {
-      if (target === "tom-ford") {
+      if (isClientVideoKey(target)) {
         returnToMainWebsiteVideo();
       }
 
@@ -2521,13 +2552,13 @@ const videos = {
         safelySetMuted(video, true);
         safelySetPlaybackRate(video, 1);
 
-        if (key === "tom-ford") {
+        if (isClientVideoKey(key)) {
           resetClientVideoToStartFrame(video);
         }
       }
     });
 
-    if (target !== "tom-ford" && !isApproachOpen && !isContactOpen) {
+    if (!isClientVideoKey(target) && !isApproachOpen && !isContactOpen) {
       showCenterNameAnimated(250);
     }
 
@@ -2537,15 +2568,15 @@ const videos = {
       videos[current].style.transform = "scale(1.02)";
     }
 
-    if (target === "tom-ford") {
-      prepareTomFordSourceForViewport();
+    if (isClientVideoKey(target)) {
+      prepareClientSourceForViewport(target);
     }
 
     try {
       videos[target].currentTime = 0;
     } catch (error) {}
 
-    if (target === "tom-ford") {
+    if (isClientVideoKey(target)) {
       if (audioFadeAnimation) {
         cancelAnimationFrame(audioFadeAnimation);
       }
@@ -2569,7 +2600,7 @@ const videos = {
       videos[target].style.transform = "scale(1)";
     }
 
-    if (target === "tom-ford") {
+    if (isClientVideoKey(target)) {
       playClientVideoFromStart(videos[target]);
     } else {
       playVideo(videos[target]);
@@ -3624,6 +3655,7 @@ const videos = {
   const commercialLink = document.querySelector("[data-link='commercial']");
   const narrativeLink = document.querySelector("[data-link='narrative']");
   const tomFordLink = document.querySelector("[data-link='tom-ford']");
+  const mrPorterLink = document.querySelector("[data-link='mr-porter']");
   const colourLink = getMainNavButton("colour");
   const directionLink = getMainNavButton("direction");
   const approachLink = getMainNavButton("approach");
@@ -3642,7 +3674,8 @@ const videos = {
 
   hideMainReelMobileStillOnDesktop();
   configureVideoAutoplayFallbacks();
-  prepareClientOneShotVideo(videos["tom-ford"]);
+  prepareClientOneShotVideo(videos["tom-ford"], "tom-ford");
+  prepareClientOneShotVideo(videos["mr-porter"], "mr-porter");
 
   installMobileLayoutFixes();
   installReactiveCornerVignettes();
@@ -3746,23 +3779,28 @@ const videos = {
     });
   }
 
-  if (tomFordLink) {
-    tomFordLink.addEventListener("click", (event) => {
+  function installClientVideoLink(link, key) {
+    if (!link || !videos[key]) return;
+
+    link.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
 
       if (isContactOpen) return;
 
-      if (current === "tom-ford") {
+      if (current === key) {
         returnToMainWebsiteVideo();
         return;
       }
 
-      showVideo("tom-ford");
-      activateProjectFocus(tomFordLink);
+      showVideo(key);
+      activateProjectFocus(link);
     });
   }
+
+  installClientVideoLink(tomFordLink, "tom-ford");
+  installClientVideoLink(mrPorterLink, "mr-porter");
 
   if (colourLink) {
     colourLink.addEventListener("mouseenter", () => {
