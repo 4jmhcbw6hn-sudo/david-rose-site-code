@@ -358,7 +358,7 @@ const videos = {
       projectsGradientPeakTimeout = setTimeout(() => {
         root.classList.remove("projects-gradient-peak");
         projectsGradientPeakTimeout = null;
-      }, 680);
+      }, 980);
     });
   }
 
@@ -1453,29 +1453,21 @@ const videos = {
           );
       }
 
-      html.projects-gradient-on.projects-gradient-peak::before,
-      html.projects-gradient-on.projects-gradient-peak body::before,
-      html.projects-gradient-on.projects-gradient-peak .projects-gradient,
-      html.projects-gradient-on.projects-gradient-peak .project-gradient,
-      html.projects-gradient-on.projects-gradient-peak .gradient-overlay,
-      html.projects-gradient-on.projects-gradient-peak .projects-gradient-overlay {
-        opacity: 1 !important;
-        filter: brightness(0.72) saturate(0.96) !important;
-        transition:
-          opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
-          filter 1450ms cubic-bezier(0.16, 1, 0.3, 1) !important;
-      }
-
-      html.projects-gradient-on:not(.projects-gradient-peak)::before,
-      html.projects-gradient-on:not(.projects-gradient-peak) body::before,
-      html.projects-gradient-on:not(.projects-gradient-peak) .projects-gradient,
-      html.projects-gradient-on:not(.projects-gradient-peak) .project-gradient,
-      html.projects-gradient-on:not(.projects-gradient-peak) .gradient-overlay,
-      html.projects-gradient-on:not(.projects-gradient-peak) .projects-gradient-overlay {
+      html.projects-gradient-on .hero-section::after {
+        opacity: 0.92 !important;
         filter: brightness(1) saturate(1) !important;
         transition:
-          opacity 1600ms cubic-bezier(0.16, 1, 0.3, 1),
-          filter 1750ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+          opacity 1900ms cubic-bezier(0.22, 1, 0.36, 1),
+          filter 2800ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+        will-change: opacity, filter !important;
+      }
+
+      html.projects-gradient-on.projects-gradient-peak .hero-section::after {
+        opacity: 1 !important;
+        filter: brightness(0.50) saturate(0.96) !important;
+        transition:
+          opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          filter 520ms cubic-bezier(0.22, 1, 0.36, 1) !important;
       }
 
       .dcr-name-shadow-spot {
