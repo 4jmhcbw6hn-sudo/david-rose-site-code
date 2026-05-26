@@ -15,6 +15,7 @@ const videos = {
   let mainReelMobileMotionAttempts = 0;
   const clientVideoSourceConfig = {
     "tom-ford": {
+      creditTitle: "FINISHING EDITOR / ONLINE EDITOR",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1920x1080_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1080x1920_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/STILL_TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1920x1080_1.1.1.jpg",
@@ -23,6 +24,7 @@ const videos = {
       playbackReady: false
     },
     "mr-porter": {
+      creditTitle: "EDITOR + COLOURIST",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_16x9_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_9x16_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/STILL_01_HARINGTON_MASTER_BRANDING_CLOSE_16x9_1.3.1.jpg",
@@ -31,6 +33,7 @@ const videos = {
       playbackReady: false
     },
     "christies-spring-season-25": {
+      creditTitle: "COLOURIST",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/GNV-LUX-SS25-Watches-Final_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/GNV-LUX-SS25-Watches-Social-Final_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/STILL_GNV-LUX-SS25-Watches-Final_1.2.1.jpg",
@@ -39,6 +42,7 @@ const videos = {
       playbackReady: false
     },
     "christies-the-winter-egg": {
+      creditTitle: "EDITOR + COLOURIST",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_1.4.1.jpg",
@@ -47,6 +51,7 @@ const videos = {
       playbackReady: false
     },
     "vogue-suntory": {
+      creditTitle: "COLOURIST",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_16x9_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_9x16_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_16_9.jpg",
@@ -74,6 +79,8 @@ const videos = {
   let clientVideoLoadingHideTimeout = null;
   let clientVideoLoadingWatchTimer = null;
   let clientVideoLoadingTextDelayTimer = null;
+  let clientVideoCreditShowTimeout = null;
+  let clientVideoCreditHideTimeout = null;
 
   const CLIENT_VIDEO_PLAYBACK_VOLUME = 0.68;
   Object.keys(videos).forEach((key) => {
@@ -556,7 +563,8 @@ const videos = {
     style.id = "dcr-client-video-loading-styles";
     style.textContent = `
       .dcr-client-video-loading-still,
-      .dcr-client-video-loading-text {
+      .dcr-client-video-loading-text,
+      .dcr-client-video-credit-text {
         pointer-events: none !important;
       }
 
@@ -641,10 +649,55 @@ const videos = {
         }
       }
 
+      .dcr-client-video-credit-text {
+        position: fixed !important;
+        left: 50vw !important;
+        top: 50vh !important;
+        top: 50svh !important;
+        z-index: 64 !important;
+        transform: translate(-50%, -50%) scale(0.975);
+        opacity: 0;
+        visibility: hidden;
+        color: rgba(255, 255, 255, 0.92);
+        font: inherit;
+        font-size: clamp(10px, 1.08vw, 15px);
+        line-height: 1.35;
+        letter-spacing: 0.30em;
+        text-transform: uppercase;
+        text-align: center;
+        white-space: nowrap;
+        filter: blur(7px);
+        text-shadow: 0 0 26px rgba(0, 0, 0, 0.54);
+        transition:
+          opacity 1250ms cubic-bezier(0.16, 1, 0.3, 1),
+          filter 1850ms cubic-bezier(0.16, 1, 0.3, 1),
+          transform 2200ms cubic-bezier(0.13, 1, 0.22, 1),
+          visibility 0s linear 1250ms;
+      }
+
+      html.dcr-client-video-credit-on .dcr-client-video-credit-text {
+        opacity: 1;
+        visibility: visible;
+        filter: blur(0);
+        transform: translate(-50%, -50%) scale(1);
+        transition:
+          opacity 1500ms cubic-bezier(0.16, 1, 0.3, 1),
+          filter 2100ms cubic-bezier(0.16, 1, 0.3, 1),
+          transform 2600ms cubic-bezier(0.13, 1, 0.22, 1),
+          visibility 0s;
+      }
+
       @media (max-width: 1024px) {
         .dcr-client-video-loading-text {
           font-size: clamp(10px, 2.45vw, 13px);
           letter-spacing: 0.38em;
+        }
+
+        .dcr-client-video-credit-text {
+          font-size: clamp(10px, 2.65vw, 13px);
+          letter-spacing: 0.24em;
+          max-width: 84vw;
+          white-space: normal;
         }
       }
     `;
@@ -657,6 +710,7 @@ const videos = {
 
     let still = document.querySelector(".dcr-client-video-loading-still");
     let text = document.querySelector(".dcr-client-video-loading-text");
+    let credit = document.querySelector(".dcr-client-video-credit-text");
 
     if (!still) {
       still = document.createElement("div");
@@ -669,11 +723,19 @@ const videos = {
       text = document.createElement("div");
       text.className = "dcr-client-video-loading-text";
       text.setAttribute("aria-live", "polite");
-      text.textContent = "LOADING...";
       document.body.appendChild(text);
     }
 
-    return { still, text };
+    text.textContent = "LOADING...";
+
+    if (!credit) {
+      credit = document.createElement("div");
+      credit.className = "dcr-client-video-credit-text";
+      credit.setAttribute("aria-hidden", "true");
+      document.body.appendChild(credit);
+    }
+
+    return { still, text, credit };
   }
 
   function getClientVideoKeyByVideo(video) {
@@ -768,13 +830,59 @@ const videos = {
     }, 1300);
   }
 
+  function clearClientVideoCreditTimers() {
+    if (clientVideoCreditShowTimeout) {
+      clearTimeout(clientVideoCreditShowTimeout);
+      clientVideoCreditShowTimeout = null;
+    }
+
+    if (clientVideoCreditHideTimeout) {
+      clearTimeout(clientVideoCreditHideTimeout);
+      clientVideoCreditHideTimeout = null;
+    }
+  }
+
+  function hideClientVideoCredit() {
+    clearClientVideoCreditTimers();
+    document.documentElement.classList.remove("dcr-client-video-credit-on");
+  }
+
+  function scheduleClientVideoCredit(key) {
+    const config = clientVideoSourceConfig[key];
+
+    hideClientVideoCredit();
+
+    if (!config || !config.creditTitle) return;
+
+    clientVideoCreditShowTimeout = setTimeout(() => {
+      clientVideoCreditShowTimeout = null;
+
+      if (current !== key || !config.playbackReady) return;
+
+      const layer = ensureClientVideoLoadingLayer();
+      layer.credit.textContent = String(config.creditTitle || "").toUpperCase();
+      document.documentElement.classList.add("dcr-client-video-credit-on");
+
+      clientVideoCreditHideTimeout = setTimeout(() => {
+        clientVideoCreditHideTimeout = null;
+        document.documentElement.classList.remove("dcr-client-video-credit-on");
+      }, 3000);
+    }, 2000);
+  }
+
   function markClientVideoPlaybackReady(key) {
     const config = clientVideoSourceConfig[key];
 
     if (!config || current !== key) return;
 
+    const wasReady = Boolean(config.playbackReady);
+
     config.playbackReady = true;
     hideClientVideoLoadingState();
+
+    if (!wasReady) {
+      scheduleClientVideoCredit(key);
+    }
   }
 
   function watchClientVideoMotion(key, startTime) {
@@ -904,6 +1012,7 @@ const videos = {
       }
 
       hideClientVideoLoadingState();
+      hideClientVideoCredit();
 
       video.loop = false;
       video.removeAttribute("loop");
@@ -1029,6 +1138,7 @@ const videos = {
     const clientKey = getClientVideoKeyByVideo(video);
 
     if (clientKey) {
+      hideClientVideoCredit();
       prepareClientSourceForViewport(clientKey);
       clientVideoSourceConfig[clientKey].playbackReady = false;
       clientVideoSourceConfig[clientKey].hasCompleted = false;
@@ -2654,6 +2764,7 @@ const videos = {
 
   function hideAndResetClientVideos() {
     hideClientVideoLoadingState();
+    hideClientVideoCredit();
 
     Object.keys(clientVideoSourceConfig).forEach((key) => {
       const video = videos[key];
@@ -2954,6 +3065,7 @@ const videos = {
       prepareClientSourceForViewport(target);
     } else {
       hideClientVideoLoadingState();
+      hideClientVideoCredit();
     }
 
     try {
