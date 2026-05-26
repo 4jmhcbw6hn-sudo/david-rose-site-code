@@ -27,7 +27,7 @@ const videos = {
   let approachVideoWasPaused = false;
   let centerNameReturnTimeout = null;
   let centerNameSettleTimeout = null;
-  let projectsGradientSurgeTimeout = null;
+  let projectsGradientPeakTimeout = null;
 
   Object.keys(videos).forEach((key) => {
     if (!videos[key]) {
@@ -338,53 +338,39 @@ const videos = {
     } catch (error) {}
   }
 
-  function getProjectsGradientSurgeLayer() {
-    let layer = document.querySelector(".dcr-projects-gradient-surge");
-
-    if (!layer) {
-      layer = document.createElement("div");
-      layer.className = "dcr-projects-gradient-surge";
-      document.body.appendChild(layer);
-    }
-
-    return layer;
-  }
-
   function showProjectsGradient() {
     const root = document.documentElement;
 
     root.classList.add("projects-gradient-on");
 
-    getProjectsGradientSurgeLayer();
-
-    if (projectsGradientSurgeTimeout) {
-      clearTimeout(projectsGradientSurgeTimeout);
-      projectsGradientSurgeTimeout = null;
+    if (projectsGradientPeakTimeout) {
+      clearTimeout(projectsGradientPeakTimeout);
+      projectsGradientPeakTimeout = null;
     }
 
-    root.classList.remove("dcr-projects-gradient-surge-on");
+    root.classList.remove("projects-gradient-peak");
 
     requestAnimationFrame(() => {
       if (!root.classList.contains("projects-gradient-on")) return;
 
-      root.classList.add("dcr-projects-gradient-surge-on");
+      root.classList.add("projects-gradient-peak");
 
-      projectsGradientSurgeTimeout = setTimeout(() => {
-        root.classList.remove("dcr-projects-gradient-surge-on");
-        projectsGradientSurgeTimeout = null;
-      }, 760);
+      projectsGradientPeakTimeout = setTimeout(() => {
+        root.classList.remove("projects-gradient-peak");
+        projectsGradientPeakTimeout = null;
+      }, 680);
     });
   }
 
   function hideProjectsGradient() {
     const root = document.documentElement;
 
-    if (projectsGradientSurgeTimeout) {
-      clearTimeout(projectsGradientSurgeTimeout);
-      projectsGradientSurgeTimeout = null;
+    if (projectsGradientPeakTimeout) {
+      clearTimeout(projectsGradientPeakTimeout);
+      projectsGradientPeakTimeout = null;
     }
 
-    root.classList.remove("dcr-projects-gradient-surge-on");
+    root.classList.remove("projects-gradient-peak");
     root.classList.remove("projects-gradient-on");
   }
 
@@ -1467,49 +1453,29 @@ const videos = {
           );
       }
 
-      .dcr-projects-gradient-surge {
-        position: fixed !important;
-        inset: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        pointer-events: none !important;
-        opacity: 0;
-        visibility: hidden;
-        z-index: 2 !important;
-        background:
-          radial-gradient(
-            ellipse 82vw 72vh at 68% 50%,
-            rgba(0, 0, 0, 0.22) 0%,
-            rgba(0, 0, 0, 0.36) 34%,
-            rgba(0, 0, 0, 0.50) 72%,
-            rgba(0, 0, 0, 0.62) 100%
-          ),
-          linear-gradient(
-            90deg,
-            rgba(0, 0, 0, 0.70) 0%,
-            rgba(0, 0, 0, 0.52) 38%,
-            rgba(0, 0, 0, 0.30) 100%
-          );
-        transition:
-          opacity 1950ms cubic-bezier(0.16, 1, 0.3, 1),
-          visibility 0ms linear 1950ms;
-      }
-
-      html.projects-gradient-on.dcr-projects-gradient-surge-on .dcr-projects-gradient-surge {
-        opacity: 0.72;
-        visibility: visible;
+      html.projects-gradient-on.projects-gradient-peak::before,
+      html.projects-gradient-on.projects-gradient-peak body::before,
+      html.projects-gradient-on.projects-gradient-peak .projects-gradient,
+      html.projects-gradient-on.projects-gradient-peak .project-gradient,
+      html.projects-gradient-on.projects-gradient-peak .gradient-overlay,
+      html.projects-gradient-on.projects-gradient-peak .projects-gradient-overlay {
+        opacity: 1 !important;
+        filter: brightness(0.72) saturate(0.96) !important;
         transition:
           opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
-          visibility 0ms linear 0ms;
+          filter 1450ms cubic-bezier(0.16, 1, 0.3, 1) !important;
       }
 
-      html.projects-gradient-on .side-nav,
-      html.projects-gradient-on .post-production-projects-panel,
-      html.projects-gradient-on .direction-projects-panel,
-      html.projects-gradient-on .colour-projects-panel,
-      html.projects-gradient-on .color-projects-panel {
-        position: relative !important;
-        z-index: 5 !important;
+      html.projects-gradient-on:not(.projects-gradient-peak)::before,
+      html.projects-gradient-on:not(.projects-gradient-peak) body::before,
+      html.projects-gradient-on:not(.projects-gradient-peak) .projects-gradient,
+      html.projects-gradient-on:not(.projects-gradient-peak) .project-gradient,
+      html.projects-gradient-on:not(.projects-gradient-peak) .gradient-overlay,
+      html.projects-gradient-on:not(.projects-gradient-peak) .projects-gradient-overlay {
+        filter: brightness(1) saturate(1) !important;
+        transition:
+          opacity 1600ms cubic-bezier(0.16, 1, 0.3, 1),
+          filter 1750ms cubic-bezier(0.16, 1, 0.3, 1) !important;
       }
 
       .dcr-name-shadow-spot {
