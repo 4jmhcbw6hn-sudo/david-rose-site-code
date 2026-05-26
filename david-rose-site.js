@@ -5,7 +5,8 @@ const videos = {
     "tom-ford": document.getElementById("tom-ford-reel"),
     "mr-porter": document.getElementById("mr-porter-reel"),
     "christies-spring-season-25": document.getElementById("christies-spring-season-25-reel"),
-    "christies-the-winter-egg": document.getElementById("christies-the-winter-egg-reel")
+    "christies-the-winter-egg": document.getElementById("christies-the-winter-egg-reel"),
+    "vogue-suntory": document.getElementById("vogue-suntory-reel")
   };
 
   let current = "main";
@@ -42,6 +43,14 @@ const videos = {
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_1.4.1.jpg",
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_1.4.1.jpg",
+      activeSourceMode: "",
+      playbackReady: false
+    },
+    "vogue-suntory": {
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_16x9_WEBSITE_RES.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_9x16_WEBSITE_RES.mp4",
+      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_16_9.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_9x16.jpg",
       activeSourceMode: "",
       playbackReady: false
     }
@@ -3998,6 +4007,7 @@ const videos = {
   const mrPorterLink = document.querySelector("[data-link='mr-porter']");
   const christiesSpringSeason25Link = document.querySelector("[data-link='christies-spring-season-25']");
   const christiesTheWinterEggLink = document.querySelector("[data-link='christies-the-winter-egg']");
+  const vogueSuntoryLink = document.querySelector("[data-link='vogue-suntory']");
   const colourLink = getMainNavButton("colour");
   const directionLink = getMainNavButton("direction");
   const approachLink = getMainNavButton("approach");
@@ -4021,6 +4031,7 @@ const videos = {
   prepareClientOneShotVideo(videos["mr-porter"], "mr-porter");
   prepareClientOneShotVideo(videos["christies-spring-season-25"], "christies-spring-season-25");
   prepareClientOneShotVideo(videos["christies-the-winter-egg"], "christies-the-winter-egg");
+  prepareClientOneShotVideo(videos["vogue-suntory"], "vogue-suntory");
 
   installMobileLayoutFixes();
   installReactiveCornerVignettes();
@@ -4148,6 +4159,7 @@ const videos = {
   installClientVideoLink(mrPorterLink, "mr-porter");
   installClientVideoLink(christiesSpringSeason25Link, "christies-spring-season-25");
   installClientVideoLink(christiesTheWinterEggLink, "christies-the-winter-egg");
+  installClientVideoLink(vogueSuntoryLink, "vogue-suntory");
 
   if (colourLink) {
     colourLink.addEventListener("mouseenter", () => {
