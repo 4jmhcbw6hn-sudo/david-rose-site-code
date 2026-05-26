@@ -137,7 +137,7 @@ html.projects-gradient-on.projects-gradient-peak .hero-section::after {
 
 
 /* Mobile still fallback must never cover the desktop reel */
-@media (min-width: 1025px) {
+@media (min-width: 1025px), (hover: hover) and (pointer: fine) {
   .dcr-main-reel-mobile-still {
     display: none !important;
     visibility: hidden !important;
