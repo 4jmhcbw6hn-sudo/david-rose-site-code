@@ -59,10 +59,17 @@
   pointer-events: auto !important;
 }
 
+html,
+body {
+  min-height: 100%;
+  background: #000;
+}
+
 .hero-section {
   position: relative;
   min-height: 100vh;
   min-height: 100svh;
+  min-height: 100dvh;
   overflow: hidden;
 }
 
@@ -70,9 +77,12 @@
 .hero-section::after {
   content: "";
   position: fixed;
-  inset: -2vh -2vw;
-  width: 104vw;
-  height: 104vh;
+  top: -14vh;
+  right: -14vw;
+  bottom: -14vh;
+  left: -14vw;
+  width: auto;
+  height: auto;
   pointer-events: none !important;
   z-index: 5;
 }
@@ -80,7 +90,7 @@
 .hero-section::before {
   background:
     radial-gradient(
-      ellipse 60vw 70vh at 0% 0%,
+      ellipse 68vw 82vh at 0% 0%,
       rgba(0, 0, 0, 0.42) 0%,
       rgba(0, 0, 0, 0.28) 24%,
       rgba(0, 0, 0, 0.13) 43%,
@@ -92,7 +102,7 @@
 .hero-section::after {
   background:
     radial-gradient(
-      ellipse 96vw 92vh at 100% 100%,
+      ellipse 108vw 108vh at 100% 100%,
       rgba(0, 0, 0, 0.56) 0%,
       rgba(0, 0, 0, 0.38) 25%,
       rgba(0, 0, 0, 0.19) 48%,
