@@ -3,7 +3,8 @@ const videos = {
     commercial: document.getElementById("commercial-reel"),
     narrative: document.getElementById("narrative-reel"),
     "tom-ford": document.getElementById("tom-ford-reel"),
-    "mr-porter": document.getElementById("mr-porter-reel")
+    "mr-porter": document.getElementById("mr-porter-reel"),
+    "christies-spring-season-25": document.getElementById("christies-spring-season-25-reel")
   };
 
   let current = "main";
@@ -19,6 +20,11 @@ const videos = {
     "mr-porter": {
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_16x9.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_9x16.mp4",
+      activeSourceMode: ""
+    },
+    "christies-spring-season-25": {
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/GNV-LUX-SS25-Watches-Final.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/GNV-LUX-SS25-Watches-Social-Final.mp4",
       activeSourceMode: ""
     }
   };
@@ -3656,6 +3662,7 @@ const videos = {
   const narrativeLink = document.querySelector("[data-link='narrative']");
   const tomFordLink = document.querySelector("[data-link='tom-ford']");
   const mrPorterLink = document.querySelector("[data-link='mr-porter']");
+  const christiesSpringSeason25Link = document.querySelector("[data-link='christies-spring-season-25']");
   const colourLink = getMainNavButton("colour");
   const directionLink = getMainNavButton("direction");
   const approachLink = getMainNavButton("approach");
@@ -3676,6 +3683,7 @@ const videos = {
   configureVideoAutoplayFallbacks();
   prepareClientOneShotVideo(videos["tom-ford"], "tom-ford");
   prepareClientOneShotVideo(videos["mr-porter"], "mr-porter");
+  prepareClientOneShotVideo(videos["christies-spring-season-25"], "christies-spring-season-25");
 
   installMobileLayoutFixes();
   installReactiveCornerVignettes();
@@ -3801,6 +3809,7 @@ const videos = {
 
   installClientVideoLink(tomFordLink, "tom-ford");
   installClientVideoLink(mrPorterLink, "mr-porter");
+  installClientVideoLink(christiesSpringSeason25Link, "christies-spring-season-25");
 
   if (colourLink) {
     colourLink.addEventListener("mouseenter", () => {
@@ -3892,6 +3901,8 @@ const videos = {
     button.addEventListener("click", () => {
       if (isContactOpen) return;
       if (button === tomFordLink) return;
+      if (button === mrPorterLink) return;
+      if (button === christiesSpringSeason25Link) return;
       activateProjectFocus(button);
     });
   });
