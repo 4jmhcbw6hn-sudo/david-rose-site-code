@@ -358,7 +358,7 @@ const videos = {
       projectsGradientPeakTimeout = setTimeout(() => {
         root.classList.remove("projects-gradient-peak");
         projectsGradientPeakTimeout = null;
-      }, 980);
+      }, 1100);
     });
   }
 
@@ -1451,23 +1451,6 @@ const videos = {
             rgba(0, 0, 0, 0.13) 52%,
             rgba(0, 0, 0, 0) 78%
           );
-      }
-
-      html.projects-gradient-on .hero-section::after {
-        opacity: 0.92 !important;
-        filter: brightness(1) saturate(1) !important;
-        transition:
-          opacity 1900ms cubic-bezier(0.22, 1, 0.36, 1),
-          filter 2800ms cubic-bezier(0.16, 1, 0.3, 1) !important;
-        will-change: opacity, filter !important;
-      }
-
-      html.projects-gradient-on.projects-gradient-peak .hero-section::after {
-        opacity: 1 !important;
-        filter: brightness(0.50) saturate(0.96) !important;
-        transition:
-          opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
-          filter 520ms cubic-bezier(0.22, 1, 0.36, 1) !important;
       }
 
       .dcr-name-shadow-spot {
