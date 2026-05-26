@@ -4,7 +4,8 @@ const videos = {
     narrative: document.getElementById("narrative-reel"),
     "tom-ford": document.getElementById("tom-ford-reel"),
     "mr-porter": document.getElementById("mr-porter-reel"),
-    "christies-spring-season-25": document.getElementById("christies-spring-season-25-reel")
+    "christies-spring-season-25": document.getElementById("christies-spring-season-25-reel"),
+    "christies-the-winter-egg": document.getElementById("christies-the-winter-egg-reel")
   };
 
   let current = "main";
@@ -25,6 +26,11 @@ const videos = {
     "christies-spring-season-25": {
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/GNV-LUX-SS25-Watches-Final.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/GNV-LUX-SS25-Watches-Social-Final.mp4",
+      activeSourceMode: ""
+    },
+    "christies-the-winter-egg": {
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG__WITH_TITLES.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES.mp4",
       activeSourceMode: ""
     }
   };
@@ -3663,6 +3669,7 @@ const videos = {
   const tomFordLink = document.querySelector("[data-link='tom-ford']");
   const mrPorterLink = document.querySelector("[data-link='mr-porter']");
   const christiesSpringSeason25Link = document.querySelector("[data-link='christies-spring-season-25']");
+  const christiesTheWinterEggLink = document.querySelector("[data-link='christies-the-winter-egg']");
   const colourLink = getMainNavButton("colour");
   const directionLink = getMainNavButton("direction");
   const approachLink = getMainNavButton("approach");
@@ -3684,6 +3691,7 @@ const videos = {
   prepareClientOneShotVideo(videos["tom-ford"], "tom-ford");
   prepareClientOneShotVideo(videos["mr-porter"], "mr-porter");
   prepareClientOneShotVideo(videos["christies-spring-season-25"], "christies-spring-season-25");
+  prepareClientOneShotVideo(videos["christies-the-winter-egg"], "christies-the-winter-egg");
 
   installMobileLayoutFixes();
   installReactiveCornerVignettes();
@@ -3810,6 +3818,7 @@ const videos = {
   installClientVideoLink(tomFordLink, "tom-ford");
   installClientVideoLink(mrPorterLink, "mr-porter");
   installClientVideoLink(christiesSpringSeason25Link, "christies-spring-season-25");
+  installClientVideoLink(christiesTheWinterEggLink, "christies-the-winter-egg");
 
   if (colourLink) {
     colourLink.addEventListener("mouseenter", () => {
@@ -3903,6 +3912,7 @@ const videos = {
       if (button === tomFordLink) return;
       if (button === mrPorterLink) return;
       if (button === christiesSpringSeason25Link) return;
+      if (button === christiesTheWinterEggLink) return;
       activateProjectFocus(button);
     });
   });
