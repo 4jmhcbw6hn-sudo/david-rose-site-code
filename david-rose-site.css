@@ -135,6 +135,21 @@ html.projects-gradient-on.projects-gradient-peak .hero-section::after {
     transform 2400ms cubic-bezier(0.13, 1, 0.22, 1);
 }
 
+
+/* Mobile still fallback must never cover the desktop reel */
+@media (min-width: 1025px) {
+  .dcr-main-reel-mobile-still {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  #main-reel {
+    visibility: visible !important;
+  }
+}
+
 @media (max-width: 1024px) {
   html,
   body {
