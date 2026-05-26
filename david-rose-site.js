@@ -14,8 +14,8 @@ const videos = {
   let mainReelMobileMotionAttempts = 0;
   const clientVideoSourceConfig = {
     "tom-ford": {
-      desktopUrl: "",
-      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1080x1920.mp4",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1920x1080_WEBSITE_RES.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1080x1920_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/STILL_TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1920x1080_1.1.1.jpg",
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/STILL_TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1080x1920_1.1.1.jpg",
       activeSourceMode: "",
@@ -86,7 +86,7 @@ const videos = {
       video.getAttribute("src") ||
       "";
 
-    if (initialSourceUrl) {
+    if (initialSourceUrl && !clientVideoSourceConfig[key].desktopUrl) {
       clientVideoSourceConfig[key].desktopUrl = initialSourceUrl;
     }
   });
@@ -669,6 +669,15 @@ const videos = {
     return Object.keys(clientVideoSourceConfig).find((key) => videos[key] === video) || "";
   }
 
+  function shouldSuppressClientVideoLoading(key) {
+    const video = videos[key];
+    const config = clientVideoSourceConfig[key];
+
+    if (!video || !config) return true;
+
+    return Boolean(config.hasCompleted || config.suppressLoading || video.ended);
+  }
+
   function getClientStillUrlForViewport(key) {
     const config = clientVideoSourceConfig[key];
 
@@ -680,7 +689,7 @@ const videos = {
   }
 
   function showClientVideoLoadingState(key, includeStill) {
-    if (!isClientVideoKey(key)) return;
+    if (!isClientVideoKey(key) || shouldSuppressClientVideoLoading(key)) return;
 
     const layer = ensureClientVideoLoadingLayer();
     const root = document.documentElement;
@@ -748,6 +757,10 @@ const videos = {
 
     function check() {
       if (current !== key || !videos[key]) return;
+      if (shouldSuppressClientVideoLoading(key)) {
+        hideClientVideoLoadingState();
+        return;
+      }
 
       checks += 1;
 
@@ -777,6 +790,11 @@ const videos = {
     const config = clientVideoSourceConfig[key];
 
     if (!config || current !== key) return;
+
+    if (shouldSuppressClientVideoLoading(key)) {
+      hideClientVideoLoadingState();
+      return;
+    }
 
     showClientVideoLoadingState(key, !config.playbackReady);
   }
@@ -835,6 +853,12 @@ const videos = {
     });
 
     video.addEventListener("ended", () => {
+      if (clientVideoSourceConfig[key]) {
+        clientVideoSourceConfig[key].hasCompleted = true;
+        clientVideoSourceConfig[key].suppressLoading = true;
+        clientVideoSourceConfig[key].playbackReady = true;
+      }
+
       hideClientVideoLoadingState();
 
       video.loop = false;
@@ -932,6 +956,7 @@ const videos = {
 
     if (clientKey) {
       prepareClientSourceForViewport(clientKey);
+      clientVideoSourceConfig[clientKey].suppressLoading = true;
     }
 
     video.loop = false;
@@ -962,6 +987,8 @@ const videos = {
     if (clientKey) {
       prepareClientSourceForViewport(clientKey);
       clientVideoSourceConfig[clientKey].playbackReady = false;
+      clientVideoSourceConfig[clientKey].hasCompleted = false;
+      clientVideoSourceConfig[clientKey].suppressLoading = false;
       showClientVideoLoadingState(clientKey, true);
     }
 
