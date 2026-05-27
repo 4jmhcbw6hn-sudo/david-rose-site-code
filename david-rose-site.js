@@ -1,3 +1,4 @@
+/* DCR reissue: includes mobile SWIPE TO CLEAR hint â€” cache bump 126 */
 const videos = {
     main: document.getElementById("main-reel"),
     commercial: document.getElementById("commercial-reel"),
