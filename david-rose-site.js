@@ -18,8 +18,10 @@ const videos = {
       creditTitle: "FINISHING EDITOR / ONLINE EDITOR",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1920x1080_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1080x1920_WEBSITE_RES.mp4",
-      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/STILL_TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1920x1080_1.1.1.jpg",
-      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/STILL_TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1080x1920_1.1.1.jpg",
+      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/STILL_TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1920x1080_1.1.1_1.1.2.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/STILL_TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1080x1920_1.1.1_1.1.1.jpg",
+      desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/STILL_2_TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1920x1080_1.1.1_1.1.2_1.1.3.jpg",
+      mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/STILL_2_TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1080x1920_1.1.1_1.1.1_1.1.2.jpg",
       activeSourceMode: "",
       playbackReady: false
     },
@@ -27,8 +29,10 @@ const videos = {
       creditTitle: "EDITOR + COLOURIST",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_16x9_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_9x16_WEBSITE_RES.mp4",
-      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/STILL_01_HARINGTON_MASTER_BRANDING_CLOSE_16x9_1.3.1.jpg",
-      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/STILL_01_HARINGTON_MASTER_BRANDING_CLOSE_9x16_1.3.1.jpg",
+      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/STILL_01_HARINGTON_MASTER_BRANDING_CLOSE_16x9_1.3.1_1.3.1.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/STILL_01_HARINGTON_MASTER_BRANDING_CLOSE_9x16_1.3.1_1.3.1.jpg",
+      desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/STILL_01_HARINGTON_MASTER_BRANDING_CLOSE_16x9_1.3.1.jpg",
+      mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/STILL_01_HARINGTON_MASTER_BRANDING_CLOSE_9x16_1.3.1.jpg",
       activeSourceMode: "",
       playbackReady: false
     },
@@ -36,8 +40,10 @@ const videos = {
       creditTitle: "COLOURIST",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/GNV-LUX-SS25-Watches-Final_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/GNV-LUX-SS25-Watches-Social-Final_WEBSITE_RES.mp4",
-      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/STILL_GNV-LUX-SS25-Watches-Final_1.2.1.jpg",
-      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/STILL_GNV-LUX-SS25-JAR-Social-Final_1.2.1.jpg",
+      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/STILL_GNV-LUX-SS25-Watches-Final_1.2.1_1.2.1.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/STILL_GNV-LUX-SS25-JAR-Social-Final_1.2.1_1.2.1.jpg",
+      desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/STILL_GNV-LUX-SS25-Watches-Final_1.2.1.jpg",
+      mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/STILL_GNV-LUX-SS25-JAR-Social-Final_1.2.1.jpg",
       activeSourceMode: "",
       playbackReady: false
     },
@@ -45,8 +51,10 @@ const videos = {
       creditTitle: "EDITOR + COMPOSER",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_WEBSITE_RES.mp4",
-      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_1.4.1.jpg",
-      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_1.4.1.jpg",
+      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_1.4.1_1.4.1.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_1.4.1_1.4.1.jpg",
+      desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_1.4.1.jpg",
+      mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_1.4.1.jpg",
       activeSourceMode: "",
       playbackReady: false
     },
@@ -56,6 +64,8 @@ const videos = {
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_9x16_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_16_9.jpg",
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_9x16.jpg",
+      desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_16_9_1.5.2.jpg",
+      mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_9x16_1.9.1.jpg",
       activeSourceMode: "",
       playbackReady: false
     }
@@ -81,6 +91,7 @@ const videos = {
   let clientVideoLoadingTextDelayTimer = null;
   let clientVideoCreditShowTimeout = null;
   let clientVideoCreditHideTimeout = null;
+  let clientVideoEndReturnTimeout = null;
 
   const CLIENT_VIDEO_PLAYBACK_VOLUME = 0.68;
   Object.keys(videos).forEach((key) => {
@@ -600,6 +611,18 @@ const videos = {
           visibility 0s;
       }
 
+      html.dcr-client-video-end-card-on .dcr-client-video-loading-still {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(1);
+        filter: brightness(0.86) saturate(1);
+        transition:
+          opacity 1450ms cubic-bezier(0.16, 1, 0.3, 1),
+          transform 5200ms cubic-bezier(0.13, 1, 0.22, 1),
+          filter 4800ms cubic-bezier(0.16, 1, 0.3, 1),
+          visibility 0s;
+      }
+
       .dcr-client-video-loading-text {
         position: fixed !important;
         left: 50vw !important;
@@ -655,7 +678,7 @@ const videos = {
         top: 50vh !important;
         top: 50svh !important;
         z-index: 64 !important;
-        transform: translate(-50%, -50%) scale(0.975);
+        transform: translate(-50%, -50%) scale(0.982);
         opacity: 0;
         visibility: hidden;
         color: rgba(255, 255, 255, 0.92);
@@ -666,13 +689,23 @@ const videos = {
         text-transform: uppercase;
         text-align: center;
         white-space: nowrap;
-        filter: blur(7px);
+        filter: blur(8px);
+        padding: clamp(18px, 2.2vw, 30px) clamp(28px, 5.8vw, 86px);
+        border-radius: 999px;
+        background:
+          radial-gradient(
+            ellipse at center,
+            rgba(0, 0, 0, 0.46) 0%,
+            rgba(0, 0, 0, 0.30) 38%,
+            rgba(0, 0, 0, 0.12) 58%,
+            rgba(0, 0, 0, 0) 78%
+          );
         text-shadow: 0 0 26px rgba(0, 0, 0, 0.54);
         transition:
-          opacity 1250ms cubic-bezier(0.16, 1, 0.3, 1),
-          filter 1850ms cubic-bezier(0.16, 1, 0.3, 1),
-          transform 2200ms cubic-bezier(0.13, 1, 0.22, 1),
-          visibility 0s linear 1250ms;
+          opacity 2850ms cubic-bezier(0.16, 1, 0.3, 1),
+          filter 3400ms cubic-bezier(0.16, 1, 0.3, 1),
+          transform 3900ms cubic-bezier(0.13, 1, 0.22, 1),
+          visibility 0s linear 2850ms;
       }
 
       html.dcr-client-video-credit-on .dcr-client-video-credit-text {
@@ -751,7 +784,7 @@ const videos = {
     return Boolean(config.hasCompleted || config.suppressLoading || video.ended);
   }
 
-  function getClientStillUrlForViewport(key) {
+  function getClientLoadingStillUrlForViewport(key) {
     const config = clientVideoSourceConfig[key];
 
     if (!config) return "";
@@ -759,6 +792,16 @@ const videos = {
     return isMobileClientVideoViewport()
       ? config.mobileStillUrl || config.desktopStillUrl || ""
       : config.desktopStillUrl || config.mobileStillUrl || "";
+  }
+
+  function getClientEndStillUrlForViewport(key) {
+    const config = clientVideoSourceConfig[key];
+
+    if (!config) return "";
+
+    return isMobileClientVideoViewport()
+      ? config.mobileEndStillUrl || config.desktopEndStillUrl || config.mobileStillUrl || config.desktopStillUrl || ""
+      : config.desktopEndStillUrl || config.mobileEndStillUrl || config.desktopStillUrl || config.mobileStillUrl || "";
   }
 
   function clearClientVideoLoadingTextDelay() {
@@ -773,7 +816,7 @@ const videos = {
 
     const layer = ensureClientVideoLoadingLayer();
     const root = document.documentElement;
-    const stillUrl = getClientStillUrlForViewport(key);
+    const stillUrl = getClientLoadingStillUrlForViewport(key);
     const config = clientVideoSourceConfig[key];
 
     if (clientVideoLoadingHideTimeout) {
@@ -782,6 +825,7 @@ const videos = {
     }
 
     root.classList.remove("dcr-client-video-loading-active");
+    root.classList.remove("dcr-client-video-end-card-on");
     clearClientVideoLoadingTextDelay();
 
     if (includeStill && stillUrl) {
@@ -818,6 +862,7 @@ const videos = {
 
     root.classList.remove("dcr-client-video-loading-active");
     root.classList.remove("dcr-client-video-loading-still-on");
+    root.classList.remove("dcr-client-video-end-card-on");
 
     if (clientVideoLoadingHideTimeout) {
       clearTimeout(clientVideoLoadingHideTimeout);
@@ -828,6 +873,29 @@ const videos = {
       layer.still.style.backgroundImage = "";
       clientVideoLoadingHideTimeout = null;
     }, 1300);
+  }
+
+  function showClientVideoEndCardState(key) {
+    if (!isClientVideoKey(key)) return;
+
+    const stillUrl = getClientEndStillUrlForViewport(key);
+    const root = document.documentElement;
+
+    if (!stillUrl) return;
+
+    const layer = ensureClientVideoLoadingLayer();
+
+    if (clientVideoLoadingHideTimeout) {
+      clearTimeout(clientVideoLoadingHideTimeout);
+      clientVideoLoadingHideTimeout = null;
+    }
+
+    clearClientVideoLoadingTextDelay();
+    root.classList.remove("dcr-client-video-loading-active");
+    root.classList.remove("dcr-client-video-loading-still-on");
+
+    layer.still.style.backgroundImage = "url(\"" + stillUrl.replace(/"/g, "%22") + "\")";
+    root.classList.add("dcr-client-video-end-card-on");
   }
 
   function clearClientVideoCreditTimers() {
@@ -845,6 +913,25 @@ const videos = {
   function hideClientVideoCredit() {
     clearClientVideoCreditTimers();
     document.documentElement.classList.remove("dcr-client-video-credit-on");
+  }
+
+  function clearClientVideoEndReturnTimer() {
+    if (clientVideoEndReturnTimeout) {
+      clearTimeout(clientVideoEndReturnTimeout);
+      clientVideoEndReturnTimeout = null;
+    }
+  }
+
+  function scheduleClientVideoEndReturn(key) {
+    clearClientVideoEndReturnTimer();
+
+    clientVideoEndReturnTimeout = setTimeout(() => {
+      clientVideoEndReturnTimeout = null;
+
+      if (current === key && !isApproachOpen && !isContactOpen) {
+        returnToMainWebsiteVideo();
+      }
+    }, 10000);
   }
 
   function scheduleClientVideoCredit(key) {
@@ -1020,14 +1107,12 @@ const videos = {
       video.pause();
       safelySetPlaybackRate(video, 1);
 
-      try {
-        video.currentTime = 0;
-      } catch (error) {}
-
       setTimeout(() => {
         if (current === key && !isApproachOpen && !isContactOpen) {
+          showClientVideoEndCardState(key);
           settleClientVideoStill(video);
           showCenterNameAnimated(250);
+          scheduleClientVideoEndReturn(key);
         }
       }, 350);
     });
@@ -1138,11 +1223,13 @@ const videos = {
     const clientKey = getClientVideoKeyByVideo(video);
 
     if (clientKey) {
+      clearClientVideoEndReturnTimer();
       hideClientVideoCredit();
       prepareClientSourceForViewport(clientKey);
       clientVideoSourceConfig[clientKey].playbackReady = false;
       clientVideoSourceConfig[clientKey].hasCompleted = false;
       clientVideoSourceConfig[clientKey].suppressLoading = false;
+      document.documentElement.classList.remove("dcr-client-video-end-card-on");
       showClientVideoLoadingState(clientKey, true);
     }
 
@@ -2765,6 +2852,7 @@ const videos = {
   function hideAndResetClientVideos() {
     hideClientVideoLoadingState();
     hideClientVideoCredit();
+    clearClientVideoEndReturnTimer();
 
     Object.keys(clientVideoSourceConfig).forEach((key) => {
       const video = videos[key];
@@ -3748,7 +3836,10 @@ const videos = {
       (sectionName === "colour" || sectionName === "direction");
 
     clearRevealTimeouts();
-    fadeCurrentAudioToZero();
+
+    if (!isSwitchingBetweenProjectMenus) {
+      fadeCurrentAudioToZero();
+    }
 
     activeSection = sectionName;
     activeMainNavButton = navButton;
