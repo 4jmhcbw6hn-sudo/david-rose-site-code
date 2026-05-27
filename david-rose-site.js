@@ -1101,6 +1101,33 @@ const videos = {
     document.documentElement.classList.remove("dcr-client-video-still-dimmed");
   }
 
+  function isCurrentClientVideoHoldingEndCard() {
+    if (!isClientVideoKey(current)) return false;
+
+    const config = clientVideoSourceConfig[current];
+    const video = videos[current];
+
+    return Boolean(
+      config &&
+      (config.hasCompleted || (video && video.ended)) &&
+      document.documentElement.classList.contains("dcr-client-video-end-card-on")
+    );
+  }
+
+  function shouldKeepCenterNameHiddenAfterApproachClose() {
+    return isClientVideoKey(current) && !isCurrentClientVideoHoldingEndCard();
+  }
+
+  function restoreCenterNameAfterApproachClose(delay) {
+    if (shouldKeepCenterNameHiddenAfterApproachClose()) {
+      cancelCenterNameReturn();
+      hideNameShadowSpot();
+      return;
+    }
+
+    showCenterNameAnimated(delay);
+  }
+
   function clearClientVideoCreditTimers() {
     if (clientVideoCreditShowTimeout) {
       clearTimeout(clientVideoCreditShowTimeout);
@@ -3922,12 +3949,7 @@ const videos = {
 
     resumeApproachVideoPlayback();
 
-    if (isClientVideoKey(current)) {
-      cancelCenterNameReturn();
-      hideNameShadowSpot();
-    } else {
-      showCenterNameAnimated(1500);
-    }
+    restoreCenterNameAfterApproachClose(1500);
 
     if (shouldResetButton && activeMainNavButton === approachLink) {
       const isMobileApproachReturn =
@@ -4045,7 +4067,7 @@ const videos = {
     if (wasOpen) {
       clearApproachVideoBlur();
       resumeApproachVideoPlayback();
-      showCenterNameAnimated(700);
+      restoreCenterNameAfterApproachClose(700);
     } else {
       removeApproachFreezeFrameImmediately();
     }
