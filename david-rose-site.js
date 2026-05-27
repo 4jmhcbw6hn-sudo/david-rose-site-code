@@ -745,8 +745,8 @@ const videos = {
         opacity: 0;
         visibility: hidden;
         z-index: 4 !important;
-        transform: scale(1.012);
-        filter: brightness(0.86) saturate(0.98);
+        transform: scale(1.035);
+        filter: blur(8px) brightness(0.82) saturate(0.96);
         transition:
           opacity 1200ms cubic-bezier(0.16, 1, 0.3, 1),
           transform 3600ms cubic-bezier(0.13, 1, 0.22, 1),
@@ -757,8 +757,8 @@ const videos = {
       html.dcr-client-video-loading-still-on .dcr-client-video-loading-still {
         opacity: 1;
         visibility: visible;
-        transform: scale(1);
-        filter: brightness(0.9) saturate(1);
+        transform: scale(1.035);
+        filter: blur(8px) brightness(0.86) saturate(0.98);
         transition:
           opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
           transform 4200ms cubic-bezier(0.13, 1, 0.22, 1),
@@ -769,8 +769,8 @@ const videos = {
       html.dcr-client-video-end-card-on .dcr-client-video-loading-still {
         opacity: 1;
         visibility: visible;
-        transform: scale(1);
-        filter: brightness(0.86) saturate(1);
+        transform: scale(1.035);
+        filter: blur(7px) brightness(0.82) saturate(0.98);
         transition:
           opacity 2800ms cubic-bezier(0.16, 1, 0.3, 1),
           transform 6800ms cubic-bezier(0.13, 1, 0.22, 1),
@@ -781,8 +781,8 @@ const videos = {
       html.dcr-client-video-still-dimmed .dcr-client-video-loading-still {
         opacity: 1;
         visibility: visible;
-        transform: scale(1.018);
-        filter: blur(7px) brightness(0.56) saturate(0.92);
+        transform: scale(1.045);
+        filter: blur(11px) brightness(0.54) saturate(0.90);
         transition:
           opacity 1800ms cubic-bezier(0.22, 1, 0.36, 1),
           transform 5200ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -1069,8 +1069,8 @@ const videos = {
     layer.still.style.transition = "none";
     layer.still.style.opacity = "0";
     layer.still.style.visibility = "visible";
-    layer.still.style.transform = "scale(1.018)";
-    layer.still.style.filter = "brightness(0.72) saturate(0.96)";
+    layer.still.style.transform = "scale(1.04)";
+    layer.still.style.filter = "blur(9px) brightness(0.70) saturate(0.94)";
 
     layer.still.getBoundingClientRect();
 
