@@ -8,23 +8,57 @@
 
 
 
-/* First-paint safety: hide overlays/menus until the site JavaScript has set the correct initial state. */
+/* First-paint safety: show nothing but black/background until the site JavaScript has prepared the intro. */
+html:not(.dcr-js-ready)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background: #000;
+  z-index: 2147483646;
+  pointer-events: none !important;
+}
+
+html:not(.dcr-js-ready) .side-nav,
+html:not(.dcr-js-ready) .nav-text,
+html:not(.dcr-js-ready) [data-main-nav],
+html:not(.dcr-js-ready) [data-link],
+html:not(.dcr-js-ready) .ig-link,
+html:not(.dcr-js-ready) .center-name-wrapper,
+html:not(.dcr-js-ready) .center-name-wrapper-opening,
+html:not(.dcr-js-ready) .name-stack,
+html:not(.dcr-js-ready) .subheadline,
+html:not(.dcr-js-ready) .center-name-text-3,
+html:not(.dcr-js-ready) .approach-overlay,
+html:not(.dcr-js-ready) .approach-container,
+html:not(.dcr-js-ready) .approach-text,
+html:not(.dcr-js-ready) .approach-copy,
+html:not(.dcr-js-ready) .approach-ig-link,
+html:not(.dcr-js-ready) .approach-reveal-line,
+html:not(.dcr-js-ready) .dcr-mobile-approach-back,
 html:not(.dcr-js-ready) .contact-overlay,
 html:not(.dcr-js-ready) .contact-modal,
 html:not(.dcr-js-ready) .post-production-projects-panel,
 html:not(.dcr-js-ready) .direction-projects-panel,
 html:not(.dcr-js-ready) .colour-projects-panel,
-html:not(.dcr-js-ready) .color-projects-panel {
+html:not(.dcr-js-ready) .color-projects-panel,
+html:not(.dcr-js-ready) .intro-overlay,
+html:not(.dcr-js-ready) .w-form {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
 }
 
+html:not(.dcr-js-ready) .side-nav *,
+html:not(.dcr-js-ready) .approach-overlay *,
+html:not(.dcr-js-ready) .approach-container *,
+html:not(.dcr-js-ready) .contact-overlay *,
 html:not(.dcr-js-ready) .post-production-projects-panel *,
 html:not(.dcr-js-ready) .direction-projects-panel *,
 html:not(.dcr-js-ready) .colour-projects-panel *,
-html:not(.dcr-js-ready) .color-projects-panel *,
-html:not(.dcr-js-ready) .contact-overlay * {
+html:not(.dcr-js-ready) .color-projects-panel * {
   pointer-events: none !important;
 }
 
