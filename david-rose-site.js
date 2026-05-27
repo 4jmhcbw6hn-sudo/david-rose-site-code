@@ -935,6 +935,31 @@ const videos = {
     document.documentElement.classList.remove("dcr-client-video-credit-on");
   }
 
+  function hideClientVideoCreditForOverlay() {
+    const root = document.documentElement;
+    const credit = document.querySelector(".dcr-client-video-credit-text");
+
+    clearClientVideoCreditTimers();
+
+    if (credit) {
+      credit.style.transition =
+        "opacity 900ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "filter 1150ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "transform 1350ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "visibility 0s linear 1150ms";
+    }
+
+    root.classList.remove("dcr-client-video-credit-on");
+
+    if (credit) {
+      setTimeout(() => {
+        if (!root.classList.contains("dcr-client-video-credit-on")) {
+          credit.style.transition = "";
+        }
+      }, 1300);
+    }
+  }
+
   function clearClientVideoEndReturnTimer() {
     if (clientVideoEndReturnTimeout) {
       clearTimeout(clientVideoEndReturnTimeout);
@@ -3648,6 +3673,7 @@ const videos = {
   function showApproachAnimated() {
     if (isContactOpen) return;
 
+    hideClientVideoCreditForOverlay();
     hideProjectsGradient();
     hideCenterNameAnimated();
 
@@ -4119,6 +4145,7 @@ const videos = {
 
     if (!overlay || !modal) return;
 
+    hideClientVideoCreditForOverlay();
     clearContactTimeouts();
 
     if (isApproachOpen) {
