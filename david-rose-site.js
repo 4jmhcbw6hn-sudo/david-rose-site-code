@@ -106,6 +106,9 @@ const videos = {
   let mobileClientFullscreenNavEntries = [];
   let mobileClientFullscreenNavCleanupTimeout = null;
   let mobileClientFullscreenTouchStart = null;
+  let clientVideoSwipeHintShowTimeout = null;
+  let clientVideoSwipeHintHideTimeout = null;
+  let clientVideoSwipeHintShownThisSession = false;
 
   const CLIENT_VIDEO_PLAYBACK_VOLUME = 0.68;
   const CLIENT_DESKTOP_MP4_FALLBACK_TO_HLS_MS = 3000;
@@ -801,7 +804,8 @@ const videos = {
     style.textContent = `
       .dcr-client-video-loading-still,
       .dcr-client-video-loading-text,
-      .dcr-client-video-credit-text {
+      .dcr-client-video-credit-text,
+      .dcr-client-video-swipe-hint {
         pointer-events: none !important;
       }
 
@@ -951,6 +955,67 @@ const videos = {
           visibility 0s;
       }
 
+      .dcr-client-video-swipe-hint {
+        position: fixed !important;
+        left: 50vw !important;
+        top: 71vh !important;
+        top: 71svh !important;
+        z-index: 65 !important;
+        transform: translate(-50%, 10px) scale(0.985);
+        opacity: 0;
+        visibility: hidden;
+        color: rgba(255, 255, 255, 0.72);
+        font: inherit;
+        font-size: clamp(9px, 2.2vw, 12px);
+        line-height: 1;
+        letter-spacing: 0.36em;
+        text-transform: uppercase;
+        text-align: center;
+        white-space: nowrap;
+        filter: blur(4px);
+        text-shadow: 0 0 22px rgba(0, 0, 0, 0.54);
+        transition:
+          opacity 1150ms cubic-bezier(0.16, 1, 0.3, 1),
+          filter 1600ms cubic-bezier(0.16, 1, 0.3, 1),
+          transform 1900ms cubic-bezier(0.13, 1, 0.22, 1),
+          visibility 0s linear 1150ms;
+      }
+
+      html.dcr-client-video-swipe-hint-on .dcr-client-video-swipe-hint {
+        opacity: 1;
+        visibility: visible;
+        filter: blur(0);
+        transform: translate(-50%, 0) scale(1);
+        animation: dcr-client-swipe-hint-drift 2600ms cubic-bezier(0.45, 0, 0.2, 1) 1;
+        transition:
+          opacity 1250ms cubic-bezier(0.16, 1, 0.3, 1),
+          filter 1650ms cubic-bezier(0.16, 1, 0.3, 1),
+          transform 1900ms cubic-bezier(0.13, 1, 0.22, 1),
+          visibility 0s;
+      }
+
+      @keyframes dcr-client-swipe-hint-drift {
+        0% {
+          transform: translate(-50%, 0) translateX(0) scale(1);
+          letter-spacing: 0.36em;
+        }
+
+        34% {
+          transform: translate(-50%, 0) translateX(-7px) scale(1.006);
+          letter-spacing: 0.39em;
+        }
+
+        68% {
+          transform: translate(-50%, 0) translateX(7px) scale(1.006);
+          letter-spacing: 0.39em;
+        }
+
+        100% {
+          transform: translate(-50%, 0) translateX(0) scale(1);
+          letter-spacing: 0.36em;
+        }
+      }
+
       @media (max-width: 1024px) {
         .dcr-client-video-loading-text {
           font-size: clamp(10px, 2.45vw, 13px);
@@ -962,6 +1027,11 @@ const videos = {
           letter-spacing: 0.24em;
           max-width: 84vw;
           white-space: normal;
+        }
+
+        .dcr-client-video-swipe-hint {
+          font-size: clamp(9px, 2.2vw, 12px);
+          letter-spacing: 0.34em;
         }
       }
     `;
@@ -975,6 +1045,7 @@ const videos = {
     let still = document.querySelector(".dcr-client-video-loading-still");
     let text = document.querySelector(".dcr-client-video-loading-text");
     let credit = document.querySelector(".dcr-client-video-credit-text");
+    let swipeHint = document.querySelector(".dcr-client-video-swipe-hint");
 
     if (!still) {
       still = document.createElement("div");
@@ -999,7 +1070,15 @@ const videos = {
       document.body.appendChild(credit);
     }
 
-    return { still, text, credit };
+    if (!swipeHint) {
+      swipeHint = document.createElement("div");
+      swipeHint.className = "dcr-client-video-swipe-hint";
+      swipeHint.setAttribute("aria-hidden", "true");
+      swipeHint.textContent = "SWIPE TO CLEAR";
+      document.body.appendChild(swipeHint);
+    }
+
+    return { still, text, credit, swipeHint };
   }
 
   function getClientVideoKeyByVideo(video) {
@@ -1118,6 +1197,8 @@ const videos = {
   }
 
   function showClientVideoEndCardState(key) {
+    hideClientVideoSwipeHint(false);
+
     if (!isClientVideoKey(key)) return;
 
     const stillUrl = getClientEndStillUrlForViewport(key);
@@ -1294,6 +1375,7 @@ const videos = {
 
     mobileClientFullscreenNavActive = true;
     document.documentElement.classList.add("dcr-mobile-client-fullscreen-nav-hidden");
+    hideClientVideoSwipeHint(true);
 
     mobileClientFullscreenNavEntries.forEach((entry) => {
       const offset = entry.direction === "left" ? "-34px" : "34px";
@@ -1435,6 +1517,75 @@ const videos = {
     }, { passive: true });
   }
 
+  function hasClientVideoSwipeHintBeenShown() {
+    if (clientVideoSwipeHintShownThisSession) return true;
+
+    try {
+      return window.sessionStorage &&
+        window.sessionStorage.getItem("dcrClientSwipeHintShown") === "true";
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function markClientVideoSwipeHintShown() {
+    clientVideoSwipeHintShownThisSession = true;
+
+    try {
+      if (window.sessionStorage) {
+        window.sessionStorage.setItem("dcrClientSwipeHintShown", "true");
+      }
+    } catch (error) {}
+  }
+
+  function clearClientVideoSwipeHintTimers() {
+    if (clientVideoSwipeHintShowTimeout) {
+      clearTimeout(clientVideoSwipeHintShowTimeout);
+      clientVideoSwipeHintShowTimeout = null;
+    }
+
+    if (clientVideoSwipeHintHideTimeout) {
+      clearTimeout(clientVideoSwipeHintHideTimeout);
+      clientVideoSwipeHintHideTimeout = null;
+    }
+  }
+
+  function hideClientVideoSwipeHint(markAsSeen) {
+    clearClientVideoSwipeHintTimers();
+    document.documentElement.classList.remove("dcr-client-video-swipe-hint-on");
+
+    if (markAsSeen) {
+      markClientVideoSwipeHintShown();
+    }
+  }
+
+  function scheduleClientVideoSwipeHint(key) {
+    if (hasClientVideoSwipeHintBeenShown()) return;
+    if (!isMobileClientVideoViewport()) return;
+    if (!isClientVideoKey(key)) return;
+
+    clearClientVideoSwipeHintTimers();
+
+    clientVideoSwipeHintShowTimeout = setTimeout(() => {
+      clientVideoSwipeHintShowTimeout = null;
+
+      if (hasClientVideoSwipeHintBeenShown()) return;
+      if (current !== key) return;
+      if (!isMobileClientVideoFullscreenEligible()) return;
+      if (mobileClientFullscreenNavActive) return;
+      if (isApproachOpen || isContactOpen) return;
+
+      ensureClientVideoLoadingLayer();
+      markClientVideoSwipeHintShown();
+      document.documentElement.classList.add("dcr-client-video-swipe-hint-on");
+
+      clientVideoSwipeHintHideTimeout = setTimeout(() => {
+        clientVideoSwipeHintHideTimeout = null;
+        document.documentElement.classList.remove("dcr-client-video-swipe-hint-on");
+      }, 3000);
+    }, 9800);
+  }
+
   function clearClientVideoCreditTimers() {
     if (clientVideoCreditShowTimeout) {
       clearTimeout(clientVideoCreditShowTimeout);
@@ -1449,6 +1600,7 @@ const videos = {
 
   function hideClientVideoCredit() {
     clearClientVideoCreditTimers();
+    hideClientVideoSwipeHint(false);
     document.documentElement.classList.remove("dcr-client-video-credit-on");
   }
 
@@ -1457,6 +1609,7 @@ const videos = {
     const credit = document.querySelector(".dcr-client-video-credit-text");
 
     clearClientVideoCreditTimers();
+    hideClientVideoSwipeHint(false);
 
     if (credit) {
       credit.style.transition =
@@ -1517,6 +1670,8 @@ const videos = {
         document.documentElement.classList.remove("dcr-client-video-credit-on");
       }, 5000);
     }, 2000);
+
+    scheduleClientVideoSwipeHint(key);
   }
 
   function markClientVideoPlaybackReady(key) {
@@ -3691,6 +3846,8 @@ const videos = {
   }
 
   function returnToMainWebsiteVideo() {
+    hideClientVideoSwipeHint(false);
+
     const mainVideo = videos.main;
 
     if (audioFadeAnimation) {
