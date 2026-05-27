@@ -2658,6 +2658,34 @@ const videos = {
       }
 
       @media (max-width: 1024px) {
+        html.dcr-mobile-scroll-lock-active,
+        html.dcr-mobile-scroll-lock-active body {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100% !important;
+          height: 100vh !important;
+          height: 100svh !important;
+          height: 100dvh !important;
+          min-height: 100vh !important;
+          min-height: 100svh !important;
+          min-height: 100dvh !important;
+          overflow: hidden !important;
+          overscroll-behavior: none !important;
+          -webkit-overflow-scrolling: auto !important;
+          background: #000 !important;
+        }
+
+        html.dcr-mobile-scroll-lock-active body {
+          touch-action: manipulation;
+        }
+
+        html.dcr-mobile-scroll-lock-active .hero-section,
+        html.dcr-mobile-scroll-lock-active .video-blur-wrapper-2,
+        html.dcr-mobile-scroll-lock-active .video-wrapper,
+        html.dcr-mobile-scroll-lock-active .video-overlay {
+          overscroll-behavior: none !important;
+        }
+
         html,
         body,
         a,
@@ -2836,6 +2864,83 @@ const videos = {
     `;
 
     document.head.appendChild(style);
+  }
+
+  function installMobileViewportScrollLock() {
+    if (window.__dcrMobileViewportScrollLockInstalled) return;
+
+    window.__dcrMobileViewportScrollLockInstalled = true;
+
+    const root = document.documentElement;
+    const mobileQuery = window.matchMedia
+      ? window.matchMedia("(max-width: 1024px)")
+      : null;
+
+    function isMobileLockedViewport() {
+      return Boolean(mobileQuery ? mobileQuery.matches : window.innerWidth <= 1024);
+    }
+
+    function allowNativeTouchMove(target) {
+      if (!target || !target.closest) return false;
+
+      return Boolean(
+        target.closest("input, textarea, select, option, [contenteditable='true'], [data-allow-touch-scroll]")
+      );
+    }
+
+    function syncMobileScrollLock() {
+      if (isMobileLockedViewport()) {
+        root.classList.add("dcr-mobile-scroll-lock-active");
+
+        if (window.scrollX || window.scrollY) {
+          window.scrollTo(0, 0);
+        }
+      } else {
+        root.classList.remove("dcr-mobile-scroll-lock-active");
+      }
+    }
+
+    function preventMobileRubberBand(event) {
+      if (!root.classList.contains("dcr-mobile-scroll-lock-active")) return;
+      if (allowNativeTouchMove(event.target)) return;
+
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+    }
+
+    document.addEventListener("touchmove", preventMobileRubberBand, {
+      passive: false
+    });
+
+    document.addEventListener("gesturestart", preventMobileRubberBand, {
+      passive: false
+    });
+
+    window.addEventListener("scroll", () => {
+      if (!root.classList.contains("dcr-mobile-scroll-lock-active")) return;
+
+      if (window.scrollX || window.scrollY) {
+        window.scrollTo(0, 0);
+      }
+    }, { passive: true });
+
+    window.addEventListener("resize", syncMobileScrollLock);
+    window.addEventListener("orientationchange", () => {
+      setTimeout(syncMobileScrollLock, 120);
+      setTimeout(syncMobileScrollLock, 420);
+    });
+
+    window.addEventListener("pageshow", syncMobileScrollLock);
+
+    if (mobileQuery && mobileQuery.addEventListener) {
+      mobileQuery.addEventListener("change", syncMobileScrollLock);
+    } else if (mobileQuery && mobileQuery.addListener) {
+      mobileQuery.addListener(syncMobileScrollLock);
+    }
+
+    syncMobileScrollLock();
+    setTimeout(syncMobileScrollLock, 350);
   }
 
   function ensureIntroAtmosphereElements() {
@@ -4799,6 +4904,7 @@ const videos = {
   prepareClientOneShotVideo(videos["vogue-suntory"], "vogue-suntory");
 
   installMobileLayoutFixes();
+  installMobileViewportScrollLock();
   installReactiveCornerVignettes();
   ensureNameShadowSpot();
   ensureMobileApproachBackButton();
