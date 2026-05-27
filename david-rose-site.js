@@ -1,4 +1,4 @@
-/* DCR update: centred SWIPE TO CLEAR hint + mobile MP4-first audio stability â€” cache bump 130 */
+/* DCR update: restore Approach + Contact video/audio pause-resume â€” cache bump 132 */
 const videos = {
     main: document.getElementById("main-reel"),
     commercial: document.getElementById("commercial-reel"),
@@ -94,6 +94,7 @@ const videos = {
   let approachPlaybackAnimation = null;
   let approachPausedVideo = null;
   let approachVideoWasPaused = false;
+  let approachResumeState = null;
   let centerNameReturnTimeout = null;
   let centerNameSettleTimeout = null;
   let projectsGradientPeakTimeout = null;
@@ -3938,6 +3939,58 @@ const videos = {
     current = "main";
   }
 
+  function captureApproachResumeState() {
+    const video = videos[current];
+    const key = getClientVideoKeyByVideo(video);
+    const config = key ? clientVideoSourceConfig[key] : null;
+
+    approachResumeState = {
+      key: key || current,
+      isClient: Boolean(key),
+      video: video || null,
+      wasPaused: video ? Boolean(video.paused) : true,
+      wasEnded: video ? Boolean(video.ended) : false,
+      hadCompleted: Boolean(config && config.hasCompleted),
+      time: video ? (video.currentTime || 0) : 0
+    };
+
+    if (key) {
+      clearClientDesktopHlsFallbackTimer(key);
+    }
+  }
+
+  function clearApproachResumeState() {
+    approachResumeState = null;
+  }
+
+  function shouldResumeApproachClientVideo(key, video) {
+    if (!key || !video || !isClientVideoKey(key)) return false;
+    if (current !== key) return false;
+
+    const config = clientVideoSourceConfig[key];
+
+    if (!config) return false;
+    if (config.hasCompleted || video.ended) return false;
+
+    return true;
+  }
+
+  function playVideoWithResumeRetries(video) {
+    if (!video) return;
+
+    playVideo(video);
+
+    [220, 720, 1450].forEach((delay) => {
+      const retry = setTimeout(() => {
+        if (!video || !isApproachOpen && !isContactOpen && video.paused && !video.ended) {
+          playVideo(video);
+        }
+      }, delay);
+
+      approachTimeouts.push(retry);
+    });
+  }
+
   function cancelApproachPlaybackAnimation() {
     if (approachPlaybackAnimation) {
       cancelAnimationFrame(approachPlaybackAnimation);
@@ -3987,11 +4040,11 @@ const videos = {
     approachPausedVideo = video;
     approachVideoWasPaused = video.paused;
 
-    if (approachVideoWasPaused) return;
+    if (approachVideoWasPaused || video.ended) return;
 
     const startRate = video.playbackRate || 1;
     const finalRate = 0.24;
-    const duration = 2800;
+    const duration = 3200;
 
     animatePlaybackRate(video, startRate, finalRate, duration, () => {
       if (!isApproachOpen || approachPausedVideo !== video) return;
@@ -3999,20 +4052,33 @@ const videos = {
       const pauseTimeout = setTimeout(() => {
         if (isApproachOpen && approachPausedVideo === video) {
           safelySetPlaybackRate(video, finalRate);
-          video.pause();
+          try {
+            video.pause();
+          } catch (error) {}
         }
-      }, 180);
+      }, 260);
 
       approachTimeouts.push(pauseTimeout);
     }, approachSlowdownEase);
   }
 
   function resumeApproachVideoPlayback() {
-    const video = approachPausedVideo || videos[current];
-    if (!video) return;
+    const savedState = approachResumeState;
+    const savedKey = savedState && savedState.isClient ? savedState.key : "";
+    const video =
+      (savedKey && videos[savedKey]) ||
+      approachPausedVideo ||
+      videos[current];
 
-    const resumeClientKey = getClientVideoKeyByVideo(video);
-    const wasPausedBeforeApproach = approachVideoWasPaused;
+    if (!video) {
+      clearApproachResumeState();
+      return;
+    }
+
+    const resumeClientKey = savedKey || getClientVideoKeyByVideo(video);
+    const wasPausedBeforeApproach = savedState
+      ? Boolean(savedState.wasPaused)
+      : approachVideoWasPaused;
 
     approachPausedVideo = null;
     approachVideoWasPaused = false;
@@ -4021,6 +4087,32 @@ const videos = {
 
     if (wasPausedBeforeApproach) {
       safelySetPlaybackRate(video, 1);
+      clearApproachResumeState();
+      return;
+    }
+
+    if (resumeClientKey && shouldResumeApproachClientVideo(resumeClientKey, video)) {
+      const config = clientVideoSourceConfig[resumeClientKey];
+
+      clearClientDesktopHlsFallbackTimer(resumeClientKey);
+
+      if (config) {
+        config.autoplayAfterSourceReady = true;
+        config.suppressLoading = false;
+      }
+
+      safelySetMuted(video, false);
+      safelySetVolume(video, 0);
+      safelySetPlaybackRate(video, 0.42);
+
+      playVideoWithResumeRetries(video);
+      fadeClientVideoAudioIn(video, resumeClientKey);
+
+      animatePlaybackRate(video, 0.42, 1, 2600, () => {
+        safelySetPlaybackRate(video, 1);
+      }, easeOutCubic);
+
+      clearApproachResumeState();
       return;
     }
 
@@ -4028,8 +4120,8 @@ const videos = {
 
     safelySetPlaybackRate(video, startRate);
 
-    if (video.paused) {
-      playVideo(video);
+    if (video.paused && !video.ended) {
+      playVideoWithResumeRetries(video);
     }
 
     if (resumeClientKey) {
@@ -4039,6 +4131,8 @@ const videos = {
     animatePlaybackRate(video, startRate, 1, 2200, () => {
       safelySetPlaybackRate(video, 1);
     });
+
+    clearApproachResumeState();
   }
 
   function fadeCurrentAudioToZero() {
@@ -4620,6 +4714,9 @@ const videos = {
     hideProjectsGradient();
     hideCenterNameAnimated();
 
+    clearApproachTimeouts();
+    captureApproachResumeState();
+
     if (activeSection) {
       closeActiveSectionAnimated();
     } else {
@@ -4627,7 +4724,6 @@ const videos = {
       activeProjectButton = null;
     }
 
-    clearApproachTimeouts();
     removeApproachFreezeFrameImmediately();
     fadeCurrentAudioToZero();
 
@@ -4642,6 +4738,7 @@ const videos = {
     enterMobileApproachFocus();
 
     blurCurrentVideoForApproach();
+    slowCurrentVideoForApproach();
 
     getApproachElements().forEach((element) => {
       element.style.display = "";
@@ -4656,14 +4753,6 @@ const videos = {
     });
 
     revealApproachLinesStaggered();
-
-    const delayedSlowdown = setTimeout(() => {
-      if (isApproachOpen) {
-        slowCurrentVideoForApproach();
-      }
-    }, 1600);
-
-    approachTimeouts.push(delayedSlowdown);
   }
 
   function hideApproachImmediate(shouldResetButton) {
@@ -4679,6 +4768,7 @@ const videos = {
       restoreCenterNameAfterApproachClose(700);
     } else {
       removeApproachFreezeFrameImmediately();
+      clearApproachResumeState();
     }
 
     hideApproachFinal(shouldResetButton);
@@ -5099,14 +5189,16 @@ const videos = {
       closeActiveSectionAnimated();
     }
 
-    dimClientVideoStillForOverlay();
-    moveToMainVideoBehindContact();
+    captureApproachResumeState();
     hideProjectsGradient();
     hideCenterNameAnimated();
     fadeCurrentAudioToZero();
     softenNavForContact();
 
     isContactOpen = true;
+
+    blurCurrentVideoForApproach();
+    slowCurrentVideoForApproach();
     activeSection = null;
     activeProjectButton = null;
     activeMainNavButton = contactLink || null;
@@ -5194,7 +5286,8 @@ const videos = {
     clearContactTimeouts();
 
     isContactOpen = false;
-    clearClientVideoStillOverlayDim();
+    resumeApproachVideoPlayback();
+    restoreCenterNameAfterApproachClose(600);
 
     const modalRevealItems = Array.from(modal.children);
 
@@ -5228,7 +5321,9 @@ const videos = {
     overlay.style.transition = "none";
     overlay.style.opacity = "1";
 
-    showCenterNameAnimated(600);
+    const backgroundReturnTimeout = setTimeout(() => {
+      clearApproachVideoBlur();
+    }, 1350);
 
     const restoreNavTimeout = setTimeout(() => {
       restoreNavAfterContact();
@@ -5246,6 +5341,7 @@ const videos = {
       restoreNavAfterContact();
     }, 2650);
 
+    contactTimeouts.push(backgroundReturnTimeout);
     contactTimeouts.push(restoreNavTimeout);
     contactTimeouts.push(finalHideTimeout);
   }
@@ -5253,9 +5349,18 @@ const videos = {
   function hideContactImmediate() {
     const overlay = getContactOverlay();
     const modal = getContactModal();
+    const wasOpen = isContactOpen;
 
     isContactOpen = false;
-    clearClientVideoStillOverlayDim();
+
+    if (wasOpen) {
+      clearApproachVideoBlur();
+      resumeApproachVideoPlayback();
+      restoreCenterNameAfterApproachClose(700);
+    } else {
+      clearApproachVideoBlur();
+      clearApproachResumeState();
+    }
 
     if (overlay) {
       overlay.style.transition = "none";
