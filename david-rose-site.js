@@ -16,6 +16,8 @@ const videos = {
   const clientVideoSourceConfig = {
     "tom-ford": {
       creditTitle: "FINISHING EDITOR / ONLINE EDITOR",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/7ed50dd2-9a11-43c5-be79-ece38675d744/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/1426fc88-3b39-444f-9e05-d46d147af762/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1920x1080_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1080x1920_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/00_TOM_FORD/FASHION/STILL_TF_Fucking_Fabulous_2025_Lip_Model_Video_Uncensored_15s_1920x1080_1.1.1_1.1.2.jpg",
@@ -27,6 +29,8 @@ const videos = {
     },
     "mr-porter": {
       creditTitle: "EDITOR + COLOURIST",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/94276a0d-8455-489e-bffa-f8248c6760c9/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/41f618ce-7a7b-40a4-9d2c-2478c1a4dbaf/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_16x9_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/01_HARINGTON_MASTER_BRANDING_CLOSE_9x16_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/MR_PORTER/STILL_01_HARINGTON_MASTER_BRANDING_CLOSE_16x9_1.3.1_1.3.1.jpg",
@@ -38,6 +42,8 @@ const videos = {
     },
     "christies-spring-season-25": {
       creditTitle: "COLOURIST",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/164a52ad-3dbb-47f3-9b5a-8ca6f8bffe55/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/3c8fdc21-e14a-4466-9cb0-fe17253c64f1/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/GNV-LUX-SS25-Watches-Final_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/GNV-LUX-SS25-Watches-Social-Final_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/STILL_GNV-LUX-SS25-Watches-Final_1.2.1_1.2.1.jpg",
@@ -49,6 +55,8 @@ const videos = {
     },
     "christies-the-winter-egg": {
       creditTitle: "EDITOR + COMPOSER",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/94ab113a-943d-4a5e-851d-b846d46d7363/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/d3d2fc38-a7ea-47d3-a18f-20c56ba9422c/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_1.4.1_1.4.1.jpg",
@@ -60,6 +68,8 @@ const videos = {
     },
     "vogue-suntory": {
       creditTitle: "COLOURIST",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/3a6ae6dc-a97c-4226-8bc4-ef57ce593409/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/18aea18f-f824-401b-8e53-bdd6524ee23f/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_16x9_WEBSITE_RES.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_9x16_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_16_9.jpg",
@@ -94,6 +104,10 @@ const videos = {
   let clientVideoEndReturnTimeout = null;
 
   const CLIENT_VIDEO_PLAYBACK_VOLUME = 0.68;
+  const CLIENT_HLS_JS_URL = "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js";
+  const clientVideoHlsInstances = {};
+  let hlsJsLoadPromise = null;
+
   Object.keys(videos).forEach((key) => {
     if (!videos[key]) {
       delete videos[key];
@@ -102,6 +116,94 @@ const videos = {
 
   function isClientVideoKey(key) {
     return Boolean(clientVideoSourceConfig[key]);
+  }
+
+  function isHlsSourceUrl(sourceUrl) {
+    return /\.m3u8(?:$|[?#])/i.test(sourceUrl || "");
+  }
+
+  function supportsNativeHls(video) {
+    if (!video || !video.canPlayType) return false;
+
+    return Boolean(
+      video.canPlayType("application/vnd.apple.mpegurl") ||
+      video.canPlayType("application/x-mpegURL")
+    );
+  }
+
+  function getClientSourceUrlForViewport(key) {
+    const config = clientVideoSourceConfig[key];
+
+    if (!config) return "";
+
+    if (isMobileClientVideoViewport()) {
+      return config.mobileHlsUrl || config.mobileUrl || config.desktopHlsUrl || config.desktopUrl || "";
+    }
+
+    return config.desktopHlsUrl || config.desktopUrl || config.mobileHlsUrl || config.mobileUrl || "";
+  }
+
+  function getClientFallbackSourceUrlForViewport(key) {
+    const config = clientVideoSourceConfig[key];
+
+    if (!config) return "";
+
+    if (isMobileClientVideoViewport()) {
+      return config.mobileUrl || config.desktopUrl || "";
+    }
+
+    return config.desktopUrl || config.mobileUrl || "";
+  }
+
+  function loadHlsJsLibrary() {
+    if (window.Hls && typeof window.Hls.isSupported === "function") {
+      return Promise.resolve(window.Hls);
+    }
+
+    if (hlsJsLoadPromise) {
+      return hlsJsLoadPromise;
+    }
+
+    hlsJsLoadPromise = new Promise((resolve, reject) => {
+      const existingScript = document.querySelector("script[data-dcr-hls-js]");
+
+      if (existingScript) {
+        existingScript.addEventListener("load", () => resolve(window.Hls), { once: true });
+        existingScript.addEventListener("error", reject, { once: true });
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = CLIENT_HLS_JS_URL;
+      script.async = true;
+      script.defer = true;
+      script.setAttribute("data-dcr-hls-js", "true");
+
+      script.addEventListener("load", () => {
+        if (window.Hls && typeof window.Hls.isSupported === "function") {
+          resolve(window.Hls);
+        } else {
+          reject(new Error("hls.js loaded but Hls was unavailable"));
+        }
+      }, { once: true });
+
+      script.addEventListener("error", reject, { once: true });
+      document.head.appendChild(script);
+    });
+
+    return hlsJsLoadPromise;
+  }
+
+  function destroyClientHlsInstance(key) {
+    const hls = clientVideoHlsInstances[key];
+
+    if (!hls) return;
+
+    try {
+      hls.destroy();
+    } catch (error) {}
+
+    delete clientVideoHlsInstances[key];
   }
 
   Object.keys(clientVideoSourceConfig).forEach((key) => {
@@ -126,6 +228,8 @@ const videos = {
 
     if (!video || !config) return;
 
+    destroyClientHlsInstance(key);
+
     try {
       video.pause();
     } catch (error) {}
@@ -144,6 +248,8 @@ const videos = {
 
     video.removeAttribute("src");
     config.activeSourceMode = "";
+    config.activeSourceUrl = "";
+    config.autoplayAfterSourceReady = false;
     config.playbackReady = false;
 
     try {
@@ -1218,6 +1324,7 @@ const videos = {
         clientVideoSourceConfig[key].hasCompleted = true;
         clientVideoSourceConfig[key].suppressLoading = true;
         clientVideoSourceConfig[key].playbackReady = true;
+        clientVideoSourceConfig[key].autoplayAfterSourceReady = false;
       }
 
       hideClientVideoLoadingState();
@@ -1255,7 +1362,7 @@ const videos = {
     return (source && source.getAttribute("src")) || video.getAttribute("src") || "";
   }
 
-  function setVideoSourceUrl(video, sourceUrl) {
+  function setDirectVideoSourceUrl(video, sourceUrl) {
     if (!video || !sourceUrl) return;
 
     const currentSource = getVideoSourceUrl(video);
@@ -1280,6 +1387,107 @@ const videos = {
     } catch (error) {}
   }
 
+  function fallbackClientVideoToMp4(key) {
+    const video = videos[key];
+    const config = clientVideoSourceConfig[key];
+    const fallbackUrl = getClientFallbackSourceUrlForViewport(key);
+
+    if (!video || !config || !fallbackUrl) return;
+
+    destroyClientHlsInstance(key);
+    config.activeSourceUrl = fallbackUrl;
+    setDirectVideoSourceUrl(video, fallbackUrl);
+
+    if (current === key && config.autoplayAfterSourceReady) {
+      playVideo(video);
+    }
+  }
+
+  function setClientHlsVideoSource(key, sourceUrl) {
+    const video = videos[key];
+    const config = clientVideoSourceConfig[key];
+
+    if (!video || !config || !sourceUrl) return;
+
+    if (config.activeSourceUrl === sourceUrl && clientVideoHlsInstances[key]) return;
+
+    destroyClientHlsInstance(key);
+    config.activeSourceUrl = sourceUrl;
+
+    const source = video.querySelector("source");
+
+    if (source) {
+      source.removeAttribute("src");
+    }
+
+    video.removeAttribute("src");
+
+    if (supportsNativeHls(video)) {
+      setDirectVideoSourceUrl(video, sourceUrl);
+      return;
+    }
+
+    loadHlsJsLibrary()
+      .then((Hls) => {
+        if (!Hls || typeof Hls.isSupported !== "function" || !Hls.isSupported()) {
+          fallbackClientVideoToMp4(key);
+          return;
+        }
+
+        if (config.activeSourceUrl !== sourceUrl) return;
+
+        const hls = new Hls({
+          enableWorker: true,
+          capLevelToPlayerSize: true,
+          maxBufferLength: 18,
+          maxMaxBufferLength: 36
+        });
+
+        clientVideoHlsInstances[key] = hls;
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (current === key && config.autoplayAfterSourceReady) {
+            playVideo(video);
+          }
+        });
+
+        hls.on(Hls.Events.ERROR, (eventName, data) => {
+          if (!data || !data.fatal) return;
+
+          fallbackClientVideoToMp4(key);
+        });
+
+        hls.attachMedia(video);
+        hls.loadSource(sourceUrl);
+      })
+      .catch(() => {
+        fallbackClientVideoToMp4(key);
+      });
+  }
+
+  function setVideoSourceUrl(video, sourceUrl, key) {
+    if (!video || !sourceUrl) return;
+
+    const clientKey = key || getClientVideoKeyByVideo(video);
+
+    if (clientKey && isHlsSourceUrl(sourceUrl)) {
+      setClientHlsVideoSource(clientKey, sourceUrl);
+      return;
+    }
+
+    if (clientKey) {
+      destroyClientHlsInstance(clientKey);
+
+      const config = clientVideoSourceConfig[clientKey];
+
+      if (config) {
+        config.activeSourceUrl = sourceUrl;
+      }
+    }
+
+    setDirectVideoSourceUrl(video, sourceUrl);
+  }
+
   function prepareClientSourceForViewport(key) {
     const video = videos[key];
     const config = clientVideoSourceConfig[key];
@@ -1291,12 +1499,12 @@ const videos = {
     }
 
     const sourceMode = isMobileClientVideoViewport() ? "mobile" : "desktop";
-    const nextSource =
-      sourceMode === "mobile" ? config.mobileUrl : config.desktopUrl;
+    const nextSource = getClientSourceUrlForViewport(key);
+    const sourceSignature = sourceMode + "|" + nextSource;
 
-    if (!nextSource || config.activeSourceMode === sourceMode) return;
+    if (!nextSource || config.activeSourceMode === sourceSignature) return;
 
-    config.activeSourceMode = sourceMode;
+    config.activeSourceMode = sourceSignature;
     config.playbackReady = false;
 
     try {
@@ -1304,7 +1512,7 @@ const videos = {
       video.setAttribute("preload", "auto");
     } catch (error) {}
 
-    setVideoSourceUrl(video, nextSource);
+    setVideoSourceUrl(video, nextSource, key);
   }
 
   function prepareAllClientSourcesForViewport() {
@@ -1353,12 +1561,18 @@ const videos = {
     const clientKey = getClientVideoKeyByVideo(video);
 
     if (clientKey) {
+      const config = clientVideoSourceConfig[clientKey];
+
       clearClientVideoEndReturnTimer();
       hideClientVideoCredit();
+
+      config.playbackReady = false;
+      config.hasCompleted = false;
+      config.suppressLoading = false;
+      config.autoplayAfterSourceReady = true;
+
       prepareClientSourceForViewport(clientKey);
-      clientVideoSourceConfig[clientKey].playbackReady = false;
-      clientVideoSourceConfig[clientKey].hasCompleted = false;
-      clientVideoSourceConfig[clientKey].suppressLoading = false;
+
       document.documentElement.classList.remove("dcr-client-video-end-card-on");
       document.documentElement.classList.remove("dcr-client-video-still-dimmed");
       showClientVideoLoadingState(clientKey, true);
