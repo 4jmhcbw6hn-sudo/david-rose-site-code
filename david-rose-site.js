@@ -1,4 +1,4 @@
-/* DCR update: reliable mobile SWIPE TO CLEAR hint + earlier client credits â€” cache bump 129 */
+/* DCR update: centred SWIPE TO CLEAR hint + mobile MP4-first audio stability â€” cache bump 130 */
 const videos = {
     main: document.getElementById("main-reel"),
     commercial: document.getElementById("commercial-reel"),
@@ -146,7 +146,10 @@ const videos = {
     if (!config) return "";
 
     if (isMobileClientVideoViewport()) {
-      return config.mobileHlsUrl || config.mobileUrl || config.desktopHlsUrl || config.desktopUrl || "";
+      // Mobile now tries the optimised MP4 first as well. The direct MP4 avoids
+      // the small early HLS quality-switch audio blip; if it takes too long,
+      // the fallback timer below moves to Bunny Stream HLS.
+      return config.mobileUrl || config.mobileHlsUrl || config.desktopUrl || config.desktopHlsUrl || "";
     }
 
     // Desktop gets the full-quality MP4 first so the opening frame does not
@@ -194,7 +197,7 @@ const videos = {
     const hlsUrl = getClientHlsSourceUrlForViewport(key);
 
     if (!video || !config || !hlsUrl) return;
-    if (current !== key || config.playbackReady || isMobileClientVideoViewport()) return;
+    if (current !== key || config.playbackReady) return;
     if (isHlsSourceUrl(config.activeSourceUrl)) return;
 
     config.activeSourceMode = "desktop-hls-fallback|" + hlsUrl;
@@ -218,7 +221,7 @@ const videos = {
     const config = clientVideoSourceConfig[key];
     const hlsUrl = getClientHlsSourceUrlForViewport(key);
 
-    if (!config || !hlsUrl || isMobileClientVideoViewport()) return;
+    if (!config || !hlsUrl) return;
     if (isHlsSourceUrl(config.activeSourceUrl)) return;
 
     clearClientDesktopHlsFallbackTimer(key);
@@ -959,10 +962,12 @@ const videos = {
       .dcr-client-video-swipe-hint {
         position: fixed !important;
         left: 50vw !important;
-        top: 71vh !important;
-        top: 71svh !important;
-        z-index: 150 !important;
-        transform: translate(-50%, 10px) scale(0.985);
+        top: 50vh !important;
+        top: 50svh !important;
+        z-index: 180 !important;
+        width: max-content;
+        max-width: 86vw;
+        transform: translate(-50%, -50%) translateY(10px) scale(0.985);
         opacity: 0;
         visibility: hidden;
         color: rgba(255, 255, 255, 0.84);
@@ -986,7 +991,7 @@ const videos = {
         opacity: 1;
         visibility: visible;
         filter: blur(0);
-        transform: translate(-50%, 0) scale(1);
+        transform: translate(-50%, -50%) scale(1);
         animation: dcr-client-swipe-hint-drift 2600ms cubic-bezier(0.45, 0, 0.2, 1) 1;
         transition:
           opacity 1250ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -997,22 +1002,22 @@ const videos = {
 
       @keyframes dcr-client-swipe-hint-drift {
         0% {
-          transform: translate(-50%, 0) translateX(0) scale(1);
+          transform: translate(-50%, -50%) translateX(0) scale(1);
           letter-spacing: 0.36em;
         }
 
         34% {
-          transform: translate(-50%, 0) translateX(-7px) scale(1.006);
+          transform: translate(-50%, -50%) translateX(-7px) scale(1.006);
           letter-spacing: 0.39em;
         }
 
         68% {
-          transform: translate(-50%, 0) translateX(7px) scale(1.006);
+          transform: translate(-50%, -50%) translateX(7px) scale(1.006);
           letter-spacing: 0.39em;
         }
 
         100% {
-          transform: translate(-50%, 0) translateX(0) scale(1);
+          transform: translate(-50%, -50%) translateX(0) scale(1);
           letter-spacing: 0.36em;
         }
       }
@@ -1523,7 +1528,7 @@ const videos = {
 
     try {
       return window.sessionStorage &&
-        window.sessionStorage.getItem("dcrClientSwipeHintShownV3") === "true";
+        window.sessionStorage.getItem("dcrClientSwipeHintShownV4") === "true";
     } catch (error) {
       return false;
     }
@@ -1534,7 +1539,7 @@ const videos = {
 
     try {
       if (window.sessionStorage) {
-        window.sessionStorage.setItem("dcrClientSwipeHintShownV3", "true");
+        window.sessionStorage.setItem("dcrClientSwipeHintShownV4", "true");
       }
     } catch (error) {}
   }
@@ -1589,7 +1594,7 @@ const videos = {
         clientVideoSwipeHintHideTimeout = null;
         document.documentElement.classList.remove("dcr-client-video-swipe-hint-on");
       }, 3600);
-    }, 7600);
+    }, 8500);
   }
 
   function clearClientVideoCreditTimers() {
@@ -2028,7 +2033,7 @@ const videos = {
 
     setVideoSourceUrl(video, nextSource, key);
 
-    if (!isMobileClientVideoViewport() && !isHlsSourceUrl(nextSource)) {
+    if (!isHlsSourceUrl(nextSource)) {
       scheduleDesktopClientVideoHlsFallback(key);
     } else {
       clearClientDesktopHlsFallbackTimer(key);
