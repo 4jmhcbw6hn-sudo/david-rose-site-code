@@ -120,6 +120,46 @@ const videos = {
     }
   });
 
+  function unloadClientVideoSource(key) {
+    const video = videos[key];
+    const config = clientVideoSourceConfig[key];
+
+    if (!video || !config) return;
+
+    try {
+      video.pause();
+    } catch (error) {}
+
+    try {
+      video.preload = "none";
+      video.setAttribute("preload", "none");
+      video.removeAttribute("autoplay");
+    } catch (error) {}
+
+    const source = video.querySelector("source");
+
+    if (source) {
+      source.removeAttribute("src");
+    }
+
+    video.removeAttribute("src");
+    config.activeSourceMode = "";
+    config.playbackReady = false;
+
+    try {
+      video.load();
+    } catch (error) {}
+  }
+
+  function unloadInactiveClientVideoSources() {
+    Object.keys(clientVideoSourceConfig).forEach((key) => {
+      if (current === key) return;
+      unloadClientVideoSource(key);
+    });
+  }
+
+  unloadInactiveClientVideoSources();
+
   Object.entries(videos).forEach(([key, video]) => {
     video.style.transition =
       "opacity 1.4s cubic-bezier(0.66, 0, 0.2, 1), " +
@@ -357,7 +397,16 @@ const videos = {
 
         video.setAttribute("playsinline", "");
         video.setAttribute("webkit-playsinline", "");
-        video.setAttribute("preload", "auto");
+
+        if (isClientVideoKey(key)) {
+          video.preload = "none";
+          video.setAttribute("preload", "none");
+          video.removeAttribute("autoplay");
+        } else {
+          video.preload = "auto";
+          video.setAttribute("preload", "auto");
+        }
+
         video.disablePictureInPicture = true;
         video.setAttribute("disablepictureinpicture", "");
         video.setAttribute("controlslist", "nodownload noplaybackrate nofullscreen");
@@ -623,6 +672,18 @@ const videos = {
           visibility 0s;
       }
 
+      html.dcr-client-video-still-dimmed .dcr-client-video-loading-still {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(1.018);
+        filter: blur(7px) brightness(0.56) saturate(0.92);
+        transition:
+          opacity 1800ms cubic-bezier(0.22, 1, 0.36, 1),
+          transform 5200ms cubic-bezier(0.22, 1, 0.36, 1),
+          filter 5200ms cubic-bezier(0.22, 1, 0.36, 1),
+          visibility 0s;
+      }
+
       .dcr-client-video-loading-text {
         position: fixed !important;
         left: 50vw !important;
@@ -861,6 +922,7 @@ const videos = {
     root.classList.remove("dcr-client-video-loading-active");
     root.classList.remove("dcr-client-video-loading-still-on");
     root.classList.remove("dcr-client-video-end-card-on");
+    root.classList.remove("dcr-client-video-still-dimmed");
 
     if (clientVideoLoadingHideTimeout) {
       clearTimeout(clientVideoLoadingHideTimeout);
@@ -916,6 +978,21 @@ const videos = {
       layer.still.style.transform = "";
       layer.still.style.filter = "";
     });
+  }
+
+  function dimClientVideoStillForOverlay() {
+    const root = document.documentElement;
+
+    if (
+      root.classList.contains("dcr-client-video-end-card-on") ||
+      root.classList.contains("dcr-client-video-loading-still-on")
+    ) {
+      root.classList.add("dcr-client-video-still-dimmed");
+    }
+  }
+
+  function clearClientVideoStillOverlayDim() {
+    document.documentElement.classList.remove("dcr-client-video-still-dimmed");
   }
 
   function clearClientVideoCreditTimers() {
@@ -1221,15 +1298,19 @@ const videos = {
 
     config.activeSourceMode = sourceMode;
     config.playbackReady = false;
+
+    try {
+      video.preload = "auto";
+      video.setAttribute("preload", "auto");
+    } catch (error) {}
+
     setVideoSourceUrl(video, nextSource);
   }
 
   function prepareAllClientSourcesForViewport() {
-    Object.keys(clientVideoSourceConfig).forEach((key) => {
-      if (current !== key) {
-        prepareClientSourceForViewport(key);
-      }
-    });
+    // Keep hidden client videos unloaded. They should only request video data
+    // after the user clicks a specific client item.
+    unloadInactiveClientVideoSources();
   }
 
   function resetClientVideoToStartFrame(video) {
@@ -1238,8 +1319,8 @@ const videos = {
     const clientKey = Object.keys(clientVideoSourceConfig).find((key) => videos[key] === video);
 
     if (clientKey) {
-      prepareClientSourceForViewport(clientKey);
       clientVideoSourceConfig[clientKey].suppressLoading = true;
+      clientVideoSourceConfig[clientKey].playbackReady = false;
     }
 
     video.loop = false;
@@ -1260,6 +1341,10 @@ const videos = {
         }, { once: true });
       }
     } catch (error) {}
+
+    if (clientKey) {
+      unloadClientVideoSource(clientKey);
+    }
   }
 
   function playClientVideoFromStart(video) {
@@ -1275,6 +1360,7 @@ const videos = {
       clientVideoSourceConfig[clientKey].hasCompleted = false;
       clientVideoSourceConfig[clientKey].suppressLoading = false;
       document.documentElement.classList.remove("dcr-client-video-end-card-on");
+      document.documentElement.classList.remove("dcr-client-video-still-dimmed");
       showClientVideoLoadingState(clientKey, true);
     }
 
@@ -3192,6 +3278,9 @@ const videos = {
 
   function blurCurrentVideoForApproach() {
     const video = videos[current];
+
+    dimClientVideoStillForOverlay();
+
     if (!video) return;
 
     setApproachVideoTransition(video, 5200);
@@ -3202,6 +3291,9 @@ const videos = {
 
   function clearApproachVideoBlur() {
     const video = videos[current];
+
+    clearClientVideoStillOverlayDim();
+
     if (!video) return;
 
     setApproachVideoTransition(video, 5000);
@@ -4156,6 +4248,7 @@ const videos = {
       closeActiveSectionAnimated();
     }
 
+    dimClientVideoStillForOverlay();
     moveToMainVideoBehindContact();
     hideProjectsGradient();
     hideCenterNameAnimated();
@@ -4250,6 +4343,7 @@ const videos = {
     clearContactTimeouts();
 
     isContactOpen = false;
+    clearClientVideoStillOverlayDim();
 
     const modalRevealItems = Array.from(modal.children);
 
@@ -4310,6 +4404,7 @@ const videos = {
     const modal = getContactModal();
 
     isContactOpen = false;
+    clearClientVideoStillOverlayDim();
 
     if (overlay) {
       overlay.style.transition = "none";
