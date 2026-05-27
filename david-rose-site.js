@@ -1,4 +1,4 @@
-/* DCR reissue: includes mobile SWIPE TO CLEAR hint â€” cache bump 126 */
+/* DCR update: reliable mobile SWIPE TO CLEAR hint + earlier client credits â€” cache bump 129 */
 const videos = {
     main: document.getElementById("main-reel"),
     commercial: document.getElementById("commercial-reel"),
@@ -961,11 +961,11 @@ const videos = {
         left: 50vw !important;
         top: 71vh !important;
         top: 71svh !important;
-        z-index: 65 !important;
+        z-index: 150 !important;
         transform: translate(-50%, 10px) scale(0.985);
         opacity: 0;
         visibility: hidden;
-        color: rgba(255, 255, 255, 0.72);
+        color: rgba(255, 255, 255, 0.84);
         font: inherit;
         font-size: clamp(9px, 2.2vw, 12px);
         line-height: 1;
@@ -1523,7 +1523,7 @@ const videos = {
 
     try {
       return window.sessionStorage &&
-        window.sessionStorage.getItem("dcrClientSwipeHintShown") === "true";
+        window.sessionStorage.getItem("dcrClientSwipeHintShownV3") === "true";
     } catch (error) {
       return false;
     }
@@ -1534,7 +1534,7 @@ const videos = {
 
     try {
       if (window.sessionStorage) {
-        window.sessionStorage.setItem("dcrClientSwipeHintShown", "true");
+        window.sessionStorage.setItem("dcrClientSwipeHintShownV3", "true");
       }
     } catch (error) {}
   }
@@ -1570,9 +1570,14 @@ const videos = {
     clientVideoSwipeHintShowTimeout = setTimeout(() => {
       clientVideoSwipeHintShowTimeout = null;
 
+      const config = clientVideoSourceConfig[key];
+      const video = videos[key];
+
       if (hasClientVideoSwipeHintBeenShown()) return;
       if (current !== key) return;
-      if (!isMobileClientVideoFullscreenEligible()) return;
+      if (!isMobileClientVideoViewport()) return;
+      if (!config || !config.playbackReady || config.hasCompleted) return;
+      if (!video || video.ended || video.paused) return;
       if (mobileClientFullscreenNavActive) return;
       if (isApproachOpen || isContactOpen) return;
 
@@ -1583,8 +1588,8 @@ const videos = {
       clientVideoSwipeHintHideTimeout = setTimeout(() => {
         clientVideoSwipeHintHideTimeout = null;
         document.documentElement.classList.remove("dcr-client-video-swipe-hint-on");
-      }, 3000);
-    }, 9800);
+      }, 3600);
+    }, 7600);
   }
 
   function clearClientVideoCreditTimers() {
@@ -1669,8 +1674,8 @@ const videos = {
       clientVideoCreditHideTimeout = setTimeout(() => {
         clientVideoCreditHideTimeout = null;
         document.documentElement.classList.remove("dcr-client-video-credit-on");
-      }, 5000);
-    }, 2000);
+      }, 4000);
+    }, 1000);
 
     scheduleClientVideoSwipeHint(key);
   }
