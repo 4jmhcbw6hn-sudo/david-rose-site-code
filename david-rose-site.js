@@ -617,9 +617,9 @@ const videos = {
         transform: scale(1);
         filter: brightness(0.86) saturate(1);
         transition:
-          opacity 1450ms cubic-bezier(0.16, 1, 0.3, 1),
-          transform 5200ms cubic-bezier(0.13, 1, 0.22, 1),
-          filter 4800ms cubic-bezier(0.16, 1, 0.3, 1),
+          opacity 2800ms cubic-bezier(0.16, 1, 0.3, 1),
+          transform 6800ms cubic-bezier(0.13, 1, 0.22, 1),
+          filter 6200ms cubic-bezier(0.16, 1, 0.3, 1),
           visibility 0s;
       }
 
@@ -690,16 +690,9 @@ const videos = {
         text-align: center;
         white-space: nowrap;
         filter: blur(8px);
-        padding: clamp(18px, 2.2vw, 30px) clamp(28px, 5.8vw, 86px);
-        border-radius: 999px;
-        background:
-          radial-gradient(
-            ellipse at center,
-            rgba(0, 0, 0, 0.46) 0%,
-            rgba(0, 0, 0, 0.30) 38%,
-            rgba(0, 0, 0, 0.12) 58%,
-            rgba(0, 0, 0, 0) 78%
-          );
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
         text-shadow: 0 0 26px rgba(0, 0, 0, 0.54);
         transition:
           opacity 2850ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -829,6 +822,11 @@ const videos = {
     clearClientVideoLoadingTextDelay();
 
     if (includeStill && stillUrl) {
+      layer.still.style.transition = "";
+      layer.still.style.opacity = "";
+      layer.still.style.visibility = "";
+      layer.still.style.transform = "";
+      layer.still.style.filter = "";
       layer.still.style.backgroundImage = "url(\"" + stillUrl.replace(/"/g, "%22") + "\")";
       root.classList.add("dcr-client-video-loading-still-on");
 
@@ -871,6 +869,11 @@ const videos = {
     clientVideoLoadingHideTimeout = setTimeout(() => {
       const layer = ensureClientVideoLoadingLayer();
       layer.still.style.backgroundImage = "";
+      layer.still.style.transition = "";
+      layer.still.style.opacity = "";
+      layer.still.style.visibility = "";
+      layer.still.style.transform = "";
+      layer.still.style.filter = "";
       clientVideoLoadingHideTimeout = null;
     }, 1300);
   }
@@ -895,7 +898,24 @@ const videos = {
     root.classList.remove("dcr-client-video-loading-still-on");
 
     layer.still.style.backgroundImage = "url(\"" + stillUrl.replace(/"/g, "%22") + "\")";
-    root.classList.add("dcr-client-video-end-card-on");
+    layer.still.style.transition = "none";
+    layer.still.style.opacity = "0";
+    layer.still.style.visibility = "visible";
+    layer.still.style.transform = "scale(1.018)";
+    layer.still.style.filter = "brightness(0.72) saturate(0.96)";
+
+    layer.still.getBoundingClientRect();
+
+    requestAnimationFrame(() => {
+      if (current !== key) return;
+
+      layer.still.style.transition = "";
+      root.classList.add("dcr-client-video-end-card-on");
+      layer.still.style.opacity = "";
+      layer.still.style.visibility = "";
+      layer.still.style.transform = "";
+      layer.still.style.filter = "";
+    });
   }
 
   function clearClientVideoCreditTimers() {
@@ -3030,6 +3050,7 @@ const videos = {
     const video = approachPausedVideo || videos[current];
     if (!video) return;
 
+    const resumeClientKey = getClientVideoKeyByVideo(video);
     const wasPausedBeforeApproach = approachVideoWasPaused;
 
     approachPausedVideo = null;
@@ -3048,6 +3069,10 @@ const videos = {
 
     if (video.paused) {
       playVideo(video);
+    }
+
+    if (resumeClientKey) {
+      fadeClientVideoAudioIn(video, resumeClientKey);
     }
 
     animatePlaybackRate(video, startRate, 1, 2200, () => {
@@ -3081,6 +3106,52 @@ const videos = {
       } else {
         safelySetVolume(video, 0);
         safelySetMuted(video, true);
+      }
+    }
+
+    audioFadeAnimation = requestAnimationFrame(fade);
+  }
+
+  function fadeClientVideoAudioIn(video, key) {
+    if (!video || !isClientVideoKey(key) || current !== key) return;
+
+    const config = clientVideoSourceConfig[key];
+    if (!config || config.hasCompleted || video.ended) return;
+
+    const targetVolume = CLIENT_VIDEO_PLAYBACK_VOLUME;
+    const startVolume = Math.max(0, Math.min(targetVolume, video.volume || 0));
+    const duration = 2200;
+    const startTime = performance.now();
+
+    if (audioFadeAnimation) {
+      cancelAnimationFrame(audioFadeAnimation);
+    }
+
+    safelySetMuted(video, false);
+    safelySetVolume(video, startVolume);
+
+    if (Math.abs(startVolume - targetVolume) < 0.01) {
+      safelySetVolume(video, targetVolume);
+      return;
+    }
+
+    function fade(now) {
+      if (current !== key || isApproachOpen || isContactOpen) return;
+
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = easeInOutCubic(progress);
+      const volume = startVolume + ((targetVolume - startVolume) * easedProgress);
+
+      safelySetMuted(video, false);
+      safelySetVolume(video, volume);
+
+      if (progress < 1) {
+        audioFadeAnimation = requestAnimationFrame(fade);
+      } else {
+        safelySetMuted(video, false);
+        safelySetVolume(video, targetVolume);
+        audioFadeAnimation = null;
       }
     }
 
