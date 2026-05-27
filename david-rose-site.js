@@ -5161,6 +5161,8 @@ const videos = {
   prepareContactHidden();
   hideContactImmediate();
 
+  document.documentElement.classList.add("dcr-js-ready");
+
   setTimeout(() => {
     runCustomPageLoadIntro();
   }, 120);
