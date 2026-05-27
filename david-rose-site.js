@@ -102,6 +102,10 @@ const videos = {
   let clientVideoCreditShowTimeout = null;
   let clientVideoCreditHideTimeout = null;
   let clientVideoEndReturnTimeout = null;
+  let mobileClientFullscreenNavActive = false;
+  let mobileClientFullscreenNavEntries = [];
+  let mobileClientFullscreenNavCleanupTimeout = null;
+  let mobileClientFullscreenTouchStart = null;
 
   const CLIENT_VIDEO_PLAYBACK_VOLUME = 0.68;
   const CLIENT_DESKTOP_MP4_FALLBACK_TO_HLS_MS = 3000;
@@ -1195,6 +1199,242 @@ const videos = {
     showCenterNameAnimated(delay);
   }
 
+  function isElementVisiblyOnScreen(element) {
+    if (!element || !element.getBoundingClientRect) return false;
+
+    const rect = element.getBoundingClientRect();
+    const style = window.getComputedStyle(element);
+
+    return (
+      rect.width > 0 &&
+      rect.height > 0 &&
+      rect.bottom > 0 &&
+      rect.right > 0 &&
+      rect.top < (window.innerHeight || 1) &&
+      rect.left < (window.innerWidth || 1) &&
+      style.display !== "none" &&
+      style.visibility !== "hidden" &&
+      Number(style.opacity || 0) > 0.04
+    );
+  }
+
+  function getMobileClientFullscreenNavTargets() {
+    const leftTargets = Array.from(new Set([
+      ...Array.from(document.querySelectorAll(".side-nav .nav-text")),
+      ...Array.from(document.querySelectorAll(".side-nav a"))
+    ])).filter(isElementVisiblyOnScreen);
+
+    const rightTargets = Array.from(new Set(Array.from(document.querySelectorAll(
+      ".post-production-projects-panel .nav-text, " +
+      ".post-production-projects-panel a, " +
+      ".direction-projects-panel .nav-text, " +
+      ".direction-projects-panel a, " +
+      ".colour-projects-panel .nav-text, " +
+      ".colour-projects-panel a, " +
+      ".color-projects-panel .nav-text, " +
+      ".color-projects-panel a"
+    )))).filter(isElementVisiblyOnScreen);
+
+    return [
+      ...leftTargets.map((element, index) => ({ element, direction: "left", index })),
+      ...rightTargets.map((element, index) => ({ element, direction: "right", index }))
+    ];
+  }
+
+  function saveMobileClientFullscreenNavStyle(element) {
+    return {
+      transition: element.style.transition,
+      transitionDelay: element.style.transitionDelay,
+      opacity: element.style.opacity,
+      filter: element.style.filter,
+      transform: element.style.transform,
+      transformOrigin: element.style.transformOrigin,
+      visibility: element.style.visibility,
+      pointerEvents: element.style.pointerEvents,
+      willChange: element.style.willChange
+    };
+  }
+
+  function isMobileClientVideoFullscreenEligible() {
+    if (!isMobileClientVideoViewport()) return false;
+    if (isApproachOpen || isContactOpen) return false;
+    if (!isClientVideoKey(current)) return false;
+
+    const config = clientVideoSourceConfig[current];
+    const video = videos[current];
+
+    return Boolean(
+      config &&
+      video &&
+      config.playbackReady &&
+      !config.hasCompleted &&
+      !video.ended &&
+      !video.paused
+    );
+  }
+
+  function hideMobileClientNavForFullscreen() {
+    if (!isMobileClientVideoFullscreenEligible()) return;
+    if (mobileClientFullscreenNavActive) return;
+
+    const targets = getMobileClientFullscreenNavTargets();
+    if (!targets.length) return;
+
+    if (mobileClientFullscreenNavCleanupTimeout) {
+      clearTimeout(mobileClientFullscreenNavCleanupTimeout);
+      mobileClientFullscreenNavCleanupTimeout = null;
+    }
+
+    mobileClientFullscreenNavEntries = targets.map((item) => ({
+      element: item.element,
+      direction: item.direction,
+      index: item.index,
+      saved: saveMobileClientFullscreenNavStyle(item.element)
+    }));
+
+    mobileClientFullscreenNavActive = true;
+    document.documentElement.classList.add("dcr-mobile-client-fullscreen-nav-hidden");
+
+    mobileClientFullscreenNavEntries.forEach((entry) => {
+      const offset = entry.direction === "left" ? "-34px" : "34px";
+      const delay = Math.min(entry.index * 36, 220);
+
+      entry.element.style.transformOrigin = entry.direction === "left" ? "0% 50%" : "100% 50%";
+      entry.element.style.transition =
+        "opacity 1350ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "filter 1750ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "transform 2050ms cubic-bezier(0.22, 1, 0.36, 1)";
+      entry.element.style.transitionDelay = delay + "ms";
+      entry.element.style.opacity = "0";
+      entry.element.style.filter = "blur(8px)";
+      entry.element.style.transform = "translateX(" + offset + ") scale(0.986)";
+      entry.element.style.pointerEvents = "none";
+      entry.element.style.willChange = "opacity, filter, transform";
+    });
+  }
+
+  function showMobileClientNavAfterFullscreen() {
+    if (!mobileClientFullscreenNavActive && !mobileClientFullscreenNavEntries.length) return;
+
+    if (mobileClientFullscreenNavCleanupTimeout) {
+      clearTimeout(mobileClientFullscreenNavCleanupTimeout);
+      mobileClientFullscreenNavCleanupTimeout = null;
+    }
+
+    const entries = mobileClientFullscreenNavEntries.slice();
+    mobileClientFullscreenNavActive = false;
+    document.documentElement.classList.remove("dcr-mobile-client-fullscreen-nav-hidden");
+
+    entries.forEach((entry) => {
+      if (!entry.element) return;
+
+      const delay = Math.min(entry.index * 46, 280);
+
+      entry.element.style.transition =
+        "opacity 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 2400ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 2850ms cubic-bezier(0.13, 1, 0.22, 1)";
+      entry.element.style.transitionDelay = delay + "ms";
+      entry.element.style.opacity = entry.saved.opacity;
+      entry.element.style.filter = entry.saved.filter;
+      entry.element.style.transform = entry.saved.transform;
+      entry.element.style.transformOrigin = entry.saved.transformOrigin;
+      entry.element.style.visibility = entry.saved.visibility;
+      entry.element.style.pointerEvents = entry.saved.pointerEvents;
+    });
+
+    mobileClientFullscreenNavCleanupTimeout = setTimeout(() => {
+      entries.forEach((entry) => {
+        if (!entry.element) return;
+
+        Object.keys(entry.saved).forEach((property) => {
+          entry.element.style[property] = entry.saved[property];
+        });
+      });
+
+      mobileClientFullscreenNavEntries = [];
+      mobileClientFullscreenNavCleanupTimeout = null;
+
+      if (activeProjectButton) {
+        returnToActiveProjectFocus();
+      } else if (activeSection) {
+        restoreActiveSectionRestingState();
+      }
+    }, 3200);
+  }
+
+  function installMobileClientVideoFullscreenGesture() {
+    if (document.documentElement.dataset.dcrMobileClientFullscreenGestureReady) return;
+
+    document.documentElement.dataset.dcrMobileClientFullscreenGestureReady = "true";
+
+    document.addEventListener("touchstart", (event) => {
+      if (!isMobileClientVideoViewport()) return;
+      if (!isClientVideoKey(current)) return;
+      if (!event.touches || event.touches.length !== 1) return;
+
+      const touch = event.touches[0];
+
+      mobileClientFullscreenTouchStart = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now()
+      };
+    }, { passive: true });
+
+    document.addEventListener("touchend", (event) => {
+      if (!mobileClientFullscreenTouchStart) return;
+      if (!isMobileClientVideoViewport()) {
+        mobileClientFullscreenTouchStart = null;
+        return;
+      }
+
+      const changedTouch = event.changedTouches && event.changedTouches.length
+        ? event.changedTouches[0]
+        : null;
+
+      if (!changedTouch) {
+        mobileClientFullscreenTouchStart = null;
+        return;
+      }
+
+      const start = mobileClientFullscreenTouchStart;
+      mobileClientFullscreenTouchStart = null;
+
+      const dx = changedTouch.clientX - start.x;
+      const dy = changedTouch.clientY - start.y;
+      const absoluteX = Math.abs(dx);
+      const absoluteY = Math.abs(dy);
+      const width = window.innerWidth || 1;
+      const duration = Date.now() - start.time;
+
+      if (duration > 1400) return;
+      if (absoluteX < 72) return;
+      if (absoluteX < absoluteY * 1.55) return;
+
+      if (mobileClientFullscreenNavActive) {
+        const startsAtLeftEdge = start.x < width * 0.26 && dx > 0;
+        const startsAtRightEdge = start.x > width * 0.74 && dx < 0;
+
+        if (startsAtLeftEdge || startsAtRightEdge || absoluteX > 115) {
+          showMobileClientNavAfterFullscreen();
+        }
+
+        return;
+      }
+
+      if (!isMobileClientVideoFullscreenEligible()) return;
+
+      const startsNearCentre = start.x > width * 0.22 && start.x < width * 0.78;
+      const movesLeftFromCentre = dx < 0 && changedTouch.clientX < start.x;
+      const movesRightFromCentre = dx > 0 && changedTouch.clientX > start.x;
+
+      if (startsNearCentre && (movesLeftFromCentre || movesRightFromCentre)) {
+        hideMobileClientNavForFullscreen();
+      }
+    }, { passive: true });
+  }
+
   function clearClientVideoCreditTimers() {
     if (clientVideoCreditShowTimeout) {
       clearTimeout(clientVideoCreditShowTimeout);
@@ -1430,6 +1670,7 @@ const videos = {
 
     video.addEventListener("ended", () => {
       clearClientDesktopHlsFallbackTimer(key);
+      showMobileClientNavAfterFullscreen();
 
       if (clientVideoSourceConfig[key]) {
         clientVideoSourceConfig[key].hasCompleted = true;
@@ -1676,6 +1917,8 @@ const videos = {
 
   function playClientVideoFromStart(video) {
     if (!video) return;
+
+    showMobileClientNavAfterFullscreen();
 
     const clientKey = getClientVideoKeyByVideo(video);
 
@@ -3419,6 +3662,7 @@ const videos = {
   }
 
   function hideAndResetClientVideos() {
+    showMobileClientNavAfterFullscreen();
     hideClientVideoLoadingState();
     hideClientVideoCredit();
     clearClientVideoEndReturnTimer();
@@ -4905,6 +5149,7 @@ const videos = {
 
   installMobileLayoutFixes();
   installMobileViewportScrollLock();
+  installMobileClientVideoFullscreenGesture();
   installReactiveCornerVignettes();
   ensureNameShadowSpot();
   ensureMobileApproachBackButton();
@@ -4915,8 +5160,6 @@ const videos = {
   hideApproachImmediate(false);
   prepareContactHidden();
   hideContactImmediate();
-
-  document.documentElement.classList.add("dcr-js-ready");
 
   setTimeout(() => {
     runCustomPageLoadIntro();
