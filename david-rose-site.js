@@ -3952,7 +3952,11 @@ const videos = {
       wasPaused: video ? Boolean(video.paused) : true,
       wasEnded: video ? Boolean(video.ended) : false,
       hadCompleted: Boolean(config && config.hasCompleted),
-      time: video ? (video.currentTime || 0) : 0
+      time: video ? (video.currentTime || 0) : 0,
+      startVolume: video ? Math.max(0, Math.min(1, video.volume || 0)) : 0,
+      wasMuted: video ? Boolean(video.muted) : true,
+      playbackRate: video ? (video.playbackRate || 1) : 1,
+      token: String(Date.now()) + "-" + String(Math.random()).slice(2)
     };
 
     if (key) {
@@ -3964,9 +3968,28 @@ const videos = {
     approachResumeState = null;
   }
 
+  function getApproachResumeVideo() {
+    if (approachResumeState && approachResumeState.video) {
+      return approachResumeState.video;
+    }
+
+    if (approachPausedVideo) {
+      return approachPausedVideo;
+    }
+
+    return videos[current] || null;
+  }
+
+  function getApproachResumeKey(video) {
+    if (approachResumeState && approachResumeState.key) {
+      return approachResumeState.key;
+    }
+
+    return getClientVideoKeyByVideo(video) || current;
+  }
+
   function shouldResumeApproachClientVideo(key, video) {
     if (!key || !video || !isClientVideoKey(key)) return false;
-    if (current !== key) return false;
 
     const config = clientVideoSourceConfig[key];
 
@@ -3981,14 +4004,16 @@ const videos = {
 
     playVideo(video);
 
-    [220, 720, 1450].forEach((delay) => {
+    [180, 520, 1150, 1900].forEach((delay) => {
       const retry = setTimeout(() => {
-        if (!video || !isApproachOpen && !isContactOpen && video.paused && !video.ended) {
+        if (!video) return;
+        if (!isApproachOpen && !isContactOpen && video.paused && !video.ended) {
           playVideo(video);
         }
       }, delay);
 
       approachTimeouts.push(retry);
+      contactTimeouts.push(retry);
     });
   }
 
@@ -4008,6 +4033,8 @@ const videos = {
     safelySetPlaybackRate(video, fromRate);
 
     function animate(now) {
+      if (!video) return;
+
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const easedProgress = easing(progress);
@@ -4039,24 +4066,26 @@ const videos = {
   }
 
   function slowCurrentVideoForApproach() {
-    const video = videos[current];
+    const video = getApproachResumeVideo();
     if (!video) return;
+
+    const savedToken = approachResumeState ? approachResumeState.token : "";
 
     approachPausedVideo = video;
     approachVideoWasPaused = video.paused;
 
     if (approachVideoWasPaused || video.ended) return;
 
-    /* Keep the active reel alive, then ease it down to a frozen, blurred frame.
-       Contact and My Approach share this behaviour. */
     playVideo(video);
 
-    const startRate = video.playbackRate || 1;
+    const startRate = Math.max(0.25, Math.min(1, video.playbackRate || 1));
     const finalRate = 0.24;
-    const duration = 3200;
+    const duration = 3300;
 
     function pauseAtOverlayFrame() {
-      if (!isVideoOverlayOpen() || approachPausedVideo !== video || video.ended) return;
+      const tokenStillMatches = !savedToken || !approachResumeState || approachResumeState.token === savedToken;
+
+      if (!isVideoOverlayOpen() || approachPausedVideo !== video || video.ended || !tokenStillMatches) return;
 
       safelySetPlaybackRate(video, finalRate);
 
@@ -4066,12 +4095,14 @@ const videos = {
     }
 
     animatePlaybackRate(video, startRate, finalRate, duration, () => {
-      const pauseTimeout = setTimeout(pauseAtOverlayFrame, 260);
+      const pauseTimeout = setTimeout(pauseAtOverlayFrame, 280);
       approachTimeouts.push(pauseTimeout);
+      contactTimeouts.push(pauseTimeout);
     }, approachSlowdownEase);
 
-    const safetyPauseTimeout = setTimeout(pauseAtOverlayFrame, duration + 650);
+    const safetyPauseTimeout = setTimeout(pauseAtOverlayFrame, duration + 850);
     approachTimeouts.push(safetyPauseTimeout);
+    contactTimeouts.push(safetyPauseTimeout);
   }
 
   function restoreSavedVideoVisibility(savedKey, video) {
@@ -4092,12 +4123,49 @@ const videos = {
     video.style.opacity = "1";
   }
 
+  function fadeOverlayAudioIn(video, targetVolume) {
+    if (!video) return;
+
+    const target = Math.max(0, Math.min(1, targetVolume));
+    const start = Math.max(0, Math.min(target, video.volume || 0));
+    const duration = 2200;
+    const startTime = performance.now();
+
+    if (audioFadeAnimation) {
+      cancelAnimationFrame(audioFadeAnimation);
+    }
+
+    safelySetMuted(video, false);
+    safelySetVolume(video, start);
+
+    function fade(now) {
+      if (isApproachOpen || isContactOpen) return;
+
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = easeInOutCubic(progress);
+      const volume = start + ((target - start) * easedProgress);
+
+      safelySetMuted(video, false);
+      safelySetVolume(video, volume);
+
+      if (progress < 1) {
+        audioFadeAnimation = requestAnimationFrame(fade);
+      } else {
+        safelySetMuted(video, false);
+        safelySetVolume(video, target);
+        audioFadeAnimation = null;
+      }
+    }
+
+    audioFadeAnimation = requestAnimationFrame(fade);
+  }
+
   function resumeApproachVideoPlayback() {
     const savedState = approachResumeState;
-    const savedKey = savedState && savedState.key ? savedState.key : "";
-    const savedClientKey = savedState && savedState.isClient ? savedState.key : "";
     const video =
-      (savedKey && videos[savedKey]) ||
+      (savedState && savedState.video) ||
+      (savedState && savedState.key && videos[savedState.key]) ||
       approachPausedVideo ||
       videos[current];
 
@@ -4106,10 +4174,19 @@ const videos = {
       return;
     }
 
-    const resumeClientKey = savedClientKey || getClientVideoKeyByVideo(video);
+    const savedKey = getApproachResumeKey(video);
+    const resumeClientKey = isClientVideoKey(savedKey)
+      ? savedKey
+      : getClientVideoKeyByVideo(video);
     const wasPausedBeforeOverlay = savedState
       ? Boolean(savedState.wasPaused)
       : approachVideoWasPaused;
+    const wasEndedBeforeOverlay = savedState
+      ? Boolean(savedState.wasEnded || savedState.hadCompleted)
+      : Boolean(video.ended);
+    const targetVolume = resumeClientKey
+      ? CLIENT_VIDEO_PLAYBACK_VOLUME
+      : Math.max(0, Math.min(1, savedState && typeof savedState.startVolume === "number" ? savedState.startVolume : (video.volume || 0)));
 
     restoreSavedVideoVisibility(savedKey || current, video);
 
@@ -4118,13 +4195,21 @@ const videos = {
 
     cancelApproachPlaybackAnimation();
 
-    if (wasPausedBeforeOverlay) {
+    setApproachVideoTransition(video, 5200);
+    video.style.filter = "blur(0) brightness(1)";
+    video.style.transform = "scale(1)";
+    clearClientVideoStillOverlayDim();
+
+    if (wasPausedBeforeOverlay || wasEndedBeforeOverlay) {
       safelySetPlaybackRate(video, 1);
+      if (resumeClientKey && !wasEndedBeforeOverlay) {
+        fadeOverlayAudioIn(video, targetVolume);
+      }
       clearApproachResumeState();
       return;
     }
 
-    if (resumeClientKey && shouldResumeApproachClientVideo(resumeClientKey, video)) {
+    if (resumeClientKey) {
       const config = clientVideoSourceConfig[resumeClientKey];
 
       clearClientDesktopHlsFallbackTimer(resumeClientKey);
@@ -4136,12 +4221,13 @@ const videos = {
       }
 
       safelySetMuted(video, false);
-      safelySetVolume(video, CLIENT_VIDEO_PLAYBACK_VOLUME);
-      safelySetPlaybackRate(video, 0.36);
+      safelySetVolume(video, 0);
+      safelySetPlaybackRate(video, 0.28);
 
       playVideoWithResumeRetries(video);
+      fadeOverlayAudioIn(video, targetVolume);
 
-      animatePlaybackRate(video, 0.36, 1, 2800, () => {
+      animatePlaybackRate(video, 0.28, 1, 3200, () => {
         safelySetPlaybackRate(video, 1);
       }, easeOutCubic);
 
@@ -4149,7 +4235,7 @@ const videos = {
       return;
     }
 
-    const startRate = 0.62;
+    const startRate = 0.34;
 
     safelySetPlaybackRate(video, startRate);
 
@@ -4157,12 +4243,7 @@ const videos = {
       playVideoWithResumeRetries(video);
     }
 
-    if (resumeClientKey) {
-      safelySetMuted(video, false);
-      safelySetVolume(video, CLIENT_VIDEO_PLAYBACK_VOLUME);
-    }
-
-    animatePlaybackRate(video, startRate, 1, 2400, () => {
+    animatePlaybackRate(video, startRate, 1, 3000, () => {
       safelySetPlaybackRate(video, 1);
     }, easeOutCubic);
 
@@ -4170,17 +4251,21 @@ const videos = {
   }
 
   function fadeCurrentAudioToZero() {
-    const video = videos[current];
+    const video = getApproachResumeVideo();
     if (!video) return;
 
-    const startVolume = video.volume || 0;
-    if (startVolume === 0) return;
-
-    const duration = 2000;
+    const startVolume = Math.max(0, Math.min(1, video.volume || 0));
+    const duration = 2200;
     const startTime = performance.now();
 
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
+    }
+
+    if (startVolume <= 0.01) {
+      safelySetVolume(video, 0);
+      safelySetMuted(video, true);
+      return;
     }
 
     function fade(now) {
@@ -4190,11 +4275,12 @@ const videos = {
 
       safelySetVolume(video, startVolume * (1 - easedProgress));
 
-      if (progress < 1) {
+      if (progress < 1 && isVideoOverlayOpen()) {
         audioFadeAnimation = requestAnimationFrame(fade);
       } else {
         safelySetVolume(video, 0);
         safelySetMuted(video, true);
+        audioFadeAnimation = null;
       }
     }
 
@@ -4207,44 +4293,7 @@ const videos = {
     const config = clientVideoSourceConfig[key];
     if (!config || config.hasCompleted || video.ended) return;
 
-    const targetVolume = CLIENT_VIDEO_PLAYBACK_VOLUME;
-    const startVolume = Math.max(0, Math.min(targetVolume, video.volume || 0));
-    const duration = 2200;
-    const startTime = performance.now();
-
-    if (audioFadeAnimation) {
-      cancelAnimationFrame(audioFadeAnimation);
-    }
-
-    safelySetMuted(video, false);
-    safelySetVolume(video, startVolume);
-
-    if (Math.abs(startVolume - targetVolume) < 0.01) {
-      safelySetVolume(video, targetVolume);
-      return;
-    }
-
-    function fade(now) {
-      if (current !== key || isApproachOpen || isContactOpen) return;
-
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easedProgress = easeInOutCubic(progress);
-      const volume = startVolume + ((targetVolume - startVolume) * easedProgress);
-
-      safelySetMuted(video, false);
-      safelySetVolume(video, volume);
-
-      if (progress < 1) {
-        audioFadeAnimation = requestAnimationFrame(fade);
-      } else {
-        safelySetMuted(video, false);
-        safelySetVolume(video, targetVolume);
-        audioFadeAnimation = null;
-      }
-    }
-
-    audioFadeAnimation = requestAnimationFrame(fade);
+    fadeOverlayAudioIn(video, CLIENT_VIDEO_PLAYBACK_VOLUME);
   }
 
   function setApproachVideoTransition(video, duration) {
@@ -4255,26 +4304,26 @@ const videos = {
   }
 
   function blurCurrentVideoForApproach() {
-    const video = videos[current];
+    const video = getApproachResumeVideo();
 
     dimClientVideoStillForOverlay();
 
     if (!video) return;
 
-    setApproachVideoTransition(video, 5200);
+    setApproachVideoTransition(video, 5400);
 
-    video.style.filter = "blur(7px) brightness(0.62)";
-    video.style.transform = "scale(1.015)";
+    video.style.filter = "blur(7px) brightness(0.58)";
+    video.style.transform = "scale(1.018)";
   }
 
   function clearApproachVideoBlur() {
-    const video = videos[current];
+    const video = getApproachResumeVideo();
 
     clearClientVideoStillOverlayDim();
 
     if (!video) return;
 
-    setApproachVideoTransition(video, 5000);
+    setApproachVideoTransition(video, 5400);
 
     video.style.filter = "blur(0) brightness(1)";
     video.style.transform = "scale(1)";
