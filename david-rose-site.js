@@ -1,5 +1,5 @@
-/* dcr overlay video/audio restoration 132 */
-/* DCR update: restore Approach + Contact video/audio pause-resume â€” cache bump 132 */
+/* dcr mobile Web Audio fade restoration 134 */
+/* DCR update: real mobile audio fade for Approach + Contact â€” cache bump 134 */
 const videos = {
     main: document.getElementById("main-reel"),
     commercial: document.getElementById("commercial-reel"),
@@ -118,6 +118,8 @@ const videos = {
   const CLIENT_HLS_JS_URL = "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js";
   const clientVideoHlsInstances = {};
   let hlsJsLoadPromise = null;
+  let dcrAudioContext = null;
+  const dcrMobileAudioControllers = new WeakMap();
 
   Object.keys(videos).forEach((key) => {
     if (!videos[key]) {
@@ -290,6 +292,8 @@ const videos = {
 
     if (!video) return;
 
+    configureVideoForWebAudio(video);
+
     const initialSource = video.querySelector("source");
     const initialSourceUrl =
       (initialSource && initialSource.getAttribute("src")) ||
@@ -347,6 +351,10 @@ const videos = {
   unloadInactiveClientVideoSources();
 
   Object.entries(videos).forEach(([key, video]) => {
+    if (isClientVideoKey(key) || key === "main") {
+      configureVideoForWebAudio(video);
+    }
+
     video.style.transition =
       "opacity 1.4s cubic-bezier(0.66, 0, 0.2, 1), " +
       "filter 1.4s cubic-bezier(0.8, 0, 0.2, 1), " +
@@ -390,6 +398,164 @@ const videos = {
       window.matchMedia &&
         window.matchMedia("(hover: hover) and (pointer: fine)").matches
     );
+  }
+
+  function isTouchMobileViewport() {
+    return Boolean(
+      window.matchMedia &&
+        window.matchMedia("(max-width: 1024px)").matches &&
+        !isDesktopLikePointer()
+    );
+  }
+
+  function configureVideoForWebAudio(video) {
+    if (!video) return;
+
+    try {
+      video.crossOrigin = "anonymous";
+      video.setAttribute("crossorigin", "anonymous");
+    } catch (error) {}
+  }
+
+  function getDcrAudioContext() {
+    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextConstructor) return null;
+
+    if (!dcrAudioContext) {
+      try {
+        dcrAudioContext = new AudioContextConstructor();
+      } catch (error) {
+        dcrAudioContext = null;
+      }
+    }
+
+    if (dcrAudioContext && dcrAudioContext.state === "suspended") {
+      try {
+        const resumePromise = dcrAudioContext.resume();
+        if (resumePromise && typeof resumePromise.catch === "function") {
+          resumePromise.catch(() => {});
+        }
+      } catch (error) {}
+    }
+
+    return dcrAudioContext;
+  }
+
+  function getStoredVideoAudioLevel(video) {
+    if (!video) return 0;
+
+    const storedLevel = Number(video.dataset.dcrAudioLevel);
+
+    if (Number.isFinite(storedLevel)) {
+      return Math.max(0, Math.min(1, storedLevel));
+    }
+
+    try {
+      return Math.max(0, Math.min(1, video.volume || 0));
+    } catch (error) {
+      return video.muted ? 0 : 1;
+    }
+  }
+
+  function setStoredVideoAudioLevel(video, level) {
+    if (!video) return;
+
+    video.dataset.dcrAudioLevel = String(Math.max(0, Math.min(1, level)));
+  }
+
+  function getExistingMobileAudioController(video) {
+    if (!video) return null;
+    return dcrMobileAudioControllers.get(video) || null;
+  }
+
+  function getOrCreateMobileAudioController(video) {
+    if (!video || !isTouchMobileViewport()) return null;
+
+    const existingController = getExistingMobileAudioController(video);
+    if (existingController) return existingController;
+
+    if (video.dataset.dcrWebAudioFailed === "true") return null;
+
+    const audioContext = getDcrAudioContext();
+    if (!audioContext) return null;
+
+    configureVideoForWebAudio(video);
+
+    try {
+      const source = audioContext.createMediaElementSource(video);
+      const gain = audioContext.createGain();
+      const level = getStoredVideoAudioLevel(video);
+
+      gain.gain.value = level;
+      source.connect(gain);
+      gain.connect(audioContext.destination);
+
+      const controller = {
+        context: audioContext,
+        source: source,
+        gain: gain
+      };
+
+      dcrMobileAudioControllers.set(video, controller);
+      return controller;
+    } catch (error) {
+      video.dataset.dcrWebAudioFailed = "true";
+      return null;
+    }
+  }
+
+  function setMobileAudioGainNow(video, level) {
+    const controller = getExistingMobileAudioController(video) || getOrCreateMobileAudioController(video);
+
+    if (!controller || !controller.gain) return false;
+
+    const nextLevel = Math.max(0, Math.min(1, level));
+
+    try {
+      if (controller.context && controller.context.state === "suspended") {
+        const resumePromise = controller.context.resume();
+        if (resumePromise && typeof resumePromise.catch === "function") {
+          resumePromise.catch(() => {});
+        }
+      }
+    } catch (error) {}
+
+    try {
+      controller.gain.gain.cancelScheduledValues(controller.context.currentTime);
+      controller.gain.gain.setValueAtTime(nextLevel, controller.context.currentTime);
+    } catch (error) {
+      try {
+        controller.gain.gain.value = nextLevel;
+      } catch (innerError) {}
+    }
+
+    return true;
+  }
+
+  function primeMobileVideoAudio(video, level) {
+    if (!video) return;
+
+    configureVideoForWebAudio(video);
+    setStoredVideoAudioLevel(video, typeof level === "number" ? level : getStoredVideoAudioLevel(video));
+
+    if (!isTouchMobileViewport()) return;
+
+    const controller = getOrCreateMobileAudioController(video);
+
+    if (controller) {
+      try {
+        video.muted = false;
+        video.defaultMuted = false;
+        video.removeAttribute("muted");
+      } catch (error) {}
+
+      try {
+        video.volume = 1;
+      } catch (error) {}
+
+      setMobileAudioGainNow(video, getStoredVideoAudioLevel(video));
+    }
   }
 
   function isMobileViewportForMainReel() {
@@ -673,14 +839,39 @@ const videos = {
   }
 
   function safelySetMuted(video, muted) {
+    if (!video) return;
+
+    const controller = getExistingMobileAudioController(video);
+
+    if (controller && isTouchMobileViewport()) {
+      if (muted) {
+        setMobileAudioGainNow(video, 0);
+      } else {
+        setMobileAudioGainNow(video, getStoredVideoAudioLevel(video));
+      }
+    }
+
     try {
       video.muted = muted;
     } catch (error) {}
   }
 
   function safelySetVolume(video, volume) {
+    if (!video) return;
+
+    const nextVolume = Math.max(0, Math.min(1, volume));
+
+    setStoredVideoAudioLevel(video, nextVolume);
+
+    if (setMobileAudioGainNow(video, nextVolume)) {
+      try {
+        video.volume = 1;
+      } catch (error) {}
+      return;
+    }
+
     try {
-      video.volume = Math.max(0, Math.min(1, volume));
+      video.volume = nextVolume;
     } catch (error) {}
   }
 
@@ -1885,6 +2076,8 @@ const videos = {
   function setDirectVideoSourceUrl(video, sourceUrl) {
     if (!video || !sourceUrl) return;
 
+    configureVideoForWebAudio(video);
+
     const currentSource = getVideoSourceUrl(video);
 
     if (currentSource === sourceUrl) return;
@@ -1929,6 +2122,8 @@ const videos = {
     const config = clientVideoSourceConfig[key];
 
     if (!video || !config || !sourceUrl) return;
+
+    configureVideoForWebAudio(video);
 
     if (config.activeSourceUrl === sourceUrl && clientVideoHlsInstances[key]) return;
 
@@ -2120,6 +2315,7 @@ const videos = {
     setClientVideoFullBrightness(video);
 
     safelySetPlaybackRate(video, 1);
+    primeMobileVideoAudio(video, CLIENT_VIDEO_PLAYBACK_VOLUME);
     safelySetMuted(video, false);
     safelySetVolume(video, CLIENT_VIDEO_PLAYBACK_VOLUME);
 
@@ -3953,7 +4149,7 @@ const videos = {
       wasEnded: video ? Boolean(video.ended) : false,
       hadCompleted: Boolean(config && config.hasCompleted),
       time: video ? (video.currentTime || 0) : 0,
-      startVolume: video ? Math.max(0, Math.min(1, video.volume || 0)) : 0,
+      startVolume: video ? getStoredVideoAudioLevel(video) : 0,
       wasMuted: video ? Boolean(video.muted) : true,
       playbackRate: video ? (video.playbackRate || 1) : 1,
       token: String(Date.now()) + "-" + String(Math.random()).slice(2)
@@ -4127,7 +4323,7 @@ const videos = {
     if (!video) return;
 
     const target = Math.max(0, Math.min(1, targetVolume));
-    const start = Math.max(0, Math.min(target, video.volume || 0));
+    const start = Math.max(0, Math.min(target, getStoredVideoAudioLevel(video)));
     const duration = 2200;
     const startTime = performance.now();
 
@@ -4135,6 +4331,7 @@ const videos = {
       cancelAnimationFrame(audioFadeAnimation);
     }
 
+    primeMobileVideoAudio(video, start);
     safelySetMuted(video, false);
     safelySetVolume(video, start);
 
@@ -4186,7 +4383,7 @@ const videos = {
       : Boolean(video.ended);
     const targetVolume = resumeClientKey
       ? CLIENT_VIDEO_PLAYBACK_VOLUME
-      : Math.max(0, Math.min(1, savedState && typeof savedState.startVolume === "number" ? savedState.startVolume : (video.volume || 0)));
+      : Math.max(0, Math.min(1, savedState && typeof savedState.startVolume === "number" ? savedState.startVolume : getStoredVideoAudioLevel(video)));
 
     restoreSavedVideoVisibility(savedKey || current, video);
 
@@ -4220,6 +4417,7 @@ const videos = {
         config.playbackReady = true;
       }
 
+      primeMobileVideoAudio(video, 0);
       safelySetMuted(video, false);
       safelySetVolume(video, 0);
       safelySetPlaybackRate(video, 0.28);
@@ -4254,7 +4452,9 @@ const videos = {
     const video = getApproachResumeVideo();
     if (!video) return;
 
-    const startVolume = Math.max(0, Math.min(1, video.volume || 0));
+    primeMobileVideoAudio(video, getStoredVideoAudioLevel(video));
+
+    const startVolume = getStoredVideoAudioLevel(video);
     const duration = 2200;
     const startTime = performance.now();
 
@@ -4380,6 +4580,7 @@ const videos = {
         cancelAnimationFrame(audioFadeAnimation);
       }
 
+      primeMobileVideoAudio(videos[target], CLIENT_VIDEO_PLAYBACK_VOLUME);
       safelySetMuted(videos[target], false);
       safelySetVolume(videos[target], CLIENT_VIDEO_PLAYBACK_VOLUME);
       videos[target].loop = false;
