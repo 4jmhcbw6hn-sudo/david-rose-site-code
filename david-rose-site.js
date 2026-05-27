@@ -104,6 +104,7 @@ const videos = {
   let clientVideoEndReturnTimeout = null;
 
   const CLIENT_VIDEO_PLAYBACK_VOLUME = 0.68;
+  const CLIENT_DESKTOP_MP4_FALLBACK_TO_HLS_MS = 3000;
   const CLIENT_HLS_JS_URL = "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js";
   const clientVideoHlsInstances = {};
   let hlsJsLoadPromise = null;
@@ -140,7 +141,10 @@ const videos = {
       return config.mobileHlsUrl || config.mobileUrl || config.desktopHlsUrl || config.desktopUrl || "";
     }
 
-    return config.desktopHlsUrl || config.desktopUrl || config.mobileHlsUrl || config.mobileUrl || "";
+    // Desktop gets the full-quality MP4 first so the opening frame does not
+    // briefly appear as a low-quality adaptive HLS rendition. If it takes too
+    // long to start, we fall back to HLS below.
+    return config.desktopUrl || config.desktopHlsUrl || config.mobileUrl || config.mobileHlsUrl || "";
   }
 
   function getClientFallbackSourceUrlForViewport(key) {
@@ -153,6 +157,68 @@ const videos = {
     }
 
     return config.desktopUrl || config.mobileUrl || "";
+  }
+
+  function getClientHlsSourceUrlForViewport(key) {
+    const config = clientVideoSourceConfig[key];
+
+    if (!config) return "";
+
+    if (isMobileClientVideoViewport()) {
+      return config.mobileHlsUrl || config.desktopHlsUrl || "";
+    }
+
+    return config.desktopHlsUrl || config.mobileHlsUrl || "";
+  }
+
+  function clearClientDesktopHlsFallbackTimer(key) {
+    const config = clientVideoSourceConfig[key];
+
+    if (!config || !config.desktopHlsFallbackTimeout) return;
+
+    clearTimeout(config.desktopHlsFallbackTimeout);
+    config.desktopHlsFallbackTimeout = null;
+  }
+
+  function switchDesktopClientVideoToHlsFallback(key) {
+    const video = videos[key];
+    const config = clientVideoSourceConfig[key];
+    const hlsUrl = getClientHlsSourceUrlForViewport(key);
+
+    if (!video || !config || !hlsUrl) return;
+    if (current !== key || config.playbackReady || isMobileClientVideoViewport()) return;
+    if (isHlsSourceUrl(config.activeSourceUrl)) return;
+
+    config.activeSourceMode = "desktop-hls-fallback|" + hlsUrl;
+    config.activeSourceUrl = hlsUrl;
+    config.autoplayAfterSourceReady = true;
+    config.playbackReady = false;
+
+    try {
+      video.pause();
+      video.currentTime = 0;
+      video.preload = "auto";
+      video.setAttribute("preload", "auto");
+    } catch (error) {}
+
+    setVideoSourceUrl(video, hlsUrl, key);
+    showClientVideoLoadingState(key, true);
+    watchClientVideoMotion(key, 0);
+  }
+
+  function scheduleDesktopClientVideoHlsFallback(key) {
+    const config = clientVideoSourceConfig[key];
+    const hlsUrl = getClientHlsSourceUrlForViewport(key);
+
+    if (!config || !hlsUrl || isMobileClientVideoViewport()) return;
+    if (isHlsSourceUrl(config.activeSourceUrl)) return;
+
+    clearClientDesktopHlsFallbackTimer(key);
+
+    config.desktopHlsFallbackTimeout = setTimeout(() => {
+      config.desktopHlsFallbackTimeout = null;
+      switchDesktopClientVideoToHlsFallback(key);
+    }, CLIENT_DESKTOP_MP4_FALLBACK_TO_HLS_MS);
   }
 
   function loadHlsJsLibrary() {
@@ -228,6 +294,7 @@ const videos = {
 
     if (!video || !config) return;
 
+    clearClientDesktopHlsFallbackTimer(key);
     destroyClientHlsInstance(key);
 
     try {
@@ -1219,6 +1286,7 @@ const videos = {
 
     const wasReady = Boolean(config.playbackReady);
 
+    clearClientDesktopHlsFallbackTimer(key);
     config.playbackReady = true;
     hideClientVideoLoadingState();
 
@@ -1334,6 +1402,20 @@ const videos = {
       });
     });
 
+    video.addEventListener("error", () => {
+      const config = clientVideoSourceConfig[key];
+
+      if (
+        current === key &&
+        config &&
+        !config.playbackReady &&
+        !isMobileClientVideoViewport() &&
+        !isHlsSourceUrl(config.activeSourceUrl)
+      ) {
+        switchDesktopClientVideoToHlsFallback(key);
+      }
+    });
+
     ["playing", "canplay", "canplaythrough"].forEach((eventName) => {
       video.addEventListener(eventName, () => {
         watchClientVideoMotion(key, video.currentTime || 0);
@@ -1347,6 +1429,8 @@ const videos = {
     });
 
     video.addEventListener("ended", () => {
+      clearClientDesktopHlsFallbackTimer(key);
+
       if (clientVideoSourceConfig[key]) {
         clientVideoSourceConfig[key].hasCompleted = true;
         clientVideoSourceConfig[key].suppressLoading = true;
@@ -1421,6 +1505,7 @@ const videos = {
 
     if (!video || !config || !fallbackUrl) return;
 
+    clearClientDesktopHlsFallbackTimer(key);
     destroyClientHlsInstance(key);
     config.activeSourceUrl = fallbackUrl;
     setDirectVideoSourceUrl(video, fallbackUrl);
@@ -1540,6 +1625,12 @@ const videos = {
     } catch (error) {}
 
     setVideoSourceUrl(video, nextSource, key);
+
+    if (!isMobileClientVideoViewport() && !isHlsSourceUrl(nextSource)) {
+      scheduleDesktopClientVideoHlsFallback(key);
+    } else {
+      clearClientDesktopHlsFallbackTimer(key);
+    }
   }
 
   function prepareAllClientSourcesForViewport() {
@@ -1554,6 +1645,7 @@ const videos = {
     const clientKey = Object.keys(clientVideoSourceConfig).find((key) => videos[key] === video);
 
     if (clientKey) {
+      clearClientDesktopHlsFallbackTimer(clientKey);
       clientVideoSourceConfig[clientKey].suppressLoading = true;
       clientVideoSourceConfig[clientKey].playbackReady = false;
     }
