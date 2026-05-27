@@ -6,6 +6,28 @@
   line-height: 1;
 }
 
+
+
+/* First-paint safety: hide overlays/menus until the site JavaScript has set the correct initial state. */
+html:not(.dcr-js-ready) .contact-overlay,
+html:not(.dcr-js-ready) .contact-modal,
+html:not(.dcr-js-ready) .post-production-projects-panel,
+html:not(.dcr-js-ready) .direction-projects-panel,
+html:not(.dcr-js-ready) .colour-projects-panel,
+html:not(.dcr-js-ready) .color-projects-panel {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+html:not(.dcr-js-ready) .post-production-projects-panel *,
+html:not(.dcr-js-ready) .direction-projects-panel *,
+html:not(.dcr-js-ready) .colour-projects-panel *,
+html:not(.dcr-js-ready) .color-projects-panel *,
+html:not(.dcr-js-ready) .contact-overlay * {
+  pointer-events: none !important;
+}
+
 /* Contact Modal Styling */
 .contact-modal {
   background: rgba(255, 255, 255, 0.08);
