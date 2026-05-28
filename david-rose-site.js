@@ -1,3 +1,5 @@
+/* DCR update: mobile overlay uses the working main-reel-style freeze/resume path; client videos remain MP4-only on mobile. */
+/* mobile overlay quick-freeze test from 4ee64d5 */
 /* DCR update: mobile MP4-only client playback; desktop MP4 with HLS fallback â€” cache bump 137 */
 /* Based on 7a86260 overlay behaviour. Mobile HLS fallback deliberately disabled while pause/resume is stabilised. */
 const videos = {
@@ -4076,6 +4078,10 @@ const videos = {
     return isApproachOpen || isContactOpen;
   }
 
+  function useMobileOverlayPauseMode() {
+    return isPhase2AMobileViewport();
+  }
+
   function slowCurrentVideoForApproach() {
     const video = getApproachResumeVideo();
     if (!video) return;
@@ -4089,21 +4095,37 @@ const videos = {
 
     playVideo(video);
 
-    const startRate = Math.max(0.25, Math.min(1, video.playbackRate || 1));
-    const finalRate = 0.24;
-    const duration = 3300;
-
     function pauseAtOverlayFrame() {
       const tokenStillMatches = !savedToken || !approachResumeState || approachResumeState.token === savedToken;
 
       if (!isVideoOverlayOpen() || approachPausedVideo !== video || video.ended || !tokenStillMatches) return;
 
-      safelySetPlaybackRate(video, finalRate);
+      safelySetPlaybackRate(video, useMobileOverlayPauseMode() ? 1 : 0.24);
 
       try {
         video.pause();
       } catch (error) {}
     }
+
+    if (useMobileOverlayPauseMode()) {
+      // Mobile Safari/Chrome can behave badly when we try to animate playbackRate.
+      // Keep the elegant visual blur/darken, but freeze much sooner so the video
+      // cannot keep running ahead underneath Approach/Contact.
+      safelySetPlaybackRate(video, 1);
+
+      const pauseTimeout = setTimeout(pauseAtOverlayFrame, 850);
+      const safetyPauseTimeout = setTimeout(pauseAtOverlayFrame, 1250);
+
+      approachTimeouts.push(pauseTimeout);
+      approachTimeouts.push(safetyPauseTimeout);
+      contactTimeouts.push(pauseTimeout);
+      contactTimeouts.push(safetyPauseTimeout);
+      return;
+    }
+
+    const startRate = Math.max(0.25, Math.min(1, video.playbackRate || 1));
+    const finalRate = 0.24;
+    const duration = 3300;
 
     animatePlaybackRate(video, startRate, finalRate, duration, () => {
       const pauseTimeout = setTimeout(pauseAtOverlayFrame, 280);
@@ -4139,7 +4161,7 @@ const videos = {
 
     const target = Math.max(0, Math.min(1, targetVolume));
     const start = Math.max(0, Math.min(target, video.volume || 0));
-    const duration = 2200;
+    const duration = useMobileOverlayPauseMode() ? 1400 : 2200;
     const startTime = performance.now();
 
     if (audioFadeAnimation) {
@@ -4233,6 +4255,18 @@ const videos = {
 
       safelySetMuted(video, false);
       safelySetVolume(video, 0);
+
+      if (useMobileOverlayPauseMode()) {
+        // On mobile, do not fake a slow ramp with playbackRate. It can run the
+        // video ahead underneath the overlay. Resume cleanly, then let the visual
+        // blur/focus transition and audio fade do the luxury work.
+        safelySetPlaybackRate(video, 1);
+        playVideoWithResumeRetries(video);
+        fadeOverlayAudioIn(video, targetVolume);
+        clearApproachResumeState();
+        return;
+      }
+
       safelySetPlaybackRate(video, 0.28);
 
       playVideoWithResumeRetries(video);
@@ -4247,6 +4281,17 @@ const videos = {
     }
 
     const startRate = 0.34;
+
+    if (useMobileOverlayPauseMode()) {
+      safelySetPlaybackRate(video, 1);
+
+      if (video.paused && !video.ended) {
+        playVideoWithResumeRetries(video);
+      }
+
+      clearApproachResumeState();
+      return;
+    }
 
     safelySetPlaybackRate(video, startRate);
 
@@ -4266,7 +4311,7 @@ const videos = {
     if (!video) return;
 
     const startVolume = Math.max(0, Math.min(1, video.volume || 0));
-    const duration = 2200;
+    const duration = useMobileOverlayPauseMode() ? 900 : 2200;
     const startTime = performance.now();
 
     if (audioFadeAnimation) {
