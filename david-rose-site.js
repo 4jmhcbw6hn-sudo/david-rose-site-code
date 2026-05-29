@@ -1,6 +1,7 @@
-/* DCR update: separate overlay video timers so Approach/Contact text animation cannot cancel mobile video freeze. */
+/* DCR update: add Half Sick of Shadows direction client video. */
+/* Based on overlay timer separation fix; no overlay-behaviour rewrite in this update. */
 /* mobile overlay quick-freeze test from 4ee64d5 */
-/* DCR update: mobile MP4-only client playback; desktop MP4 with HLS fallback â€” cache bump 137 */
+/* DCR update: mobile MP4-only client playback; desktop MP4 with HLS fallback — cache bump 137 */
 /* Based on 7a86260 overlay behaviour. Mobile HLS fallback deliberately disabled while pause/resume is stabilised. */
 const videos = {
     main: document.getElementById("main-reel"),
@@ -10,7 +11,8 @@ const videos = {
     "mr-porter": document.getElementById("mr-porter-reel"),
     "christies-spring-season-25": document.getElementById("christies-spring-season-25-reel"),
     "christies-the-winter-egg": document.getElementById("christies-the-winter-egg-reel"),
-    "vogue-suntory": document.getElementById("vogue-suntory-reel")
+    "vogue-suntory": document.getElementById("vogue-suntory-reel"),
+    "half-sick-of-shadows": document.getElementById("half-sick-of-shadows-reel")
   };
 
   let current = "main";
@@ -80,6 +82,19 @@ const videos = {
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_9x16.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_16_9_1.5.2.jpg",
       mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/SUNTORY/Vogue_Suntory_9x16_1.9.1.jpg",
+      activeSourceMode: "",
+      playbackReady: false
+    },
+    "half-sick-of-shadows": {
+      creditTitle: "DIRECTOR",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/8d7f8047-e810-48e6-875f-a9fbc5ca9c93/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/96aeeac0-ae37-44cb-9a6e-fc4c2213608e/playlist.m3u8",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/HSOS.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/HSOS-9x16.mp4",
+      desktopStillUrl: "",
+      mobileStillUrl: "",
+      desktopEndStillUrl: "",
+      mobileEndStillUrl: "",
       activeSourceMode: "",
       playbackReady: false
     }
@@ -5544,6 +5559,7 @@ const videos = {
   const christiesSpringSeason25Link = document.querySelector("[data-link='christies-spring-season-25']");
   const christiesTheWinterEggLink = document.querySelector("[data-link='christies-the-winter-egg']");
   const vogueSuntoryLink = document.querySelector("[data-link='vogue-suntory']");
+  const halfSickOfShadowsLink = document.querySelector("[data-link='half-sick-of-shadows']");
   const colourLink = getMainNavButton("colour");
   const directionLink = getMainNavButton("direction");
   const approachLink = getMainNavButton("approach");
@@ -5568,6 +5584,7 @@ const videos = {
   prepareClientOneShotVideo(videos["christies-spring-season-25"], "christies-spring-season-25");
   prepareClientOneShotVideo(videos["christies-the-winter-egg"], "christies-the-winter-egg");
   prepareClientOneShotVideo(videos["vogue-suntory"], "vogue-suntory");
+  prepareClientOneShotVideo(videos["half-sick-of-shadows"], "half-sick-of-shadows");
 
   installMobileLayoutFixes();
   installMobileViewportScrollLock();
@@ -5700,6 +5717,7 @@ const videos = {
   installClientVideoLink(christiesSpringSeason25Link, "christies-spring-season-25");
   installClientVideoLink(christiesTheWinterEggLink, "christies-the-winter-egg");
   installClientVideoLink(vogueSuntoryLink, "vogue-suntory");
+  installClientVideoLink(halfSickOfShadowsLink, "half-sick-of-shadows");
 
   if (colourLink) {
     colourLink.addEventListener("mouseenter", () => {
