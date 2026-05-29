@@ -1,4 +1,4 @@
-/* DCR update: add Half Sick of Shadows direction client video + stills. */
+/* DCR update: Half Sick of Shadows job description credit + stills. */
 /* Based on overlay timer separation fix; no overlay-behaviour rewrite in this update. */
 /* mobile overlay quick-freeze test from 4ee64d5 */
 /* DCR update: mobile MP4-only client playback; desktop MP4 with HLS fallback â€” cache bump 137 */
@@ -86,7 +86,7 @@ const videos = {
       playbackReady: false
     },
     "half-sick-of-shadows": {
-      creditTitle: "DIRECTOR",
+      creditTitle: "DIRECTION\nNARRATIVE\n(EXCERPT)",
       desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/8d7f8047-e810-48e6-875f-a9fbc5ca9c93/playlist.m3u8",
       mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/96aeeac0-ae37-44cb-9a6e-fc4c2213608e/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/HSOS.mp4",
@@ -965,7 +965,7 @@ const videos = {
         letter-spacing: 0.30em;
         text-transform: uppercase;
         text-align: center;
-        white-space: nowrap;
+        white-space: pre-line;
         filter: blur(8px);
         padding: 0;
         border-radius: 0;
