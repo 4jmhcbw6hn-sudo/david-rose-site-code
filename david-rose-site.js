@@ -1,7 +1,7 @@
-/* DCR update: add Half Sick of Shadows direction client video. */
+/* DCR update: add Half Sick of Shadows direction client video + stills. */
 /* Based on overlay timer separation fix; no overlay-behaviour rewrite in this update. */
 /* mobile overlay quick-freeze test from 4ee64d5 */
-/* DCR update: mobile MP4-only client playback; desktop MP4 with HLS fallback — cache bump 137 */
+/* DCR update: mobile MP4-only client playback; desktop MP4 with HLS fallback â€” cache bump 137 */
 /* Based on 7a86260 overlay behaviour. Mobile HLS fallback deliberately disabled while pause/resume is stabilised. */
 const videos = {
     main: document.getElementById("main-reel"),
@@ -91,10 +91,10 @@ const videos = {
       mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/96aeeac0-ae37-44cb-9a6e-fc4c2213608e/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/HSOS.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/HSOS-9x16.mp4",
-      desktopStillUrl: "",
-      mobileStillUrl: "",
-      desktopEndStillUrl: "",
-      mobileEndStillUrl: "",
+      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/open_16x9_1.1.2.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/open_9x16_1.1.1.jpg",
+      desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/close_16x9_1.13.1.jpg",
+      mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/close_9x16_1.13.1.jpg",
       activeSourceMode: "",
       playbackReady: false
     }
