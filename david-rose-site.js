@@ -1,4 +1,4 @@
-/* DCR update: mobile overlay uses the working main-reel-style freeze/resume path; client videos remain MP4-only on mobile. */
+/* DCR update: separate overlay video timers so Approach/Contact text animation cannot cancel mobile video freeze. */
 /* mobile overlay quick-freeze test from 4ee64d5 */
 /* DCR update: mobile MP4-only client playback; desktop MP4 with HLS fallback â€” cache bump 137 */
 /* Based on 7a86260 overlay behaviour. Mobile HLS fallback deliberately disabled while pause/resume is stabilised. */
@@ -94,6 +94,7 @@ const videos = {
   let revealTimeouts = [];
   let approachTimeouts = [];
   let contactTimeouts = [];
+  let overlayVideoTimeouts = [];
   let approachPlaybackAnimation = null;
   let approachPausedVideo = null;
   let approachVideoWasPaused = false;
@@ -3749,6 +3750,14 @@ const videos = {
     contactTimeouts = [];
   }
 
+  function clearOverlayVideoTimeouts() {
+    overlayVideoTimeouts.forEach((timeout) => {
+      clearTimeout(timeout);
+    });
+
+    overlayVideoTimeouts = [];
+  }
+
   function forceInactiveProjectPanelsHidden() {
     ["colour", "direction"].forEach((sectionName) => {
       if (activeSection === sectionName) return;
@@ -3978,6 +3987,7 @@ const videos = {
   }
 
   function clearApproachResumeState() {
+    clearOverlayVideoTimeouts();
     approachResumeState = null;
   }
 
@@ -4083,6 +4093,8 @@ const videos = {
   }
 
   function slowCurrentVideoForApproach() {
+    clearOverlayVideoTimeouts();
+
     const video = getApproachResumeVideo();
     if (!video) return;
 
@@ -4116,10 +4128,8 @@ const videos = {
       const pauseTimeout = setTimeout(pauseAtOverlayFrame, 850);
       const safetyPauseTimeout = setTimeout(pauseAtOverlayFrame, 1250);
 
-      approachTimeouts.push(pauseTimeout);
-      approachTimeouts.push(safetyPauseTimeout);
-      contactTimeouts.push(pauseTimeout);
-      contactTimeouts.push(safetyPauseTimeout);
+      overlayVideoTimeouts.push(pauseTimeout);
+      overlayVideoTimeouts.push(safetyPauseTimeout);
       return;
     }
 
@@ -4129,13 +4139,11 @@ const videos = {
 
     animatePlaybackRate(video, startRate, finalRate, duration, () => {
       const pauseTimeout = setTimeout(pauseAtOverlayFrame, 280);
-      approachTimeouts.push(pauseTimeout);
-      contactTimeouts.push(pauseTimeout);
+      overlayVideoTimeouts.push(pauseTimeout);
     }, approachSlowdownEase);
 
     const safetyPauseTimeout = setTimeout(pauseAtOverlayFrame, duration + 850);
-    approachTimeouts.push(safetyPauseTimeout);
-    contactTimeouts.push(safetyPauseTimeout);
+    overlayVideoTimeouts.push(safetyPauseTimeout);
   }
 
   function restoreSavedVideoVisibility(savedKey, video) {
@@ -4470,7 +4478,7 @@ const videos = {
         }
       }, 1600);
 
-      approachTimeouts.push(delayedSlowdown);
+      overlayVideoTimeouts.push(delayedSlowdown);
     }
   }
 
