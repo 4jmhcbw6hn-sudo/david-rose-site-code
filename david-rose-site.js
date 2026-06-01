@@ -1,4 +1,4 @@
-/* DCR update: mobile overlay hold/freeze fix; based on Half Sick of Shadows job description credit + stills. */
+/* DCR update: mobile overlay slow-to-still + balanced Approach text timing. */
 /* Based on overlay timer separation fix; no overlay-behaviour rewrite in this update. */
 /* mobile overlay quick-freeze test from 4ee64d5 */
 /* DCR update: mobile MP4-only client playback; desktop MP4 with HLS fallback â€” cache bump 137 */
@@ -2824,9 +2824,9 @@ const videos = {
       button.style.visibility = "visible";
       button.style.pointerEvents = "auto";
       button.style.transition =
-        "opacity 850ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "filter 1050ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 1250ms cubic-bezier(0.13, 1, 0.22, 1)";
+        "opacity 1450ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 2200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
       button.style.opacity = "1";
       button.style.filter = "blur(0)";
@@ -2842,9 +2842,9 @@ const videos = {
     if (!button) return;
 
     button.style.transition =
-      "opacity 420ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "filter 560ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 640ms cubic-bezier(0.22, 1, 0.36, 1)";
+      "opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 900ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 1000ms cubic-bezier(0.22, 1, 0.36, 1)";
 
     button.style.opacity = "0";
     button.style.filter = "blur(6px)";
@@ -2853,7 +2853,7 @@ const videos = {
 
     const hideTimeout = setTimeout(() => {
       button.style.visibility = "hidden";
-    }, 660);
+    }, 1000);
 
     mobileApproachNavTimeouts.push(hideTimeout);
   }
@@ -2878,10 +2878,10 @@ const videos = {
       item.style.pointerEvents = "auto";
       item.style.willChange = "opacity, filter, transform";
       item.style.transition =
-        "opacity 900ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "filter 1150ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 1350ms cubic-bezier(0.13, 1, 0.22, 1)";
-      item.style.transitionDelay = index * 65 + "ms";
+        "opacity 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 2450ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 2900ms cubic-bezier(0.13, 1, 0.22, 1)";
+      item.style.transitionDelay = index * 115 + "ms";
       item.style.opacity = "0.5";
       item.style.filter = "blur(0)";
       item.style.transform = "translateX(0) scale(1)";
@@ -2939,7 +2939,7 @@ const videos = {
 
     document.documentElement.classList.add("dcr-phase2b-mobile-approach-active");
 
-    revealMobileApproachBackButton(850);
+    revealMobileApproachBackButton(2650);
   }
 
   function exitMobileApproachFocus(delay) {
@@ -2977,14 +2977,14 @@ const videos = {
 
       const navReturnCleanupTimeout = setTimeout(() => {
         clearPhase2BEMobileNavReturn();
-      }, 1800);
+      }, 3600);
 
       mobileApproachNavTimeouts.push(navReturnCleanupTimeout);
     }, Math.max(0, navReturnDelay));
 
     const clearStateTimeout = setTimeout(() => {
       mobileApproachFocusIsExiting = false;
-    }, Math.max(2200, navReturnDelay + 2200));
+    }, Math.max(4200, navReturnDelay + 4200));
 
     mobileApproachNavTimeouts.push(navReturnTimeout);
     mobileApproachNavTimeouts.push(clearStateTimeout);
@@ -3344,9 +3344,9 @@ const videos = {
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text,
         html.dcr-phase2b-mobile-approach-active .side-nav > .ig-link {
           transition:
-            opacity 900ms cubic-bezier(0.22, 1, 0.36, 1),
-            filter 1150ms cubic-bezier(0.22, 1, 0.36, 1),
-            transform 1350ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+            opacity 2050ms cubic-bezier(0.22, 1, 0.36, 1),
+            filter 2700ms cubic-bezier(0.22, 1, 0.36, 1),
+            transform 3200ms cubic-bezier(0.22, 1, 0.36, 1) !important;
           opacity: 0 !important;
           filter: blur(8px) !important;
           transform: translateX(-28px) scale(0.988) !important;
@@ -3360,12 +3360,12 @@ const videos = {
 
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(2),
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(4) {
-          transition-delay: 75ms !important;
+          transition-delay: 170ms !important;
         }
 
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(1),
         html.dcr-phase2b-mobile-approach-active .side-nav > .ig-link {
-          transition-delay: 150ms !important;
+          transition-delay: 340ms !important;
         }
       }
 
@@ -4366,7 +4366,7 @@ const videos = {
         return;
       }
 
-      safelySetPlaybackRate(video, useMobileOverlayPauseMode() ? 1 : 0.24);
+      safelySetPlaybackRate(video, useMobileOverlayPauseMode() ? 0.18 : 0.24);
 
       try {
         video.pause();
@@ -4375,11 +4375,23 @@ const videos = {
 
     if (useMobileOverlayPauseMode()) {
       // Mobile rule: do not call playVideo(video) while opening the overlay.
-      // Let the captured frame dissolve over the moving video, give audio a
-      // visible beat to fade where supported, then hard-pause repeatedly.
-      safelySetPlaybackRate(video, 1);
+      // Let the actual video visibly slow/dim first, then capture the current
+      // frame just before the hard pause so it settles into a still.
+      const startRate = Math.max(0.35, Math.min(1, video.playbackRate || 1));
+      const finalRate = 0.18;
+      const duration = 1650;
+      const key = getApproachResumeKey(video);
 
-      [950, 1250, 1700, 2300].forEach((delay) => {
+      animatePlaybackRate(video, startRate, finalRate, duration, null, approachSlowdownEase);
+
+      const holdVisualTimeout = setTimeout(() => {
+        if (!isVideoOverlayOpen() || approachPausedVideo !== video || video.ended) return;
+        showMobileApproachHoldVisual(video, key);
+      }, 1180);
+
+      overlayVideoTimeouts.push(holdVisualTimeout);
+
+      [1650, 2050, 2500].forEach((delay) => {
         const pauseTimeout = setTimeout(pauseAtOverlayFrame, delay);
         overlayVideoTimeouts.push(pauseTimeout);
       });
@@ -4473,7 +4485,7 @@ const videos = {
         }
 
         audioFadeAnimation = requestAnimationFrame(mobileFade);
-      }, 520);
+      }, 280);
 
       overlayVideoTimeouts.push(mobileUnmuteDelay);
       return;
@@ -4679,7 +4691,7 @@ const videos = {
     if (!video) return;
 
     const startVolume = Math.max(0, Math.min(1, video.volume || 0));
-    const duration = useMobileOverlayPauseMode() ? 950 : 2200;
+    const duration = useMobileOverlayPauseMode() ? 1650 : 2200;
     const startTime = performance.now();
 
     if (audioFadeAnimation) {
@@ -4725,7 +4737,7 @@ const videos = {
         if (isVideoOverlayOpen() && getApproachResumeVideo() === video) {
           finishMute();
         }
-      }, duration + 180);
+      }, duration + 220);
 
       overlayVideoTimeouts.push(muteFallback);
     }
@@ -4752,7 +4764,9 @@ const videos = {
     const key = video ? getApproachResumeKey(video) : "";
 
     if (useMobileOverlayPauseMode() && video) {
-      showMobileApproachHoldVisual(video, key);
+      // On mobile, keep the real video visible during the slowdown; the freeze
+      // frame is captured later by slowCurrentVideoForApproach().
+      clearClientVideoOverlayHoldStill();
     } else if (
       key &&
       isClientVideoKey(key) &&
@@ -4765,7 +4779,7 @@ const videos = {
 
     if (!video) return;
 
-    setApproachVideoTransition(video, useMobileOverlayPauseMode() ? 1850 : 5400);
+    setApproachVideoTransition(video, useMobileOverlayPauseMode() ? 2400 : 5400);
 
     video.style.filter = "blur(7px) brightness(0.58)";
     video.style.transform = "scale(1.018)";
@@ -4778,7 +4792,7 @@ const videos = {
 
     if (!video) return;
 
-    setApproachVideoTransition(video, useMobileOverlayPauseMode() ? 1350 : 5400);
+    setApproachVideoTransition(video, useMobileOverlayPauseMode() ? 2200 : 5400);
 
     video.style.filter = "blur(0) brightness(1)";
     video.style.transform = "scale(1)";
@@ -5085,10 +5099,10 @@ const videos = {
       (isPhase2AMobileViewport() &&
         document.documentElement.classList.contains("dcr-phase2b-mobile-approach-active"));
 
-    const textStartDelay = isMobileApproachFocus ? 460 : 1550;
-    const lineStagger = isMobileApproachFocus ? 72 : 170;
-    const groupPause = isMobileApproachFocus ? 180 : 460;
-    const fadeInDuration = isMobileApproachFocus ? 1400 : 3600;
+    const textStartDelay = isMobileApproachFocus ? 720 : 1550;
+    const lineStagger = isMobileApproachFocus ? 105 : 170;
+    const groupPause = isMobileApproachFocus ? 300 : 460;
+    const fadeInDuration = isMobileApproachFocus ? 2450 : 3600;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     let delay = textStartDelay;
@@ -5180,19 +5194,19 @@ const videos = {
     const items = getApproachHideItems();
 
     const isMobileApproachExit = isPhase2AMobileViewport();
-    const textFadeStartDelay = isMobileApproachExit ? 90 : 260;
-    const staggerOut = isMobileApproachExit ? 55 : 145;
-    const fadeOutDuration = isMobileApproachExit ? 1250 : 3400;
-    const backgroundReturnDelay = isMobileApproachExit ? 80 : 150;
+    const textFadeStartDelay = isMobileApproachExit ? 160 : 260;
+    const staggerOut = isMobileApproachExit ? 90 : 145;
+    const fadeOutDuration = isMobileApproachExit ? 2350 : 3400;
+    const backgroundReturnDelay = isMobileApproachExit ? 120 : 150;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     isApproachOpen = false;
 
-    exitMobileApproachFocus(isMobileApproachExit ? 650 : 5200);
+    exitMobileApproachFocus(isPhase2AMobileViewport() ? 1800 : 5200);
 
     resumeApproachVideoPlayback();
 
-    restoreCenterNameAfterApproachClose(isMobileApproachExit ? 700 : 1500);
+    restoreCenterNameAfterApproachClose(1500);
 
     if (shouldResetButton && activeMainNavButton === approachLink) {
       const isMobileApproachReturn =
