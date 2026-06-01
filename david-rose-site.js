@@ -1,4 +1,4 @@
-/* DCR update: Half Sick of Shadows job description credit + stills. */
+/* DCR update: mobile overlay hold/freeze fix; based on Half Sick of Shadows job description credit + stills. */
 /* Based on overlay timer separation fix; no overlay-behaviour rewrite in this update. */
 /* mobile overlay quick-freeze test from 4ee64d5 */
 /* DCR update: mobile MP4-only client playback; desktop MP4 with HLS fallback â€” cache bump 137 */
@@ -111,9 +111,14 @@ const videos = {
   let contactTimeouts = [];
   let overlayVideoTimeouts = [];
   let approachPlaybackAnimation = null;
+  let approachFreezeFrame = null;
+  let approachFreezeFrameRemoveTimeout = null;
   let approachPausedVideo = null;
   let approachVideoWasPaused = false;
   let approachResumeState = null;
+  let overlayHoldStillActive = false;
+  let overlayHoldStillHadLoadingStill = false;
+  let overlayHoldStillHadEndCard = false;
   let centerNameReturnTimeout = null;
   let centerNameSettleTimeout = null;
   let projectsGradientPeakTimeout = null;
@@ -136,6 +141,7 @@ const videos = {
   const CLIENT_HLS_JS_URL = "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js";
   const clientVideoHlsInstances = {};
   let hlsJsLoadPromise = null;
+  let supportsProgrammaticVideoVolume = null;
 
   Object.keys(videos).forEach((key) => {
     if (!videos[key]) {
@@ -1288,6 +1294,68 @@ const videos = {
 
   function clearClientVideoStillOverlayDim() {
     document.documentElement.classList.remove("dcr-client-video-still-dimmed");
+  }
+
+  function showClientVideoOverlayHoldStill(key) {
+    if (!isClientVideoKey(key)) return false;
+
+    const root = document.documentElement;
+    const stillUrl =
+      getClientLoadingStillUrlForViewport(key) ||
+      getClientEndStillUrlForViewport(key);
+
+    if (!stillUrl) return false;
+
+    const layer = ensureClientVideoLoadingLayer();
+
+    if (!overlayHoldStillActive) {
+      overlayHoldStillHadLoadingStill =
+        root.classList.contains("dcr-client-video-loading-still-on");
+      overlayHoldStillHadEndCard =
+        root.classList.contains("dcr-client-video-end-card-on");
+    }
+
+    if (clientVideoLoadingHideTimeout) {
+      clearTimeout(clientVideoLoadingHideTimeout);
+      clientVideoLoadingHideTimeout = null;
+    }
+
+    clearClientVideoLoadingTextDelay();
+    root.classList.remove("dcr-client-video-loading-active");
+
+    if (!overlayHoldStillHadEndCard) {
+      layer.still.style.backgroundImage =
+        "url(\"" + stillUrl.replace(/"/g, "%22") + "\")";
+      layer.still.style.transition = "";
+      layer.still.style.opacity = "";
+      layer.still.style.visibility = "";
+      layer.still.style.transform = "";
+      layer.still.style.filter = "";
+
+      root.classList.add("dcr-client-video-loading-still-on");
+    }
+
+    root.classList.add("dcr-client-video-still-dimmed");
+    overlayHoldStillActive = true;
+    return true;
+  }
+
+  function clearClientVideoOverlayHoldStill() {
+    const root = document.documentElement;
+
+    root.classList.remove("dcr-client-video-still-dimmed");
+
+    if (
+      overlayHoldStillActive &&
+      !overlayHoldStillHadLoadingStill &&
+      !overlayHoldStillHadEndCard
+    ) {
+      root.classList.remove("dcr-client-video-loading-still-on");
+    }
+
+    overlayHoldStillActive = false;
+    overlayHoldStillHadLoadingStill = false;
+    overlayHoldStillHadEndCard = false;
   }
 
   function isCurrentClientVideoHoldingEndCard() {
@@ -4095,9 +4163,135 @@ const videos = {
     approachPlaybackAnimation = requestAnimationFrame(animate);
   }
 
-  function removeApproachFreezeFrameImmediately() {}
+  function cancelApproachFreezeFrameRemoval() {
+    if (approachFreezeFrameRemoveTimeout) {
+      clearTimeout(approachFreezeFrameRemoveTimeout);
+      approachFreezeFrameRemoveTimeout = null;
+    }
+  }
 
-  function fadeOutApproachFreezeFrame() {}
+  function removeApproachFreezeFrameImmediately() {
+    cancelApproachFreezeFrameRemoval();
+
+    if (approachFreezeFrame && approachFreezeFrame.parentNode) {
+      approachFreezeFrame.parentNode.removeChild(approachFreezeFrame);
+    }
+
+    approachFreezeFrame = null;
+  }
+
+  function drawVideoFrameToCanvas(video, canvas, rect) {
+    if (!video || !canvas || !rect) return false;
+    if (!video.videoWidth || !video.videoHeight) return false;
+
+    const ratio = Math.max(1, window.devicePixelRatio || 1);
+    const width = Math.max(1, Math.round(rect.width * ratio));
+    const height = Math.max(1, Math.round(rect.height * ratio));
+    const context = canvas.getContext("2d");
+
+    if (!context) return false;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const sourceRatio = video.videoWidth / video.videoHeight;
+    const targetRatio = width / height;
+    let drawWidth = width;
+    let drawHeight = height;
+    let drawX = 0;
+    let drawY = 0;
+
+    if (sourceRatio > targetRatio) {
+      drawHeight = height;
+      drawWidth = height * sourceRatio;
+      drawX = (width - drawWidth) / 2;
+    } else {
+      drawWidth = width;
+      drawHeight = width / sourceRatio;
+      drawY = (height - drawHeight) / 2;
+    }
+
+    try {
+      context.drawImage(video, drawX, drawY, drawWidth, drawHeight);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function showApproachFreezeFrame(video) {
+    if (!useMobileOverlayPauseMode() || !video || video.readyState < 2) return false;
+
+    const rect = video.getBoundingClientRect();
+
+    if (!rect || rect.width < 2 || rect.height < 2) return false;
+
+    removeApproachFreezeFrameImmediately();
+
+    const canvas = document.createElement("canvas");
+    const computedStyle = window.getComputedStyle(video);
+    const zIndex = parseInt(computedStyle.zIndex, 10);
+
+    canvas.className = "dcr-approach-video-freeze-frame";
+    canvas.setAttribute("aria-hidden", "true");
+
+    canvas.style.position = "fixed";
+    canvas.style.left = rect.left + "px";
+    canvas.style.top = rect.top + "px";
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
+    canvas.style.pointerEvents = "none";
+    canvas.style.opacity = "1";
+    canvas.style.visibility = "visible";
+    canvas.style.zIndex = String(Number.isFinite(zIndex) ? Math.max(zIndex + 1, 5) : 5);
+    canvas.style.transformOrigin = computedStyle.transformOrigin || "50% 50%";
+    canvas.style.transform = computedStyle.transform === "none" ? "scale(1)" : computedStyle.transform;
+    canvas.style.filter = computedStyle.filter === "none" ? "blur(0) brightness(1)" : computedStyle.filter;
+    canvas.style.transition =
+      "opacity 900ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 5400ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 5400ms cubic-bezier(0.22, 1, 0.36, 1)";
+    canvas.style.backfaceVisibility = "hidden";
+    canvas.style.webkitBackfaceVisibility = "hidden";
+
+    if (!drawVideoFrameToCanvas(video, canvas, rect)) return false;
+
+    document.body.appendChild(canvas);
+    approachFreezeFrame = canvas;
+
+    canvas.getBoundingClientRect();
+
+    requestAnimationFrame(() => {
+      if (approachFreezeFrame !== canvas) return;
+
+      canvas.style.filter = "blur(7px) brightness(0.58)";
+      canvas.style.transform = "scale(1.018)";
+    });
+
+    return true;
+  }
+
+  function fadeOutApproachFreezeFrame() {
+    const frame = approachFreezeFrame;
+
+    if (!frame) return;
+
+    cancelApproachFreezeFrameRemoval();
+
+    frame.style.transition =
+      "opacity 850ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 1600ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 1800ms cubic-bezier(0.22, 1, 0.36, 1)";
+    frame.style.opacity = "0";
+    frame.style.filter = "blur(0) brightness(1)";
+    frame.style.transform = "scale(1)";
+
+    approachFreezeFrameRemoveTimeout = setTimeout(() => {
+      if (approachFreezeFrame === frame) {
+        removeApproachFreezeFrameImmediately();
+      }
+    }, 950);
+  }
 
   function isVideoOverlayOpen() {
     return isApproachOpen || isContactOpen;
@@ -4105,6 +4299,42 @@ const videos = {
 
   function useMobileOverlayPauseMode() {
     return isPhase2AMobileViewport();
+  }
+
+  function showMobileApproachHoldVisual(video, key) {
+    if (!useMobileOverlayPauseMode() || !video) return;
+
+    const usedCanvasFrame = showApproachFreezeFrame(video);
+
+    if (!usedCanvasFrame && key && isClientVideoKey(key) && !isCurrentClientVideoHoldingEndCard()) {
+      showClientVideoOverlayHoldStill(key);
+    }
+  }
+
+  function clearMobileApproachHoldVisual() {
+    fadeOutApproachFreezeFrame();
+    clearClientVideoOverlayHoldStill();
+  }
+
+  function canFadeVideoVolume(video) {
+    if (!video) return false;
+
+    if (supportsProgrammaticVideoVolume !== null) {
+      return supportsProgrammaticVideoVolume;
+    }
+
+    const originalVolume = Math.max(0, Math.min(1, video.volume || 0));
+    const testVolume = originalVolume > 0.35 ? originalVolume - 0.25 : originalVolume + 0.25;
+
+    try {
+      video.volume = testVolume;
+      supportsProgrammaticVideoVolume = Math.abs((video.volume || 0) - testVolume) < 0.04;
+      video.volume = originalVolume;
+    } catch (error) {
+      supportsProgrammaticVideoVolume = false;
+    }
+
+    return supportsProgrammaticVideoVolume;
   }
 
   function slowCurrentVideoForApproach() {
@@ -4120,12 +4350,20 @@ const videos = {
 
     if (approachVideoWasPaused || video.ended) return;
 
-    playVideo(video);
-
     function pauseAtOverlayFrame() {
-      const tokenStillMatches = !savedToken || !approachResumeState || approachResumeState.token === savedToken;
+      const tokenStillMatches =
+        !savedToken ||
+        !approachResumeState ||
+        approachResumeState.token === savedToken;
 
-      if (!isVideoOverlayOpen() || approachPausedVideo !== video || video.ended || !tokenStillMatches) return;
+      if (
+        !isVideoOverlayOpen() ||
+        approachPausedVideo !== video ||
+        video.ended ||
+        !tokenStillMatches
+      ) {
+        return;
+      }
 
       safelySetPlaybackRate(video, useMobileOverlayPauseMode() ? 1 : 0.24);
 
@@ -4135,18 +4373,21 @@ const videos = {
     }
 
     if (useMobileOverlayPauseMode()) {
-      // Mobile Safari/Chrome can behave badly when we try to animate playbackRate.
-      // Keep the elegant visual blur/darken, but freeze much sooner so the video
-      // cannot keep running ahead underneath Approach/Contact.
+      // Mobile rule: do not call playVideo(video) while opening the overlay.
+      // The canvas/current-still hold is already hiding motion, then the real
+      // video is paused quickly and repeatedly so it cannot run ahead underneath.
       safelySetPlaybackRate(video, 1);
 
-      const pauseTimeout = setTimeout(pauseAtOverlayFrame, 850);
-      const safetyPauseTimeout = setTimeout(pauseAtOverlayFrame, 1250);
+      [360, 520, 900, 1400].forEach((delay) => {
+        const pauseTimeout = setTimeout(pauseAtOverlayFrame, delay);
+        overlayVideoTimeouts.push(pauseTimeout);
+      });
 
-      overlayVideoTimeouts.push(pauseTimeout);
-      overlayVideoTimeouts.push(safetyPauseTimeout);
       return;
     }
+
+    // Desktop keeps the existing slow, luxury playback-rate ramp.
+    playVideo(video);
 
     const startRate = Math.max(0.25, Math.min(1, video.playbackRate || 1));
     const finalRate = 0.24;
@@ -4183,12 +4424,29 @@ const videos = {
     if (!video) return;
 
     const target = Math.max(0, Math.min(1, targetVolume));
-    const start = Math.max(0, Math.min(target, video.volume || 0));
-    const duration = useMobileOverlayPauseMode() ? 1400 : 2200;
+    const isMobileOverlay = useMobileOverlayPauseMode();
+    const canFadeAudio = !isMobileOverlay || canFadeVideoVolume(video);
+    const start = canFadeAudio ? Math.max(0, Math.min(target, video.volume || 0)) : 0;
+    const duration = isMobileOverlay ? 1400 : 2200;
     const startTime = performance.now();
 
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
+    }
+
+    if (!canFadeAudio) {
+      safelySetMuted(video, true);
+      safelySetVolume(video, 0);
+
+      const unmuteTimeout = setTimeout(() => {
+        if (isApproachOpen || isContactOpen || video.ended) return;
+
+        safelySetVolume(video, target);
+        safelySetMuted(video, false);
+      }, 520);
+
+      overlayVideoTimeouts.push(unmuteTimeout);
+      return;
     }
 
     safelySetMuted(video, false);
@@ -4243,8 +4501,32 @@ const videos = {
     const targetVolume = resumeClientKey
       ? CLIENT_VIDEO_PLAYBACK_VOLUME
       : Math.max(0, Math.min(1, savedState && typeof savedState.startVolume === "number" ? savedState.startVolume : (video.volume || 0)));
+    const resumeConfigAtClose = resumeClientKey
+      ? clientVideoSourceConfig[resumeClientKey]
+      : null;
+    const shouldTreatAsEnded =
+      wasEndedBeforeOverlay ||
+      Boolean(resumeConfigAtClose && resumeConfigAtClose.hasCompleted) ||
+      Boolean(video.ended);
 
     restoreSavedVideoVisibility(savedKey || current, video);
+
+    if (
+      savedState &&
+      resumeClientKey &&
+      !shouldTreatAsEnded &&
+      typeof savedState.time === "number" &&
+      video.readyState >= 1
+    ) {
+      const currentTime = video.currentTime || 0;
+      const drift = Math.abs(currentTime - savedState.time);
+
+      if (drift > 0.45) {
+        try {
+          video.currentTime = savedState.time;
+        } catch (error) {}
+      }
+    }
 
     approachPausedVideo = null;
     approachVideoWasPaused = false;
@@ -4254,13 +4536,26 @@ const videos = {
     setApproachVideoTransition(video, 5200);
     video.style.filter = "blur(0) brightness(1)";
     video.style.transform = "scale(1)";
-    clearClientVideoStillOverlayDim();
+    clearMobileApproachHoldVisual();
 
-    if (wasPausedBeforeOverlay || wasEndedBeforeOverlay) {
+    if (wasPausedBeforeOverlay || shouldTreatAsEnded) {
       safelySetPlaybackRate(video, 1);
-      if (resumeClientKey && !wasEndedBeforeOverlay) {
-        fadeOverlayAudioIn(video, targetVolume);
+
+      if (shouldTreatAsEnded && resumeClientKey) {
+        if (resumeConfigAtClose) {
+          resumeConfigAtClose.hasCompleted = true;
+          resumeConfigAtClose.suppressLoading = true;
+          resumeConfigAtClose.playbackReady = true;
+          resumeConfigAtClose.autoplayAfterSourceReady = false;
+        }
+
+        hideClientVideoLoadingState();
+        hideClientVideoCredit();
+        showClientVideoEndCardState(resumeClientKey);
+        settleClientVideoStill(video);
+        scheduleClientVideoEndReturn(resumeClientKey);
       }
+
       clearApproachResumeState();
       return;
     }
@@ -4334,36 +4629,56 @@ const videos = {
     if (!video) return;
 
     const startVolume = Math.max(0, Math.min(1, video.volume || 0));
-    const duration = useMobileOverlayPauseMode() ? 900 : 2200;
+    const duration = useMobileOverlayPauseMode() ? 360 : 2200;
     const startTime = performance.now();
 
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
     }
 
-    if (startVolume <= 0.01) {
+    function finishMute() {
       safelySetVolume(video, 0);
       safelySetMuted(video, true);
+      audioFadeAnimation = null;
+    }
+
+    if (startVolume <= 0.01) {
+      finishMute();
       return;
     }
 
     function fade(now) {
+      if (!isVideoOverlayOpen()) {
+        audioFadeAnimation = null;
+        return;
+      }
+
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const easedProgress = easeInOutCubic(progress);
 
+      // Best-effort on mobile. Some mobile browsers ignore video.volume,
+      // so muted is the reliable final state.
       safelySetVolume(video, startVolume * (1 - easedProgress));
 
-      if (progress < 1 && isVideoOverlayOpen()) {
+      if (progress < 1) {
         audioFadeAnimation = requestAnimationFrame(fade);
       } else {
-        safelySetVolume(video, 0);
-        safelySetMuted(video, true);
-        audioFadeAnimation = null;
+        finishMute();
       }
     }
 
     audioFadeAnimation = requestAnimationFrame(fade);
+
+    if (useMobileOverlayPauseMode()) {
+      const muteFallback = setTimeout(() => {
+        if (isVideoOverlayOpen() && getApproachResumeVideo() === video) {
+          finishMute();
+        }
+      }, duration + 120);
+
+      overlayVideoTimeouts.push(muteFallback);
+    }
   }
 
   function fadeClientVideoAudioIn(video, key) {
@@ -4384,8 +4699,19 @@ const videos = {
 
   function blurCurrentVideoForApproach() {
     const video = getApproachResumeVideo();
+    const key = video ? getApproachResumeKey(video) : "";
 
-    dimClientVideoStillForOverlay();
+    if (useMobileOverlayPauseMode() && video) {
+      showMobileApproachHoldVisual(video, key);
+    } else if (
+      key &&
+      isClientVideoKey(key) &&
+      !isCurrentClientVideoHoldingEndCard()
+    ) {
+      showClientVideoOverlayHoldStill(key);
+    } else {
+      dimClientVideoStillForOverlay();
+    }
 
     if (!video) return;
 
@@ -4398,7 +4724,7 @@ const videos = {
   function clearApproachVideoBlur() {
     const video = getApproachResumeVideo();
 
-    clearClientVideoStillOverlayDim();
+    clearMobileApproachHoldVisual();
 
     if (!video) return;
 
@@ -4420,6 +4746,7 @@ const videos = {
     }
 
     removeApproachFreezeFrameImmediately();
+    clearClientVideoOverlayHoldStill();
     cancelApproachPlaybackAnimation();
 
     Object.entries(videos).forEach(([key, video]) => {
@@ -4887,11 +5214,12 @@ const videos = {
     }
 
     removeApproachFreezeFrameImmediately();
-    fadeCurrentAudioToZero();
 
     isApproachOpen = true;
     activeSection = null;
     activeMainNavButton = approachLink;
+
+    fadeCurrentAudioToZero();
 
     if (approachLink) {
       focusElement(approachLink);
@@ -5352,12 +5680,13 @@ const videos = {
     }
 
     captureApproachResumeState();
+
+    isContactOpen = true;
+
     hideProjectsGradient();
     hideCenterNameAnimated();
     fadeCurrentAudioToZero();
     softenNavForContact();
-
-    isContactOpen = true;
 
     blurCurrentVideoForApproach();
     slowCurrentVideoForApproach();
