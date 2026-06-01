@@ -2824,9 +2824,9 @@ const videos = {
       button.style.visibility = "visible";
       button.style.pointerEvents = "auto";
       button.style.transition =
-        "opacity 1450ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "filter 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 2200ms cubic-bezier(0.13, 1, 0.22, 1)";
+        "opacity 850ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 1050ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 1250ms cubic-bezier(0.13, 1, 0.22, 1)";
 
       button.style.opacity = "1";
       button.style.filter = "blur(0)";
@@ -2842,9 +2842,9 @@ const videos = {
     if (!button) return;
 
     button.style.transition =
-      "opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "filter 900ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 1000ms cubic-bezier(0.22, 1, 0.36, 1)";
+      "opacity 420ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 560ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 640ms cubic-bezier(0.22, 1, 0.36, 1)";
 
     button.style.opacity = "0";
     button.style.filter = "blur(6px)";
@@ -2853,7 +2853,7 @@ const videos = {
 
     const hideTimeout = setTimeout(() => {
       button.style.visibility = "hidden";
-    }, 1000);
+    }, 660);
 
     mobileApproachNavTimeouts.push(hideTimeout);
   }
@@ -2878,10 +2878,10 @@ const videos = {
       item.style.pointerEvents = "auto";
       item.style.willChange = "opacity, filter, transform";
       item.style.transition =
-        "opacity 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "filter 2450ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 2900ms cubic-bezier(0.13, 1, 0.22, 1)";
-      item.style.transitionDelay = index * 115 + "ms";
+        "opacity 900ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "filter 1150ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 1350ms cubic-bezier(0.13, 1, 0.22, 1)";
+      item.style.transitionDelay = index * 65 + "ms";
       item.style.opacity = "0.5";
       item.style.filter = "blur(0)";
       item.style.transform = "translateX(0) scale(1)";
@@ -2939,7 +2939,7 @@ const videos = {
 
     document.documentElement.classList.add("dcr-phase2b-mobile-approach-active");
 
-    revealMobileApproachBackButton(2650);
+    revealMobileApproachBackButton(850);
   }
 
   function exitMobileApproachFocus(delay) {
@@ -2977,14 +2977,14 @@ const videos = {
 
       const navReturnCleanupTimeout = setTimeout(() => {
         clearPhase2BEMobileNavReturn();
-      }, 3600);
+      }, 1800);
 
       mobileApproachNavTimeouts.push(navReturnCleanupTimeout);
     }, Math.max(0, navReturnDelay));
 
     const clearStateTimeout = setTimeout(() => {
       mobileApproachFocusIsExiting = false;
-    }, Math.max(4200, navReturnDelay + 4200));
+    }, Math.max(2200, navReturnDelay + 2200));
 
     mobileApproachNavTimeouts.push(navReturnTimeout);
     mobileApproachNavTimeouts.push(clearStateTimeout);
@@ -3344,9 +3344,9 @@ const videos = {
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text,
         html.dcr-phase2b-mobile-approach-active .side-nav > .ig-link {
           transition:
-            opacity 2050ms cubic-bezier(0.22, 1, 0.36, 1),
-            filter 2700ms cubic-bezier(0.22, 1, 0.36, 1),
-            transform 3200ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+            opacity 900ms cubic-bezier(0.22, 1, 0.36, 1),
+            filter 1150ms cubic-bezier(0.22, 1, 0.36, 1),
+            transform 1350ms cubic-bezier(0.22, 1, 0.36, 1) !important;
           opacity: 0 !important;
           filter: blur(8px) !important;
           transform: translateX(-28px) scale(0.988) !important;
@@ -3360,12 +3360,12 @@ const videos = {
 
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(2),
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(4) {
-          transition-delay: 170ms !important;
+          transition-delay: 75ms !important;
         }
 
         html.dcr-phase2b-mobile-approach-active .side-nav > .nav-text:nth-child(1),
         html.dcr-phase2b-mobile-approach-active .side-nav > .ig-link {
-          transition-delay: 340ms !important;
+          transition-delay: 150ms !important;
         }
       }
 
@@ -4241,16 +4241,16 @@ const videos = {
     canvas.style.width = rect.width + "px";
     canvas.style.height = rect.height + "px";
     canvas.style.pointerEvents = "none";
-    canvas.style.opacity = "1";
+    canvas.style.opacity = "0";
     canvas.style.visibility = "visible";
     canvas.style.zIndex = String(Number.isFinite(zIndex) ? Math.max(zIndex + 1, 5) : 5);
     canvas.style.transformOrigin = computedStyle.transformOrigin || "50% 50%";
     canvas.style.transform = computedStyle.transform === "none" ? "scale(1)" : computedStyle.transform;
     canvas.style.filter = computedStyle.filter === "none" ? "blur(0) brightness(1)" : computedStyle.filter;
     canvas.style.transition =
-      "opacity 900ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "filter 5400ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 5400ms cubic-bezier(0.22, 1, 0.36, 1)";
+      "opacity 720ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 1850ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 2200ms cubic-bezier(0.22, 1, 0.36, 1)";
     canvas.style.backfaceVisibility = "hidden";
     canvas.style.webkitBackfaceVisibility = "hidden";
 
@@ -4264,6 +4264,7 @@ const videos = {
     requestAnimationFrame(() => {
       if (approachFreezeFrame !== canvas) return;
 
+      canvas.style.opacity = "1";
       canvas.style.filter = "blur(7px) brightness(0.58)";
       canvas.style.transform = "scale(1.018)";
     });
@@ -4279,9 +4280,9 @@ const videos = {
     cancelApproachFreezeFrameRemoval();
 
     frame.style.transition =
-      "opacity 850ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "filter 1600ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 1800ms cubic-bezier(0.22, 1, 0.36, 1)";
+      "opacity 1050ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 1250ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 1350ms cubic-bezier(0.22, 1, 0.36, 1)";
     frame.style.opacity = "0";
     frame.style.filter = "blur(0) brightness(1)";
     frame.style.transform = "scale(1)";
@@ -4290,7 +4291,7 @@ const videos = {
       if (approachFreezeFrame === frame) {
         removeApproachFreezeFrameImmediately();
       }
-    }, 950);
+    }, 1150);
   }
 
   function isVideoOverlayOpen() {
@@ -4374,11 +4375,11 @@ const videos = {
 
     if (useMobileOverlayPauseMode()) {
       // Mobile rule: do not call playVideo(video) while opening the overlay.
-      // The canvas/current-still hold is already hiding motion, then the real
-      // video is paused quickly and repeatedly so it cannot run ahead underneath.
+      // Let the captured frame dissolve over the moving video, give audio a
+      // visible beat to fade where supported, then hard-pause repeatedly.
       safelySetPlaybackRate(video, 1);
 
-      [360, 520, 900, 1400].forEach((delay) => {
+      [950, 1250, 1700, 2300].forEach((delay) => {
         const pauseTimeout = setTimeout(pauseAtOverlayFrame, delay);
         overlayVideoTimeouts.push(pauseTimeout);
       });
@@ -4427,11 +4428,55 @@ const videos = {
     const isMobileOverlay = useMobileOverlayPauseMode();
     const canFadeAudio = !isMobileOverlay || canFadeVideoVolume(video);
     const start = canFadeAudio ? Math.max(0, Math.min(target, video.volume || 0)) : 0;
-    const duration = isMobileOverlay ? 1400 : 2200;
+    const duration = isMobileOverlay ? 1800 : 2200;
     const startTime = performance.now();
 
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
+    }
+
+    if (isMobileOverlay) {
+      // Mobile browsers can report volume changes while still outputting at
+      // full volume. Keep audio muted briefly as the video visually refocuses;
+      // browsers that honour volume will then ramp in, others will at least
+      // avoid the instant blast on overlay close.
+      safelySetVolume(video, 0);
+      safelySetMuted(video, true);
+
+      const mobileUnmuteDelay = setTimeout(() => {
+        if (isApproachOpen || isContactOpen || video.ended) return;
+
+        safelySetVolume(video, 0);
+        safelySetMuted(video, false);
+
+        const mobileFadeStart = performance.now();
+
+        function mobileFade(now) {
+          if (isApproachOpen || isContactOpen || video.ended) {
+            audioFadeAnimation = null;
+            return;
+          }
+
+          const elapsed = now - mobileFadeStart;
+          const progress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeInOutCubic(progress);
+
+          safelySetVolume(video, target * easedProgress);
+
+          if (progress < 1) {
+            audioFadeAnimation = requestAnimationFrame(mobileFade);
+          } else {
+            safelySetVolume(video, target);
+            safelySetMuted(video, false);
+            audioFadeAnimation = null;
+          }
+        }
+
+        audioFadeAnimation = requestAnimationFrame(mobileFade);
+      }, 520);
+
+      overlayVideoTimeouts.push(mobileUnmuteDelay);
+      return;
     }
 
     if (!canFadeAudio) {
@@ -4571,8 +4616,13 @@ const videos = {
         config.playbackReady = true;
       }
 
-      safelySetMuted(video, false);
-      safelySetVolume(video, 0);
+      if (useMobileOverlayPauseMode()) {
+        safelySetMuted(video, true);
+        safelySetVolume(video, 0);
+      } else {
+        safelySetMuted(video, false);
+        safelySetVolume(video, 0);
+      }
 
       if (useMobileOverlayPauseMode()) {
         // On mobile, do not fake a slow ramp with playbackRate. It can run the
@@ -4629,7 +4679,7 @@ const videos = {
     if (!video) return;
 
     const startVolume = Math.max(0, Math.min(1, video.volume || 0));
-    const duration = useMobileOverlayPauseMode() ? 360 : 2200;
+    const duration = useMobileOverlayPauseMode() ? 950 : 2200;
     const startTime = performance.now();
 
     if (audioFadeAnimation) {
@@ -4675,7 +4725,7 @@ const videos = {
         if (isVideoOverlayOpen() && getApproachResumeVideo() === video) {
           finishMute();
         }
-      }, duration + 120);
+      }, duration + 180);
 
       overlayVideoTimeouts.push(muteFallback);
     }
@@ -4715,7 +4765,7 @@ const videos = {
 
     if (!video) return;
 
-    setApproachVideoTransition(video, 5400);
+    setApproachVideoTransition(video, useMobileOverlayPauseMode() ? 1850 : 5400);
 
     video.style.filter = "blur(7px) brightness(0.58)";
     video.style.transform = "scale(1.018)";
@@ -4728,7 +4778,7 @@ const videos = {
 
     if (!video) return;
 
-    setApproachVideoTransition(video, 5400);
+    setApproachVideoTransition(video, useMobileOverlayPauseMode() ? 1350 : 5400);
 
     video.style.filter = "blur(0) brightness(1)";
     video.style.transform = "scale(1)";
@@ -5035,10 +5085,10 @@ const videos = {
       (isPhase2AMobileViewport() &&
         document.documentElement.classList.contains("dcr-phase2b-mobile-approach-active"));
 
-    const textStartDelay = isMobileApproachFocus ? 1050 : 1550;
-    const lineStagger = isMobileApproachFocus ? 145 : 170;
-    const groupPause = isMobileApproachFocus ? 410 : 460;
-    const fadeInDuration = isMobileApproachFocus ? 3400 : 3600;
+    const textStartDelay = isMobileApproachFocus ? 460 : 1550;
+    const lineStagger = isMobileApproachFocus ? 72 : 170;
+    const groupPause = isMobileApproachFocus ? 180 : 460;
+    const fadeInDuration = isMobileApproachFocus ? 1400 : 3600;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     let delay = textStartDelay;
@@ -5129,19 +5179,20 @@ const videos = {
 
     const items = getApproachHideItems();
 
-    const textFadeStartDelay = 260;
-    const staggerOut = 145;
-    const fadeOutDuration = 3400;
-    const backgroundReturnDelay = 150;
+    const isMobileApproachExit = isPhase2AMobileViewport();
+    const textFadeStartDelay = isMobileApproachExit ? 90 : 260;
+    const staggerOut = isMobileApproachExit ? 55 : 145;
+    const fadeOutDuration = isMobileApproachExit ? 1250 : 3400;
+    const backgroundReturnDelay = isMobileApproachExit ? 80 : 150;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     isApproachOpen = false;
 
-    exitMobileApproachFocus(isPhase2AMobileViewport() ? 1800 : 5200);
+    exitMobileApproachFocus(isMobileApproachExit ? 650 : 5200);
 
     resumeApproachVideoPlayback();
 
-    restoreCenterNameAfterApproachClose(1500);
+    restoreCenterNameAfterApproachClose(isMobileApproachExit ? 700 : 1500);
 
     if (shouldResetButton && activeMainNavButton === approachLink) {
       const isMobileApproachReturn =
