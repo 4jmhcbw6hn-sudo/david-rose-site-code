@@ -64,6 +64,7 @@ const videos = {
     },
     "vogue-bicester-village": {
       creditTitle: "COLOURIST",
+      creditDelayMs: 5000,
       desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/41929183-a0d0-4bcf-b3f1-298cc06f6ac5/playlist.m3u8",
       mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/5ed7099b-4942-4890-8417-8131e2641279/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_16X9.mp4",
@@ -1841,7 +1842,7 @@ const videos = {
         clientVideoCreditHideTimeout = null;
         document.documentElement.classList.remove("dcr-client-video-credit-on");
       }, 4000);
-    }, 1000);
+    }, typeof config.creditDelayMs === "number" ? config.creditDelayMs : 1000);
 
     scheduleClientVideoSwipeHint(key);
   }
