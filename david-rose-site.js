@@ -159,6 +159,8 @@ const videos = {
   let mobileClientFullscreenNavEntries = [];
   let mobileClientFullscreenNavCleanupTimeout = null;
   let mobileClientFullscreenTouchStart = null;
+  let desktopClientFullscreenPointerStart = null;
+  let desktopClientFullscreenWheelLock = false;
   let clientVideoSwipeHintShowTimeout = null;
   let clientVideoSwipeHintHideTimeout = null;
   let clientVideoSwipeHintShownThisSession = false;
@@ -1529,8 +1531,12 @@ const videos = {
     };
   }
 
+  function isClientVideoFullscreenGestureViewport() {
+    return isMobileClientVideoViewport() || isDesktopLikePointer();
+  }
+
   function isMobileClientVideoFullscreenEligible() {
-    if (!isMobileClientVideoViewport()) return false;
+    if (!isClientVideoFullscreenGestureViewport()) return false;
     if (isApproachOpen || isContactOpen) return false;
     if (!isClientVideoKey(current)) return false;
 
@@ -1638,6 +1644,39 @@ const videos = {
     }, 3200);
   }
 
+  function handleClientFullscreenSwipeGesture(startX, startY, endX, endY, duration) {
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const absoluteX = Math.abs(dx);
+    const absoluteY = Math.abs(dy);
+    const width = window.innerWidth || 1;
+
+    if (duration > 1400) return;
+    if (absoluteX < 72) return;
+    if (absoluteX < absoluteY * 1.55) return;
+
+    if (mobileClientFullscreenNavActive) {
+      const startsAtLeftEdge = startX < width * 0.26 && dx > 0;
+      const startsAtRightEdge = startX > width * 0.74 && dx < 0;
+
+      if (startsAtLeftEdge || startsAtRightEdge || absoluteX > 115) {
+        showMobileClientNavAfterFullscreen();
+      }
+
+      return;
+    }
+
+    if (!isMobileClientVideoFullscreenEligible()) return;
+
+    const startsNearCentre = startX > width * 0.22 && startX < width * 0.78;
+    const movesLeftFromCentre = dx < 0 && endX < startX;
+    const movesRightFromCentre = dx > 0 && endX > startX;
+
+    if (startsNearCentre && (movesLeftFromCentre || movesRightFromCentre)) {
+      hideMobileClientNavForFullscreen();
+    }
+  }
+
   function installMobileClientVideoFullscreenGesture() {
     if (document.documentElement.dataset.dcrMobileClientFullscreenGestureReady) return;
 
@@ -1676,37 +1715,69 @@ const videos = {
       const start = mobileClientFullscreenTouchStart;
       mobileClientFullscreenTouchStart = null;
 
-      const dx = changedTouch.clientX - start.x;
-      const dy = changedTouch.clientY - start.y;
+      handleClientFullscreenSwipeGesture(
+        start.x,
+        start.y,
+        changedTouch.clientX,
+        changedTouch.clientY,
+        Date.now() - start.time
+      );
+    }, { passive: true });
+
+    document.addEventListener("pointerdown", (event) => {
+      if (!isDesktopLikePointer()) return;
+      if (!isClientVideoKey(current)) return;
+      if (event.button !== 0) return;
+
+      desktopClientFullscreenPointerStart = {
+        x: event.clientX,
+        y: event.clientY,
+        time: Date.now()
+      };
+    }, { passive: true });
+
+    document.addEventListener("pointerup", (event) => {
+      if (!desktopClientFullscreenPointerStart) return;
+
+      const start = desktopClientFullscreenPointerStart;
+      desktopClientFullscreenPointerStart = null;
+
+      if (!isDesktopLikePointer()) return;
+      if (!isClientVideoKey(current) && !mobileClientFullscreenNavActive) return;
+
+      handleClientFullscreenSwipeGesture(
+        start.x,
+        start.y,
+        event.clientX,
+        event.clientY,
+        Date.now() - start.time
+      );
+    }, { passive: true });
+
+    document.addEventListener("wheel", (event) => {
+      if (!isDesktopLikePointer()) return;
+      if (desktopClientFullscreenWheelLock) return;
+      if (!isClientVideoKey(current) && !mobileClientFullscreenNavActive) return;
+
+      const dx = event.deltaX || 0;
+      const dy = event.deltaY || 0;
       const absoluteX = Math.abs(dx);
       const absoluteY = Math.abs(dy);
-      const width = window.innerWidth || 1;
-      const duration = Date.now() - start.time;
 
-      if (duration > 1400) return;
-      if (absoluteX < 72) return;
-      if (absoluteX < absoluteY * 1.55) return;
+      if (absoluteX < 42) return;
+      if (absoluteX < absoluteY * 1.35) return;
 
-      if (mobileClientFullscreenNavActive) {
-        const startsAtLeftEdge = start.x < width * 0.26 && dx > 0;
-        const startsAtRightEdge = start.x > width * 0.74 && dx < 0;
+      desktopClientFullscreenWheelLock = true;
 
-        if (startsAtLeftEdge || startsAtRightEdge || absoluteX > 115) {
-          showMobileClientNavAfterFullscreen();
-        }
+      setTimeout(() => {
+        desktopClientFullscreenWheelLock = false;
+      }, 900);
 
-        return;
-      }
+      const startX = event.clientX || (window.innerWidth || 1) / 2;
+      const startY = event.clientY || (window.innerHeight || 1) / 2;
+      const endX = startX + (dx < 0 ? -130 : 130);
 
-      if (!isMobileClientVideoFullscreenEligible()) return;
-
-      const startsNearCentre = start.x > width * 0.22 && start.x < width * 0.78;
-      const movesLeftFromCentre = dx < 0 && changedTouch.clientX < start.x;
-      const movesRightFromCentre = dx > 0 && changedTouch.clientX > start.x;
-
-      if (startsNearCentre && (movesLeftFromCentre || movesRightFromCentre)) {
-        hideMobileClientNavForFullscreen();
-      }
+      handleClientFullscreenSwipeGesture(startX, startY, endX, startY, 220);
     }, { passive: true });
   }
 
@@ -1754,7 +1825,7 @@ const videos = {
 
   function scheduleClientVideoSwipeHint(key) {
     if (hasClientVideoSwipeHintBeenShown()) return;
-    if (!isMobileClientVideoViewport()) return;
+    if (!isClientVideoFullscreenGestureViewport()) return;
     if (!isClientVideoKey(key)) return;
 
     clearClientVideoSwipeHintTimers();
@@ -1767,7 +1838,7 @@ const videos = {
 
       if (hasClientVideoSwipeHintBeenShown()) return;
       if (current !== key) return;
-      if (!isMobileClientVideoViewport()) return;
+      if (!isClientVideoFullscreenGestureViewport()) return;
       if (!config || !config.playbackReady || config.hasCompleted) return;
       if (!video || video.ended || video.paused) return;
       if (mobileClientFullscreenNavActive) return;
