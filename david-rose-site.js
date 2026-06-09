@@ -104,7 +104,7 @@ const videos = {
       playbackReady: false
     },
     "christies-luxury-aw23": {
-      creditTitle: "DIRECTION",
+      creditTitle: "COMMERCIAL DIRECTION",
       desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/5c07d682-48f8-4fa0-bd08-408ae87b6895/playlist.m3u8",
       mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/5f419ef8-c26f-4dc2-bb26-af201756c092/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_01/CHRISTIE'S_DIRECTION_01_16x9.mp4",
@@ -117,7 +117,7 @@ const videos = {
       playbackReady: false
     },
     "half-sick-of-shadows": {
-      creditTitle: "DIRECTION\nNARRATIVE\n(EXCERPT)",
+      creditTitle: "NARRATIVE DIRECTION\n(EXCERPT)",
       desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/8d7f8047-e810-48e6-875f-a9fbc5ca9c93/playlist.m3u8",
       mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/96aeeac0-ae37-44cb-9a6e-fc4c2213608e/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/HSOS.mp4",
