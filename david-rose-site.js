@@ -19,6 +19,8 @@ const videos = {
   let mainReelMobileMotionReady = false;
   let mainReelMobileMotionTimer = null;
   let mainReelMobileMotionAttempts = 0;
+  let mainReelMobileFallbackStillTimer = null;
+  let mainReelMobileFallbackStillAllowed = false;
   const clientVideoSourceConfig = {
     "tom-ford": {
       creditTitle: "FINISHING EDITOR / ONLINE EDITOR",
@@ -381,11 +383,7 @@ const videos = {
       "filter 1.4s cubic-bezier(0.8, 0, 0.2, 1), " +
       "transform 1.4s ease";
 
-    video.style.opacity =
-      key === "main" &&
-      !(window.matchMedia && window.matchMedia("(max-width: 1024px)").matches)
-        ? "1"
-        : "0";
+    video.style.opacity = key === "main" ? "1" : "0";
     video.style.filter = "blur(0) brightness(1)";
     video.style.transform = "scale(1)";
   });
@@ -477,10 +475,55 @@ const videos = {
     } catch (error) {}
   }
 
-  function keepMobileStillVisible() {
+  function clearMobileMainReelStillFallbackTimer() {
+    if (mainReelMobileFallbackStillTimer) {
+      clearTimeout(mainReelMobileFallbackStillTimer);
+      mainReelMobileFallbackStillTimer = null;
+    }
+  }
+
+  function hideMobileMainReelStillForPrimaryAttempt() {
     const still = getMainReelMobileStill();
 
     if (!still || !isMobileViewportForMainReel()) return;
+
+    still.style.display = "block";
+    still.style.visibility = "hidden";
+    still.style.opacity = "0";
+    still.style.pointerEvents = "none";
+
+    if (videos.main) {
+      videos.main.style.opacity = "1";
+      videos.main.style.visibility = "visible";
+      videos.main.style.pointerEvents = "none";
+    }
+  }
+
+  function scheduleMobileMainReelStillFallback(delay) {
+    if (!videos.main || !isMobileViewportForMainReel() || mainReelMobileMotionReady) return;
+    if (mainReelMobileFallbackStillTimer) return;
+
+    hideMobileMainReelStillForPrimaryAttempt();
+
+    mainReelMobileFallbackStillTimer = setTimeout(() => {
+      mainReelMobileFallbackStillTimer = null;
+
+      if (!videos.main || !isMobileViewportForMainReel() || mainReelMobileMotionReady) return;
+
+      mainReelMobileFallbackStillAllowed = true;
+      keepMobileStillVisible(true);
+    }, typeof delay === "number" ? delay : 3000);
+  }
+
+  function keepMobileStillVisible(force) {
+    const still = getMainReelMobileStill();
+
+    if (!still || !isMobileViewportForMainReel()) return;
+
+    if (!force && !mainReelMobileFallbackStillAllowed) {
+      scheduleMobileMainReelStillFallback(3000);
+      return;
+    }
 
     still.style.display = "block";
     still.style.visibility = "visible";
@@ -498,6 +541,8 @@ const videos = {
     if (!videos.main || mainReelMobileMotionReady) return;
 
     mainReelMobileMotionReady = true;
+    mainReelMobileFallbackStillAllowed = false;
+    clearMobileMainReelStillFallbackTimer();
 
     if (mainReelMobileMotionTimer) {
       clearTimeout(mainReelMobileMotionTimer);
@@ -3769,7 +3814,7 @@ const videos = {
     if (videos.main) {
       videos.main.style.transition = "none";
       videos.main.style.opacity =
-        isMobileViewportForMainReel() && !mainReelMobileMotionReady ? "0" : "1";
+        "1";
       videos.main.style.filter = "blur(18px) brightness(0.68) saturate(0.92)";
       videos.main.style.transform = "scale(1.026)";
       videos.main.style.willChange = "filter, transform";
@@ -3804,7 +3849,7 @@ const videos = {
             "transform 8600ms cubic-bezier(0.13, 1, 0.22, 1)";
 
           videos.main.style.opacity =
-            isMobileViewportForMainReel() && !mainReelMobileMotionReady ? "0" : "1";
+            "1";
           videos.main.style.filter = "blur(0) brightness(1) saturate(1)";
           videos.main.style.transform = "scale(1)";
 
@@ -4183,7 +4228,7 @@ const videos = {
         "transform 1.4s ease";
 
       mainVideo.style.opacity =
-        isMobileViewportForMainReel() && !mainReelMobileMotionReady ? "0" : "1";
+        "1";
       mainVideo.style.filter = "blur(0) brightness(1)";
       mainVideo.style.transform = "scale(1)";
 
@@ -4230,7 +4275,7 @@ const videos = {
       safelySetMuted(mainVideo, true);
       safelySetPlaybackRate(mainVideo, 1);
       mainVideo.style.opacity =
-        isMobileViewportForMainReel() && !mainReelMobileMotionReady ? "0" : "1";
+        "1";
       mainVideo.style.filter = "blur(0) brightness(1)";
       mainVideo.style.transform = "scale(1)";
 
@@ -5086,11 +5131,11 @@ const videos = {
     const items = getApproachHideItems();
     const isMobileApproachExit = isPhase2AMobileViewport() || isMobileLayoutViewport();
 
-    const textFadeStartDelay = isMobileApproachExit ? 30 : 260;
-    const staggerOut = isMobileApproachExit ? 45 : 145;
-    const fadeOutDuration = isMobileApproachExit ? 950 : 3400;
+    const textFadeStartDelay = isMobileApproachExit ? 80 : 260;
+    const staggerOut = isMobileApproachExit ? 65 : 145;
+    const fadeOutDuration = isMobileApproachExit ? 1850 : 3400;
     const backgroundReturnDelay = isMobileApproachExit
-      ? Math.min(1350, textFadeStartDelay + (Math.max(0, items.length - 1) * staggerOut) + 520)
+      ? Math.min(2400, textFadeStartDelay + (Math.max(0, items.length - 1) * staggerOut) + 1500)
       : 150;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
