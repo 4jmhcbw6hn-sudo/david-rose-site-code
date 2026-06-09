@@ -10,6 +10,7 @@ const videos = {
     "tom-ford": document.getElementById("tom-ford-reel"),
     "mr-porter": document.getElementById("mr-porter-reel"),
     "christies-spring-season-25": document.getElementById("christies-spring-season-25-reel"),
+    "vogue-bicester-village": document.getElementById("vogue-bicester-village-reel"),
     "christies-the-winter-egg": document.getElementById("christies-the-winter-egg-reel"),
     "vogue-suntory": document.getElementById("vogue-suntory-reel"),
     "half-sick-of-shadows": document.getElementById("half-sick-of-shadows-reel")
@@ -58,6 +59,19 @@ const videos = {
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/STILL_GNV-LUX-SS25-JAR-Social-Final_1.2.1_1.2.1.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/STILL_GNV-LUX-SS25-Watches-Final_1.2.1.jpg",
       mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/LUXURY_SS25/STILL_GNV-LUX-SS25-JAR-Social-Final_1.2.1.jpg",
+      activeSourceMode: "",
+      playbackReady: false
+    },
+    "vogue-bicester-village": {
+      creditTitle: "COLOURIST",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/41929183-a0d0-4bcf-b3f1-298cc06f6ac5/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/5ed7099b-4942-4890-8417-8131e2641279/playlist.m3u8",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_16X9.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_9X16.mp4",
+      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_16X9_HOLDING_STILL.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_9x16_HOLDING_STILL.jpg",
+      desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_16X9_END_STILL.jpg",
+      mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_9X16_END_STILL.jpg",
       activeSourceMode: "",
       playbackReady: false
     },
@@ -5908,6 +5922,7 @@ const videos = {
   const tomFordLink = document.querySelector("[data-link='tom-ford']");
   const mrPorterLink = document.querySelector("[data-link='mr-porter']");
   const christiesSpringSeason25Link = document.querySelector("[data-link='christies-spring-season-25']");
+  const vogueBicesterVillageLink = document.querySelector("[data-link='vogue-bicester-village']");
   const christiesTheWinterEggLink = document.querySelector("[data-link='christies-the-winter-egg']");
   const vogueSuntoryLink = document.querySelector("[data-link='vogue-suntory']");
   const halfSickOfShadowsLink = document.querySelector("[data-link='half-sick-of-shadows']");
@@ -5933,6 +5948,7 @@ const videos = {
   prepareClientOneShotVideo(videos["tom-ford"], "tom-ford");
   prepareClientOneShotVideo(videos["mr-porter"], "mr-porter");
   prepareClientOneShotVideo(videos["christies-spring-season-25"], "christies-spring-season-25");
+  prepareClientOneShotVideo(videos["vogue-bicester-village"], "vogue-bicester-village");
   prepareClientOneShotVideo(videos["christies-the-winter-egg"], "christies-the-winter-egg");
   prepareClientOneShotVideo(videos["vogue-suntory"], "vogue-suntory");
   prepareClientOneShotVideo(videos["half-sick-of-shadows"], "half-sick-of-shadows");
@@ -6066,6 +6082,7 @@ const videos = {
   installClientVideoLink(tomFordLink, "tom-ford");
   installClientVideoLink(mrPorterLink, "mr-porter");
   installClientVideoLink(christiesSpringSeason25Link, "christies-spring-season-25");
+  installClientVideoLink(vogueBicesterVillageLink, "vogue-bicester-village");
   installClientVideoLink(christiesTheWinterEggLink, "christies-the-winter-egg");
   installClientVideoLink(vogueSuntoryLink, "vogue-suntory");
   installClientVideoLink(halfSickOfShadowsLink, "half-sick-of-shadows");
@@ -6162,6 +6179,7 @@ const videos = {
       if (button === tomFordLink) return;
       if (button === mrPorterLink) return;
       if (button === christiesSpringSeason25Link) return;
+      if (button === vogueBicesterVillageLink) return;
       if (button === christiesTheWinterEggLink) return;
       activateProjectFocus(button);
     });
