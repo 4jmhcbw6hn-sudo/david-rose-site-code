@@ -1,7 +1,7 @@
 /* DCR update: Half Sick of Shadows job description credit + stills. */
 /* Based on overlay timer separation fix; no overlay-behaviour rewrite in this update. */
 /* mobile overlay quick-freeze test from 4ee64d5 */
-/* DCR update: mobile MP4-only client playback; desktop MP4 with HLS fallback â€” cache bump 137 */
+/* DCR update: mobile homepage autoplay + client-video nav preservation + faster mobile Approach exit */
 /* Based on 7a86260 overlay behaviour. Mobile HLS fallback deliberately disabled while pause/resume is stabilised. */
 const videos = {
     main: document.getElementById("main-reel"),
@@ -570,6 +570,12 @@ const videos = {
       return;
     }
 
+    // Do not wake the hidden home reel while a client film is playing.
+    // iOS is especially sensitive to multiple media elements competing.
+    if (current !== "main") {
+      return;
+    }
+
     configureMainReelAsDecorative();
     keepMobileStillVisible();
 
@@ -578,8 +584,23 @@ const videos = {
     const startTime = videos.main.currentTime || 0;
 
     try {
-      const playPromise = videos.main.play();
+      videos.main.muted = true;
+      videos.main.defaultMuted = true;
+      videos.main.autoplay = true;
+      videos.main.playsInline = true;
+      videos.main.preload = "auto";
+      videos.main.setAttribute("muted", "");
+      videos.main.setAttribute("autoplay", "");
+      videos.main.setAttribute("playsinline", "");
+      videos.main.setAttribute("webkit-playsinline", "");
+      videos.main.setAttribute("preload", "auto");
 
+      if (videos.main.readyState === 0) {
+        videos.main.load();
+      }
+    } catch (error) {}
+
+    function handlePlaybackAttempt(playPromise) {
       if (playPromise && typeof playPromise.then === "function") {
         playPromise
           .then(() => {
@@ -591,6 +612,10 @@ const videos = {
       } else {
         watchMobileMainReelMotion(startTime);
       }
+    }
+
+    try {
+      handlePlaybackAttempt(videos.main.play());
     } catch (error) {
       keepMobileStillVisible();
     }
@@ -647,15 +672,19 @@ const videos = {
           }
         });
 
-        setTimeout(requestMobileMainReelMotion, 350);
-        setTimeout(requestMobileMainReelMotion, 1600);
-        setTimeout(requestMobileMainReelMotion, 3600);
+        setTimeout(requestMobileMainReelMotion, 120);
+        setTimeout(requestMobileMainReelMotion, 480);
+        setTimeout(requestMobileMainReelMotion, 1100);
+        setTimeout(requestMobileMainReelMotion, 2400);
+        setTimeout(requestMobileMainReelMotion, 4600);
 
-        ["touchstart", "pointerdown"].forEach((eventName) => {
+        ["touchstart", "touchend", "pointerdown", "click", "keydown"].forEach((eventName) => {
           document.addEventListener(eventName, requestMobileMainReelMotion, {
             passive: true
           });
         });
+
+        window.addEventListener("load", requestMobileMainReelMotion, { once: true });
       } else {
         hideMainReelMobileStillOnDesktop();
         playVideo(videos.main);
@@ -1931,6 +1960,63 @@ const videos = {
     );
   }
 
+  function shouldPreserveMobileClientVideoDuringProjectNav(sectionName) {
+    if (!isMobileClientVideoViewport()) return false;
+    if (isApproachOpen || isContactOpen) return false;
+    if (sectionName !== "colour" && sectionName !== "direction") return false;
+    if (!isClientVideoKey(current)) return false;
+
+    const video = videos[current];
+    const config = clientVideoSourceConfig[current];
+
+    const hasStartedPlayback = Boolean(
+      config.playbackReady ||
+      (video.currentTime || 0) > 0.08 ||
+      (!video.paused && video.readyState >= 2)
+    );
+
+    return Boolean(
+      video &&
+      config &&
+      hasStartedPlayback &&
+      !config.hasCompleted &&
+      !video.ended
+    );
+  }
+
+  function preserveMobileClientVideoPlaybackDuringProjectNav(sectionName) {
+    if (!shouldPreserveMobileClientVideoDuringProjectNav(sectionName)) return;
+
+    const video = videos[current];
+    const config = clientVideoSourceConfig[current];
+
+    if (!video || !config) return;
+
+    clearClientDesktopHlsFallbackTimer(current);
+    clearClientVideoEndReturnTimer();
+    clearClientVideoLoadingTextDelay();
+
+    config.autoplayAfterSourceReady = true;
+    config.suppressLoading = true;
+    config.playbackReady = true;
+
+    document.documentElement.classList.remove("dcr-client-video-loading-active");
+    document.documentElement.classList.remove("dcr-client-video-loading-still-on");
+    document.documentElement.classList.remove("dcr-client-video-end-card-on");
+    document.documentElement.classList.remove("dcr-client-video-still-dimmed");
+
+    video.style.opacity = "1";
+    video.style.filter = "blur(0) brightness(1)";
+    video.style.transform = "scale(1)";
+    safelySetPlaybackRate(video, 1);
+    safelySetMuted(video, false);
+    safelySetVolume(video, CLIENT_VIDEO_PLAYBACK_VOLUME);
+
+    if (video.paused && !video.ended) {
+      playVideoWithResumeRetries(video);
+    }
+  }
+
   function getVideoSourceUrl(video) {
     if (!video) return "";
 
@@ -3006,6 +3092,27 @@ const videos = {
     return button;
   }
 
+  function forceMobileApproachNavHidden() {
+    if (!isPhase2AMobileViewport()) return;
+
+    const items = Array.from(new Set([
+      ...mobileApproachNavForcedItems,
+      ...getPhase2BEMobileReturnItems()
+    ])).filter(Boolean);
+
+    if (!items.length) return;
+
+    mobileApproachNavForcedItems = items;
+
+    items.forEach((item) => {
+      setMobileApproachStyle(item, "visibility", "visible");
+      setMobileApproachStyle(item, "pointer-events", "none");
+      setMobileApproachStyle(item, "opacity", "0");
+      setMobileApproachStyle(item, "filter", "blur(8px)");
+      setMobileApproachStyle(item, "transform", "translateX(-28px) scale(0.988)");
+    });
+  }
+
   function enterMobileApproachFocus() {
     if (!isPhase2AMobileViewport()) {
       document.documentElement.classList.remove("dcr-phase2b-mobile-approach-active");
@@ -3018,7 +3125,18 @@ const videos = {
     document.documentElement.classList.add("dcr-phase2b-mobile-approach-active");
     animateMobileNavOut();
 
-    revealMobileApproachBackButton(2650);
+    [520, 1180, 1900].forEach((delay) => {
+      const reinforceTimeout = setTimeout(() => {
+        if (!isApproachOpen) return;
+        if (!document.documentElement.classList.contains("dcr-phase2b-mobile-approach-active")) return;
+
+        forceMobileApproachNavHidden();
+      }, delay);
+
+      mobileApproachNavTimeouts.push(reinforceTimeout);
+    });
+
+    revealMobileApproachBackButton(2250);
   }
 
   function exitMobileApproachFocus(delay) {
@@ -4053,6 +4171,8 @@ const videos = {
 
     hideAndResetClientVideos();
 
+    current = "main";
+
     if (mainVideo) {
       safelySetMuted(mainVideo, true);
       safelySetPlaybackRate(mainVideo, 1);
@@ -4073,8 +4193,6 @@ const videos = {
         playVideo(mainVideo);
       }
     }
-
-    current = "main";
 
     if (activeSection) {
       restoreActiveSectionRestingState();
@@ -4106,6 +4224,8 @@ const videos = {
 
     hideAndResetClientVideos();
 
+    current = "main";
+
     if (mainVideo) {
       safelySetMuted(mainVideo, true);
       safelySetPlaybackRate(mainVideo, 1);
@@ -4121,7 +4241,6 @@ const videos = {
       }
     }
 
-    current = "main";
   }
 
   function captureApproachResumeState() {
@@ -4585,6 +4704,12 @@ const videos = {
         safelySetMuted(video, true);
         safelySetPlaybackRate(video, 1);
 
+        if (isMobileClientVideoViewport() && isClientVideoKey(target)) {
+          try {
+            video.pause();
+          } catch (error) {}
+        }
+
         if (isClientVideoKey(key)) {
           resetClientVideoToStartFrame(video);
         }
@@ -4959,16 +5084,19 @@ const videos = {
     clearApproachTimeouts();
 
     const items = getApproachHideItems();
+    const isMobileApproachExit = isPhase2AMobileViewport() || isMobileLayoutViewport();
 
-    const textFadeStartDelay = 260;
-    const staggerOut = 145;
-    const fadeOutDuration = 3400;
-    const backgroundReturnDelay = 150;
+    const textFadeStartDelay = isMobileApproachExit ? 30 : 260;
+    const staggerOut = isMobileApproachExit ? 45 : 145;
+    const fadeOutDuration = isMobileApproachExit ? 950 : 3400;
+    const backgroundReturnDelay = isMobileApproachExit
+      ? Math.min(1350, textFadeStartDelay + (Math.max(0, items.length - 1) * staggerOut) + 520)
+      : 150;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     isApproachOpen = false;
 
-    exitMobileApproachFocus(isPhase2AMobileViewport() ? 1800 : 5200);
+    exitMobileApproachFocus(isPhase2AMobileViewport() ? 1200 : 5200);
 
     resumeApproachVideoPlayback();
 
@@ -5269,6 +5397,7 @@ const videos = {
     if (isContactOpen) return;
 
     const wasApproachOpen = isApproachOpen;
+    const preserveMobileClientVideo = shouldPreserveMobileClientVideoDuringProjectNav(sectionName);
 
     if (isApproachOpen) {
       hideApproachAnimated(true);
@@ -5287,8 +5416,12 @@ const videos = {
 
     clearRevealTimeouts();
 
-    if (!isSwitchingBetweenProjectMenus) {
+    if (!isSwitchingBetweenProjectMenus && !preserveMobileClientVideo) {
       fadeCurrentAudioToZero();
+    }
+
+    if (preserveMobileClientVideo) {
+      preserveMobileClientVideoPlaybackDuringProjectNav(sectionName);
     }
 
     activeSection = sectionName;
@@ -5349,6 +5482,7 @@ const videos = {
 
       setTimeout(() => {
         forceInactiveProjectPanelsHidden();
+        preserveMobileClientVideoPlaybackDuringProjectNav(sectionName);
       }, 600);
     }
 
