@@ -380,6 +380,8 @@ const videos = {
 
     if (!video || isMobileViewportForMainReel()) return;
 
+    document.documentElement.classList.remove("dcr-main-reel-mobile-playing");
+
     destroyMainReelHlsInstance();
     mainReelStreamSourceUrl = "";
     mainReelStreamSourceReady = false;
@@ -613,6 +615,8 @@ const videos = {
   function hideMainReelMobileStillOnDesktop() {
     const still = getMainReelMobileStill();
 
+    document.documentElement.classList.remove("dcr-main-reel-mobile-playing");
+
     if (!still || isMobileViewportForMainReel()) return;
 
     still.style.display = "none";
@@ -703,6 +707,10 @@ const videos = {
 
     mainReelMobileFallbackStillAllowed = true;
 
+    if (!mainReelMobileMotionReady) {
+      document.documentElement.classList.remove("dcr-main-reel-mobile-playing");
+    }
+
     still.style.display = "block";
     still.style.visibility = "visible";
     still.style.opacity = "1";
@@ -728,6 +736,8 @@ const videos = {
     }
 
     const still = getMainReelMobileStill();
+
+    document.documentElement.classList.add("dcr-main-reel-mobile-playing");
 
     videos.main.style.visibility = "visible";
     videos.main.style.pointerEvents = "none";
@@ -2290,17 +2300,25 @@ const videos = {
     if (!video || !sourceUrl) return;
 
     const currentSource = getVideoSourceUrl(video);
+    const source = video.querySelector("source");
+    const expectedType = isHlsSourceUrl(sourceUrl)
+      ? "application/vnd.apple.mpegurl"
+      : "video/mp4";
 
-    if (currentSource === sourceUrl) return;
+    if (
+      currentSource === sourceUrl &&
+      (!source || source.getAttribute("type") === expectedType)
+    ) {
+      return;
+    }
 
     try {
       video.pause();
     } catch (error) {}
 
-    const source = video.querySelector("source");
-
     if (source) {
       source.setAttribute("src", sourceUrl);
+      source.setAttribute("type", expectedType);
       video.removeAttribute("src");
     } else {
       video.setAttribute("src", sourceUrl);
