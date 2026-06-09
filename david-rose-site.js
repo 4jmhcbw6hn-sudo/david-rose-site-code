@@ -136,14 +136,7 @@ const videos = {
   const CLIENT_VIDEO_PLAYBACK_VOLUME = 0.68;
   const CLIENT_DESKTOP_MP4_FALLBACK_TO_HLS_MS = 3000;
   const CLIENT_HLS_JS_URL = "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js";
-  const MAIN_REEL_MP4_URL = "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-bg-no-audio.mp4";
-  const MAIN_REEL_HLS_URL = "https://vz-636468bf-dd1.b-cdn.net/fe66b235-93af-40e0-8d30-9df72fc3ed6c/playlist.m3u8";
   const clientVideoHlsInstances = {};
-  let mainReelHlsInstance = null;
-  let mainReelStreamSourceUrl = "";
-  let mainReelStreamSourceReady = false;
-  let mainReelDesktopMotionReady = false;
-  let mainReelDesktopStillFallbackTimer = null;
   let hlsJsLoadPromise = null;
 
   Object.keys(videos).forEach((key) => {
@@ -323,179 +316,6 @@ const videos = {
     delete clientVideoHlsInstances[key];
   }
 
-  function destroyMainReelHlsInstance() {
-    if (!mainReelHlsInstance) return;
-
-    try {
-      mainReelHlsInstance.destroy();
-    } catch (error) {}
-
-    mainReelHlsInstance = null;
-    mainReelStreamSourceReady = false;
-  }
-
-  function clearDesktopMainReelStillFallbackTimer() {
-    if (mainReelDesktopStillFallbackTimer) {
-      clearTimeout(mainReelDesktopStillFallbackTimer);
-      mainReelDesktopStillFallbackTimer = null;
-    }
-  }
-
-  function hideDesktopMainReelStillFallback() {
-    clearDesktopMainReelStillFallbackTimer();
-    document.documentElement.classList.remove("dcr-main-reel-desktop-still-on");
-  }
-
-  function showDesktopMainReelStillFallback() {
-    if (!videos.main || isMobileViewportForMainReel() || mainReelDesktopMotionReady) return;
-    document.documentElement.classList.add("dcr-main-reel-desktop-still-on");
-  }
-
-  function scheduleDesktopMainReelStillFallback(delay) {
-    if (!videos.main || isMobileViewportForMainReel() || mainReelDesktopMotionReady) return;
-
-    clearDesktopMainReelStillFallbackTimer();
-
-    mainReelDesktopStillFallbackTimer = setTimeout(() => {
-      mainReelDesktopStillFallbackTimer = null;
-      showDesktopMainReelStillFallback();
-    }, typeof delay === "number" ? delay : 3000);
-  }
-
-  function confirmDesktopMainReelMotion() {
-    if (!videos.main || isMobileViewportForMainReel() || mainReelDesktopMotionReady) return;
-
-    mainReelDesktopMotionReady = true;
-    hideDesktopMainReelStillFallback();
-
-    try {
-      videos.main.style.visibility = "visible";
-      videos.main.style.opacity = "1";
-      videos.main.style.pointerEvents = "none";
-    } catch (error) {}
-  }
-
-  function setMainReelMp4SourceForDesktop() {
-    const video = videos.main;
-
-    if (!video || isMobileViewportForMainReel()) return;
-
-    document.documentElement.classList.remove("dcr-main-reel-mobile-playing");
-
-    destroyMainReelHlsInstance();
-    mainReelStreamSourceUrl = "";
-    mainReelStreamSourceReady = false;
-
-    try {
-      video.muted = true;
-      video.defaultMuted = true;
-      video.loop = true;
-      video.autoplay = true;
-      video.playsInline = true;
-      video.preload = "auto";
-      video.setAttribute("muted", "");
-      video.setAttribute("loop", "");
-      video.setAttribute("autoplay", "");
-      video.setAttribute("playsinline", "");
-      video.setAttribute("webkit-playsinline", "");
-      video.setAttribute("preload", "auto");
-    } catch (error) {}
-
-    setDirectVideoSourceUrl(video, MAIN_REEL_MP4_URL);
-  }
-
-  function setMainReelStreamSource() {
-    const video = videos.main;
-    const sourceUrl = MAIN_REEL_HLS_URL;
-
-    if (!video || !sourceUrl || !isMobileViewportForMainReel()) return;
-
-    try {
-      video.muted = true;
-      video.defaultMuted = true;
-      video.loop = true;
-      video.autoplay = true;
-      video.playsInline = true;
-      video.preload = "auto";
-      video.setAttribute("muted", "");
-      video.setAttribute("loop", "");
-      video.setAttribute("autoplay", "");
-      video.setAttribute("playsinline", "");
-      video.setAttribute("webkit-playsinline", "");
-      video.setAttribute("preload", "auto");
-    } catch (error) {}
-
-    if (mainReelStreamSourceUrl === sourceUrl && mainReelStreamSourceReady) return;
-
-    mainReelStreamSourceUrl = sourceUrl;
-
-    if (supportsNativeHls(video)) {
-      destroyMainReelHlsInstance();
-      setDirectVideoSourceUrl(video, sourceUrl);
-      mainReelStreamSourceUrl = sourceUrl;
-      mainReelStreamSourceReady = true;
-
-      if (current === "main" && isMobileViewportForMainReel()) {
-        playVideo(video);
-        watchMobileMainReelMotion(video.currentTime || 0);
-      }
-
-      return;
-    }
-
-    if (mainReelHlsInstance && mainReelStreamSourceUrl === sourceUrl) return;
-
-    destroyMainReelHlsInstance();
-
-    const source = video.querySelector("source");
-
-    if (source) {
-      source.removeAttribute("src");
-    }
-
-    video.removeAttribute("src");
-
-    loadHlsJsLibrary()
-      .then((Hls) => {
-        if (!Hls || typeof Hls.isSupported !== "function" || !Hls.isSupported()) {
-          return;
-        }
-
-        if (mainReelStreamSourceUrl !== sourceUrl) return;
-
-        const hls = new Hls({
-          enableWorker: true,
-          capLevelToPlayerSize: true,
-          maxBufferLength: 12,
-          maxMaxBufferLength: 24,
-          startLevel: -1
-        });
-
-        mainReelHlsInstance = hls;
-
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          mainReelStreamSourceReady = true;
-
-          if (current === "main" && isMobileViewportForMainReel()) {
-            playVideo(video);
-            watchMobileMainReelMotion(video.currentTime || 0);
-          }
-        });
-
-        hls.on(Hls.Events.ERROR, (eventName, data) => {
-          if (!data || !data.fatal) return;
-
-          mainReelStreamSourceReady = false;
-        });
-
-        hls.attachMedia(video);
-        hls.loadSource(sourceUrl);
-      })
-      .catch(() => {
-        mainReelStreamSourceReady = false;
-      });
-  }
-
   Object.keys(clientVideoSourceConfig).forEach((key) => {
     const video = videos[key];
 
@@ -563,8 +383,7 @@ const videos = {
       "filter 1.4s cubic-bezier(0.8, 0, 0.2, 1), " +
       "transform 1.4s ease";
 
-    video.style.opacity =
-      key === "main" ? "1" : "0";
+    video.style.opacity = key === "main" ? "1" : "0";
     video.style.filter = "blur(0) brightness(1)";
     video.style.transform = "scale(1)";
   });
@@ -609,13 +428,23 @@ const videos = {
   }
 
   function getMainReelMobileStill() {
-    return document.querySelector(".dcr-main-reel-mobile-still");
+    // Native poster mode: the homepage still is now handled by the video
+    // element's poster attribute, not by a separate overlay div. If an old
+    // overlay is still present from a previous embed, force it out of the way.
+    const still = document.querySelector(".dcr-main-reel-mobile-still");
+
+    if (still) {
+      still.style.display = "none";
+      still.style.visibility = "hidden";
+      still.style.opacity = "0";
+      still.style.pointerEvents = "none";
+    }
+
+    return null;
   }
 
   function hideMainReelMobileStillOnDesktop() {
     const still = getMainReelMobileStill();
-
-    document.documentElement.classList.remove("dcr-main-reel-mobile-playing");
 
     if (!still || isMobileViewportForMainReel()) return;
 
@@ -705,10 +534,9 @@ const videos = {
 
     if (!still || !isMobileViewportForMainReel()) return;
 
-    mainReelMobileFallbackStillAllowed = true;
-
-    if (!mainReelMobileMotionReady) {
-      document.documentElement.classList.remove("dcr-main-reel-mobile-playing");
+    if (!force && !mainReelMobileFallbackStillAllowed) {
+      scheduleMobileMainReelStillFallback(3000);
+      return;
     }
 
     still.style.display = "block";
@@ -717,9 +545,7 @@ const videos = {
     still.style.pointerEvents = "none";
 
     if (videos.main && !mainReelMobileMotionReady) {
-      // Keep the video visible underneath the still. iOS/Safari is much more
-      // reliable when the autoplaying video is not hidden by CSS.
-      videos.main.style.opacity = "1";
+      videos.main.style.opacity = "0";
       videos.main.style.visibility = "visible";
       videos.main.style.pointerEvents = "none";
     }
@@ -739,26 +565,24 @@ const videos = {
 
     const still = getMainReelMobileStill();
 
-    document.documentElement.classList.add("dcr-main-reel-mobile-playing");
-
     videos.main.style.visibility = "visible";
     videos.main.style.pointerEvents = "none";
     videos.main.style.transition =
-      "opacity 950ms cubic-bezier(0.16, 1, 0.3, 1), " +
-      "filter 1700ms cubic-bezier(0.16, 1, 0.3, 1), " +
-      "transform 2200ms cubic-bezier(0.13, 1, 0.22, 1)";
+      "opacity 1800ms cubic-bezier(0.16, 1, 0.3, 1), " +
+      "filter 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+      "transform 3600ms cubic-bezier(0.13, 1, 0.22, 1)";
     videos.main.style.opacity = "1";
 
     if (still) {
       still.style.transition =
-        "opacity 950ms cubic-bezier(0.16, 1, 0.3, 1)";
+        "opacity 2200ms cubic-bezier(0.16, 1, 0.3, 1)";
       still.style.opacity = "0";
 
       setTimeout(() => {
         if (mainReelMobileMotionReady) {
           still.style.visibility = "hidden";
         }
-      }, 1050);
+      }, 2300);
     }
   }
 
@@ -812,7 +636,6 @@ const videos = {
     }
 
     configureMainReelAsDecorative();
-    setMainReelStreamSource();
     keepMobileStillVisible();
 
     mainReelMobileMotionAttempts += 1;
@@ -820,9 +643,6 @@ const videos = {
     const startTime = videos.main.currentTime || 0;
 
     try {
-      videos.main.style.opacity = "1";
-      videos.main.style.visibility = "visible";
-      videos.main.style.pointerEvents = "none";
       videos.main.muted = true;
       videos.main.defaultMuted = true;
       videos.main.autoplay = true;
@@ -899,7 +719,6 @@ const videos = {
       configureMainReelAsDecorative();
 
       if (isMobileViewportForMainReel()) {
-        setMainReelStreamSource();
         keepMobileStillVisible();
 
         videos.main.addEventListener("playing", () => {
@@ -912,21 +731,11 @@ const videos = {
           }
         });
 
-        ["loadstart", "loadedmetadata", "loadeddata", "canplay", "canplaythrough", "durationchange", "progress"].forEach((eventName) => {
-          videos.main.addEventListener(eventName, () => {
-            if (!mainReelMobileMotionReady && current === "main") {
-              requestMobileMainReelMotion();
-            }
-          });
-        });
-
-        setTimeout(requestMobileMainReelMotion, 80);
-        setTimeout(requestMobileMainReelMotion, 260);
-        setTimeout(requestMobileMainReelMotion, 620);
-        setTimeout(requestMobileMainReelMotion, 1250);
+        setTimeout(requestMobileMainReelMotion, 120);
+        setTimeout(requestMobileMainReelMotion, 480);
+        setTimeout(requestMobileMainReelMotion, 1100);
         setTimeout(requestMobileMainReelMotion, 2400);
         setTimeout(requestMobileMainReelMotion, 4600);
-        setTimeout(requestMobileMainReelMotion, 7200);
 
         ["touchstart", "touchend", "pointerdown", "click", "keydown"].forEach((eventName) => {
           document.addEventListener(eventName, requestMobileMainReelMotion, {
@@ -936,20 +745,7 @@ const videos = {
 
         window.addEventListener("load", requestMobileMainReelMotion, { once: true });
       } else {
-        setMainReelMp4SourceForDesktop();
         hideMainReelMobileStillOnDesktop();
-        scheduleDesktopMainReelStillFallback(3000);
-
-        videos.main.addEventListener("playing", () => {
-          confirmDesktopMainReelMotion();
-        });
-
-        videos.main.addEventListener("timeupdate", () => {
-          if ((videos.main.currentTime || 0) > 0.08) {
-            confirmDesktopMainReelMotion();
-          }
-        });
-
         playVideo(videos.main);
       }
     }
@@ -958,9 +754,7 @@ const videos = {
       if (isMobileViewportForMainReel()) {
         requestMobileMainReelMotion();
       } else if (videos.main) {
-        setMainReelMp4SourceForDesktop();
         hideMainReelMobileStillOnDesktop();
-        scheduleDesktopMainReelStillFallback(3000);
         playVideo(videos.main);
       }
     });
@@ -971,9 +765,7 @@ const videos = {
       if (isMobileViewportForMainReel()) {
         requestMobileMainReelMotion();
       } else if (videos.main) {
-        setMainReelMp4SourceForDesktop();
         hideMainReelMobileStillOnDesktop();
-        scheduleDesktopMainReelStillFallback(3000);
         playVideo(videos.main);
       }
 
@@ -984,17 +776,6 @@ const videos = {
 
     window.addEventListener("resize", () => {
       hideMainReelMobileStillOnDesktop();
-
-      if (videos.main && !isMobileViewportForMainReel()) {
-        setMainReelMp4SourceForDesktop();
-        scheduleDesktopMainReelStillFallback(3000);
-        playVideo(videos.main);
-      } else if (videos.main && isMobileViewportForMainReel()) {
-        mainReelMobileMotionReady = false;
-        setMainReelStreamSource();
-        keepMobileStillVisible(true);
-        requestMobileMainReelMotion();
-      }
 
       if (!isClientVideoKey(current)) {
         prepareAllClientSourcesForViewport();
@@ -2307,25 +2088,17 @@ const videos = {
     if (!video || !sourceUrl) return;
 
     const currentSource = getVideoSourceUrl(video);
-    const source = video.querySelector("source");
-    const expectedType = isHlsSourceUrl(sourceUrl)
-      ? "application/vnd.apple.mpegurl"
-      : "video/mp4";
 
-    if (
-      currentSource === sourceUrl &&
-      (!source || source.getAttribute("type") === expectedType)
-    ) {
-      return;
-    }
+    if (currentSource === sourceUrl) return;
 
     try {
       video.pause();
     } catch (error) {}
 
+    const source = video.querySelector("source");
+
     if (source) {
       source.setAttribute("src", sourceUrl);
-      source.setAttribute("type", expectedType);
       video.removeAttribute("src");
     } else {
       video.setAttribute("src", sourceUrl);
@@ -5277,10 +5050,10 @@ const videos = {
       (isPhase2AMobileViewport() &&
         document.documentElement.classList.contains("dcr-phase2b-mobile-approach-active"));
 
-    const textStartDelay = isMobileApproachFocus ? 900 : 1550;
-    const lineStagger = isMobileApproachFocus ? 132 : 170;
-    const groupPause = isMobileApproachFocus ? 370 : 460;
-    const fadeInDuration = isMobileApproachFocus ? 3250 : 3600;
+    const textStartDelay = isMobileApproachFocus ? 1050 : 1550;
+    const lineStagger = isMobileApproachFocus ? 145 : 170;
+    const groupPause = isMobileApproachFocus ? 410 : 460;
+    const fadeInDuration = isMobileApproachFocus ? 3400 : 3600;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     let delay = textStartDelay;
