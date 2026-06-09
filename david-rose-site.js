@@ -564,7 +564,7 @@ const videos = {
       "transform 1.4s ease";
 
     video.style.opacity =
-      key === "main" && !isMobileViewportForMainReel() ? "1" : "0";
+      key === "main" ? "1" : "0";
     video.style.filter = "blur(0) brightness(1)";
     video.style.transform = "scale(1)";
   });
@@ -717,7 +717,9 @@ const videos = {
     still.style.pointerEvents = "none";
 
     if (videos.main && !mainReelMobileMotionReady) {
-      videos.main.style.opacity = "0";
+      // Keep the video visible underneath the still. iOS/Safari is much more
+      // reliable when the autoplaying video is not hidden by CSS.
+      videos.main.style.opacity = "1";
       videos.main.style.visibility = "visible";
       videos.main.style.pointerEvents = "none";
     }
@@ -818,6 +820,9 @@ const videos = {
     const startTime = videos.main.currentTime || 0;
 
     try {
+      videos.main.style.opacity = "1";
+      videos.main.style.visibility = "visible";
+      videos.main.style.pointerEvents = "none";
       videos.main.muted = true;
       videos.main.defaultMuted = true;
       videos.main.autoplay = true;
@@ -907,7 +912,7 @@ const videos = {
           }
         });
 
-        ["loadedmetadata", "loadeddata", "canplay", "canplaythrough"].forEach((eventName) => {
+        ["loadstart", "loadedmetadata", "loadeddata", "canplay", "canplaythrough", "durationchange", "progress"].forEach((eventName) => {
           videos.main.addEventListener(eventName, () => {
             if (!mainReelMobileMotionReady && current === "main") {
               requestMobileMainReelMotion();
@@ -915,11 +920,13 @@ const videos = {
           });
         });
 
-        setTimeout(requestMobileMainReelMotion, 120);
-        setTimeout(requestMobileMainReelMotion, 480);
-        setTimeout(requestMobileMainReelMotion, 1100);
+        setTimeout(requestMobileMainReelMotion, 80);
+        setTimeout(requestMobileMainReelMotion, 260);
+        setTimeout(requestMobileMainReelMotion, 620);
+        setTimeout(requestMobileMainReelMotion, 1250);
         setTimeout(requestMobileMainReelMotion, 2400);
         setTimeout(requestMobileMainReelMotion, 4600);
+        setTimeout(requestMobileMainReelMotion, 7200);
 
         ["touchstart", "touchend", "pointerdown", "click", "keydown"].forEach((eventName) => {
           document.addEventListener(eventName, requestMobileMainReelMotion, {
