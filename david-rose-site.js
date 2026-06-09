@@ -136,7 +136,11 @@ const videos = {
   const CLIENT_VIDEO_PLAYBACK_VOLUME = 0.68;
   const CLIENT_DESKTOP_MP4_FALLBACK_TO_HLS_MS = 3000;
   const CLIENT_HLS_JS_URL = "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js";
+  const MAIN_REEL_HLS_URL = "https://vz-636468bf-dd1.b-cdn.net/fe66b235-93af-40e0-8d30-9df72fc3ed6c/playlist.m3u8";
   const clientVideoHlsInstances = {};
+  let mainReelHlsInstance = null;
+  let mainReelStreamSourceUrl = "";
+  let mainReelStreamSourceReady = false;
   let hlsJsLoadPromise = null;
 
   Object.keys(videos).forEach((key) => {
@@ -316,6 +320,102 @@ const videos = {
     delete clientVideoHlsInstances[key];
   }
 
+  function destroyMainReelHlsInstance() {
+    if (!mainReelHlsInstance) return;
+
+    try {
+      mainReelHlsInstance.destroy();
+    } catch (error) {}
+
+    mainReelHlsInstance = null;
+    mainReelStreamSourceReady = false;
+  }
+
+  function setMainReelStreamSource() {
+    const video = videos.main;
+    const sourceUrl = MAIN_REEL_HLS_URL;
+
+    if (!video || !sourceUrl) return;
+
+    try {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.loop = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.preload = "auto";
+      video.setAttribute("muted", "");
+      video.setAttribute("loop", "");
+      video.setAttribute("autoplay", "");
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+      video.setAttribute("preload", "auto");
+    } catch (error) {}
+
+    if (mainReelStreamSourceUrl === sourceUrl && mainReelStreamSourceReady) return;
+
+    mainReelStreamSourceUrl = sourceUrl;
+
+    if (supportsNativeHls(video)) {
+      destroyMainReelHlsInstance();
+      setDirectVideoSourceUrl(video, sourceUrl);
+      mainReelStreamSourceUrl = sourceUrl;
+      mainReelStreamSourceReady = true;
+      return;
+    }
+
+    if (mainReelHlsInstance && mainReelStreamSourceUrl === sourceUrl) return;
+
+    destroyMainReelHlsInstance();
+
+    const source = video.querySelector("source");
+
+    if (source) {
+      source.removeAttribute("src");
+    }
+
+    video.removeAttribute("src");
+
+    loadHlsJsLibrary()
+      .then((Hls) => {
+        if (!Hls || typeof Hls.isSupported !== "function" || !Hls.isSupported()) {
+          return;
+        }
+
+        if (mainReelStreamSourceUrl !== sourceUrl) return;
+
+        const hls = new Hls({
+          enableWorker: true,
+          capLevelToPlayerSize: true,
+          maxBufferLength: 12,
+          maxMaxBufferLength: 24,
+          startLevel: -1
+        });
+
+        mainReelHlsInstance = hls;
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          mainReelStreamSourceReady = true;
+
+          if (current === "main" && isMobileViewportForMainReel()) {
+            playVideo(video);
+          }
+        });
+
+        hls.on(Hls.Events.ERROR, (eventName, data) => {
+          if (!data || !data.fatal) return;
+
+          mainReelStreamSourceReady = false;
+        });
+
+        hls.attachMedia(video);
+        hls.loadSource(sourceUrl);
+      })
+      .catch(() => {
+        mainReelStreamSourceReady = false;
+      });
+  }
+
   Object.keys(clientVideoSourceConfig).forEach((key) => {
     const video = videos[key];
 
@@ -460,11 +560,13 @@ const videos = {
       mainVideo.muted = true;
       mainVideo.defaultMuted = true;
       mainVideo.loop = true;
+      mainVideo.autoplay = true;
       mainVideo.playsInline = true;
       mainVideo.controls = false;
       mainVideo.removeAttribute("controls");
       mainVideo.setAttribute("muted", "");
       mainVideo.setAttribute("loop", "");
+      mainVideo.setAttribute("autoplay", "");
       mainVideo.setAttribute("playsinline", "");
       mainVideo.setAttribute("webkit-playsinline", "");
       mainVideo.setAttribute("preload", "auto");
@@ -622,6 +724,7 @@ const videos = {
     }
 
     configureMainReelAsDecorative();
+    setMainReelStreamSource();
     keepMobileStillVisible();
 
     mainReelMobileMotionAttempts += 1;
@@ -705,6 +808,7 @@ const videos = {
       configureMainReelAsDecorative();
 
       if (isMobileViewportForMainReel()) {
+        setMainReelStreamSource();
         keepMobileStillVisible();
 
         videos.main.addEventListener("playing", () => {
@@ -5036,10 +5140,10 @@ const videos = {
       (isPhase2AMobileViewport() &&
         document.documentElement.classList.contains("dcr-phase2b-mobile-approach-active"));
 
-    const textStartDelay = isMobileApproachFocus ? 1050 : 1550;
-    const lineStagger = isMobileApproachFocus ? 145 : 170;
-    const groupPause = isMobileApproachFocus ? 410 : 460;
-    const fadeInDuration = isMobileApproachFocus ? 3400 : 3600;
+    const textStartDelay = isMobileApproachFocus ? 900 : 1550;
+    const lineStagger = isMobileApproachFocus ? 132 : 170;
+    const groupPause = isMobileApproachFocus ? 370 : 460;
+    const fadeInDuration = isMobileApproachFocus ? 3250 : 3600;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     let delay = textStartDelay;
