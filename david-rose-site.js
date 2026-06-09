@@ -117,7 +117,8 @@ const videos = {
       playbackReady: false
     },
     "half-sick-of-shadows": {
-      creditTitle: "NARRATIVE DIRECTION\n(EXCERPT)",
+      creditTitle: "NARRATIVE DIRECTION",
+      creditHtml: 'NARRATIVE DIRECTION<br><span class="dcr-client-video-credit-subline">excerpt</span>',
       desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/8d7f8047-e810-48e6-875f-a9fbc5ca9c93/playlist.m3u8",
       mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/96aeeac0-ae37-44cb-9a6e-fc4c2213608e/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/HSOS.mp4",
@@ -1066,6 +1067,16 @@ const videos = {
         }
       }
 
+      .dcr-client-video-credit-subline {
+        display: block;
+        margin-top: 0.42em;
+        font-size: 0.72em;
+        line-height: 1;
+        letter-spacing: 0.22em;
+        text-transform: lowercase;
+        opacity: 0.82;
+      }
+
       .dcr-client-video-credit-text {
         position: fixed !important;
         left: 50vw !important;
@@ -1849,7 +1860,13 @@ const videos = {
       if (current !== key || !config.playbackReady) return;
 
       const layer = ensureClientVideoLoadingLayer();
-      layer.credit.textContent = String(config.creditTitle || "").toUpperCase();
+
+      if (config.creditHtml) {
+        layer.credit.innerHTML = String(config.creditHtml || "");
+      } else {
+        layer.credit.textContent = String(config.creditTitle || "").toUpperCase();
+      }
+
       document.documentElement.classList.add("dcr-client-video-credit-on");
 
       clientVideoCreditHideTimeout = setTimeout(() => {
