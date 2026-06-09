@@ -4132,7 +4132,17 @@ const videos = {
   }
 
   function useMobileOverlayPauseMode() {
-    return isPhase2AMobileViewport();
+    if (!isPhase2AMobileViewport()) return false;
+
+    const video = getApproachResumeVideo();
+    const key = getApproachResumeKey(video);
+
+    // Client videos now use the same slow-down / pause / resume behaviour
+    // on mobile as they do on desktop. Non-client mobile video keeps the
+    // previous quick-pause mode for stability.
+    if (isClientVideoKey(key)) return false;
+
+    return true;
   }
 
   function slowCurrentVideoForApproach() {
