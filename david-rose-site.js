@@ -118,7 +118,7 @@ const videos = {
     },
     "half-sick-of-shadows": {
       creditTitle: "NARRATIVE DIRECTION",
-      creditHtml: 'NARRATIVE DIRECTION<br><span class="dcr-client-video-credit-subline">excerpt</span>',
+      creditHtml: 'NARRATIVE DIRECTION<br><span class="dcr-client-video-credit-subline">(excerpt)</span>',
       desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/8d7f8047-e810-48e6-875f-a9fbc5ca9c93/playlist.m3u8",
       mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/96aeeac0-ae37-44cb-9a6e-fc4c2213608e/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/00_HSOS/HSOS.mp4",
@@ -1070,7 +1070,7 @@ const videos = {
       .dcr-client-video-credit-subline {
         display: block;
         margin-top: 0.42em;
-        font-size: 0.72em;
+        font-size: 0.82em;
         line-height: 1;
         letter-spacing: 0.22em;
         text-transform: lowercase;
