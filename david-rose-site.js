@@ -1,4 +1,4 @@
-/* DCR update: mobile main-reel starter + client overlay audio/slowdown repair. */
+/* DCR update: Half Sick of Shadows job description credit + stills. */
 /* Based on overlay timer separation fix; no overlay-behaviour rewrite in this update. */
 /* mobile overlay quick-freeze test from 4ee64d5 */
 /* DCR update: mobile MP4-only client playback; desktop MP4 with HLS fallback â€” cache bump 137 */
@@ -18,8 +18,6 @@ const videos = {
   let current = "main";
   let mainReelMobileMotionReady = false;
   let mainReelMobileMotionTimer = null;
-  let mainReelMobileMotionRetryTimer = null;
-  let mainReelMobileMotionRetryStartedAt = 0;
   let mainReelMobileMotionAttempts = 0;
   const clientVideoSourceConfig = {
     "tom-ford": {
@@ -112,16 +110,10 @@ const videos = {
   let approachTimeouts = [];
   let contactTimeouts = [];
   let overlayVideoTimeouts = [];
-  let audioResumeTimeouts = [];
   let approachPlaybackAnimation = null;
-  let approachFreezeFrame = null;
-  let approachFreezeFrameRemoveTimeout = null;
   let approachPausedVideo = null;
   let approachVideoWasPaused = false;
   let approachResumeState = null;
-  let overlayHoldStillActive = false;
-  let overlayHoldStillHadLoadingStill = false;
-  let overlayHoldStillHadEndCard = false;
   let centerNameReturnTimeout = null;
   let centerNameSettleTimeout = null;
   let projectsGradientPeakTimeout = null;
@@ -144,7 +136,6 @@ const videos = {
   const CLIENT_HLS_JS_URL = "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js";
   const clientVideoHlsInstances = {};
   let hlsJsLoadPromise = null;
-  let supportsProgrammaticVideoVolume = null;
 
   Object.keys(videos).forEach((key) => {
     if (!videos[key]) {
@@ -503,48 +494,10 @@ const videos = {
     }
   }
 
-  function clearMobileMainReelMotionRetry() {
-    if (mainReelMobileMotionRetryTimer) {
-      clearTimeout(mainReelMobileMotionRetryTimer);
-      mainReelMobileMotionRetryTimer = null;
-    }
-  }
-
-  function scheduleMobileMainReelMotionRetry(delay) {
-    if (!videos.main || !isMobileViewportForMainReel() || mainReelMobileMotionReady) {
-      clearMobileMainReelMotionRetry();
-      return;
-    }
-
-    if (!mainReelMobileMotionRetryStartedAt) {
-      mainReelMobileMotionRetryStartedAt = Date.now();
-    }
-
-    clearMobileMainReelMotionRetry();
-
-    mainReelMobileMotionRetryTimer = setTimeout(() => {
-      mainReelMobileMotionRetryTimer = null;
-
-      if (!videos.main || !isMobileViewportForMainReel() || mainReelMobileMotionReady) {
-        clearMobileMainReelMotionRetry();
-        return;
-      }
-
-      requestMobileMainReelMotion();
-
-      const elapsed = Date.now() - mainReelMobileMotionRetryStartedAt;
-
-      if (!mainReelMobileMotionReady && elapsed < 30000) {
-        scheduleMobileMainReelMotionRetry(elapsed < 9000 ? 900 : 1800);
-      }
-    }, typeof delay === "number" ? delay : 900);
-  }
-
   function confirmMobileMainReelMotion() {
     if (!videos.main || mainReelMobileMotionReady) return;
 
     mainReelMobileMotionReady = true;
-    clearMobileMainReelMotionRetry();
 
     if (mainReelMobileMotionTimer) {
       clearTimeout(mainReelMobileMotionTimer);
@@ -634,14 +587,12 @@ const videos = {
           })
           .catch(() => {
             keepMobileStillVisible();
-            scheduleMobileMainReelMotionRetry(850);
           });
       } else {
         watchMobileMainReelMotion(startTime);
       }
     } catch (error) {
       keepMobileStillVisible();
-      scheduleMobileMainReelMotionRetry(850);
     }
   }
 
@@ -686,11 +637,8 @@ const videos = {
       if (isMobileViewportForMainReel()) {
         keepMobileStillVisible();
 
-        ["loadedmetadata", "loadeddata", "canplay", "canplaythrough", "playing"].forEach((eventName) => {
-          videos.main.addEventListener(eventName, () => {
-            requestMobileMainReelMotion();
-            watchMobileMainReelMotion(videos.main.currentTime || 0);
-          });
+        videos.main.addEventListener("playing", () => {
+          watchMobileMainReelMotion(videos.main.currentTime || 0);
         });
 
         videos.main.addEventListener("timeupdate", () => {
@@ -699,13 +647,11 @@ const videos = {
           }
         });
 
-        setTimeout(requestMobileMainReelMotion, 120);
-        setTimeout(requestMobileMainReelMotion, 500);
-        setTimeout(requestMobileMainReelMotion, 1200);
-        setTimeout(requestMobileMainReelMotion, 2600);
-        scheduleMobileMainReelMotionRetry(700);
+        setTimeout(requestMobileMainReelMotion, 350);
+        setTimeout(requestMobileMainReelMotion, 1600);
+        setTimeout(requestMobileMainReelMotion, 3600);
 
-        ["touchstart", "touchend", "pointerdown", "click"].forEach((eventName) => {
+        ["touchstart", "pointerdown"].forEach((eventName) => {
           document.addEventListener(eventName, requestMobileMainReelMotion, {
             passive: true
           });
@@ -1332,78 +1278,44 @@ const videos = {
   function dimClientVideoStillForOverlay() {
     const root = document.documentElement;
 
-    if (
-      root.classList.contains("dcr-client-video-end-card-on") ||
+    if (!isClientVideoKey(current)) return;
+
+    const video = videos[current];
+    const config = clientVideoSourceConfig[current];
+
+    if (!video || !config) return;
+
+    const isActivePlayingClientVideo = Boolean(
+      config.playbackReady &&
+      !config.hasCompleted &&
+      !video.ended
+    );
+
+    if (isActivePlayingClientVideo) {
+      root.classList.remove("dcr-client-video-loading-active");
+      root.classList.remove("dcr-client-video-loading-still-on");
+      root.classList.remove("dcr-client-video-end-card-on");
+      root.classList.remove("dcr-client-video-still-dimmed");
+      return;
+    }
+
+    const isTrueEndCard = Boolean(
+      (config.hasCompleted || video.ended) &&
+      root.classList.contains("dcr-client-video-end-card-on")
+    );
+
+    const isStillLoading = Boolean(
+      !config.playbackReady &&
       root.classList.contains("dcr-client-video-loading-still-on")
-    ) {
+    );
+
+    if (isTrueEndCard || isStillLoading) {
       root.classList.add("dcr-client-video-still-dimmed");
     }
   }
 
   function clearClientVideoStillOverlayDim() {
     document.documentElement.classList.remove("dcr-client-video-still-dimmed");
-  }
-
-  function showClientVideoOverlayHoldStill(key) {
-    if (!isClientVideoKey(key)) return false;
-
-    const root = document.documentElement;
-    const stillUrl =
-      getClientLoadingStillUrlForViewport(key) ||
-      getClientEndStillUrlForViewport(key);
-
-    if (!stillUrl) return false;
-
-    const layer = ensureClientVideoLoadingLayer();
-
-    if (!overlayHoldStillActive) {
-      overlayHoldStillHadLoadingStill =
-        root.classList.contains("dcr-client-video-loading-still-on");
-      overlayHoldStillHadEndCard =
-        root.classList.contains("dcr-client-video-end-card-on");
-    }
-
-    if (clientVideoLoadingHideTimeout) {
-      clearTimeout(clientVideoLoadingHideTimeout);
-      clientVideoLoadingHideTimeout = null;
-    }
-
-    clearClientVideoLoadingTextDelay();
-    root.classList.remove("dcr-client-video-loading-active");
-
-    if (!overlayHoldStillHadEndCard) {
-      layer.still.style.backgroundImage =
-        "url(\"" + stillUrl.replace(/"/g, "%22") + "\")";
-      layer.still.style.transition = "";
-      layer.still.style.opacity = "";
-      layer.still.style.visibility = "";
-      layer.still.style.transform = "";
-      layer.still.style.filter = "";
-
-      root.classList.add("dcr-client-video-loading-still-on");
-    }
-
-    root.classList.add("dcr-client-video-still-dimmed");
-    overlayHoldStillActive = true;
-    return true;
-  }
-
-  function clearClientVideoOverlayHoldStill() {
-    const root = document.documentElement;
-
-    root.classList.remove("dcr-client-video-still-dimmed");
-
-    if (
-      overlayHoldStillActive &&
-      !overlayHoldStillHadLoadingStill &&
-      !overlayHoldStillHadEndCard
-    ) {
-      root.classList.remove("dcr-client-video-loading-still-on");
-    }
-
-    overlayHoldStillActive = false;
-    overlayHoldStillHadLoadingStill = false;
-    overlayHoldStillHadEndCard = false;
   }
 
   function isCurrentClientVideoHoldingEndCard() {
@@ -2261,7 +2173,6 @@ const videos = {
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
     }
-    clearAudioResumeTimeouts();
 
     setClientVideoFullBrightness(video);
 
@@ -3889,22 +3800,6 @@ const videos = {
 
     overlayVideoTimeouts = [];
   }
-  function clearAudioResumeTimeouts() {
-    audioResumeTimeouts.forEach((timeout) => {
-      clearTimeout(timeout);
-    });
-
-    audioResumeTimeouts = [];
-  }
-
-  function trackAudioResumeTimeout(timeout) {
-    if (timeout) {
-      audioResumeTimeouts.push(timeout);
-    }
-
-    return timeout;
-  }
-
 
   function forceInactiveProjectPanelsHidden() {
     ["colour", "direction"].forEach((sectionName) => {
@@ -4000,7 +3895,6 @@ const videos = {
   }
 
   function hideAndResetClientVideos() {
-    clearAudioResumeTimeouts();
     showMobileClientNavAfterFullscreen();
     hideClientVideoLoadingState();
     hideClientVideoCredit();
@@ -4037,7 +3931,6 @@ const videos = {
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
     }
-    clearAudioResumeTimeouts();
 
     hideAndResetClientVideos();
 
@@ -4091,7 +3984,6 @@ const videos = {
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
     }
-    clearAudioResumeTimeouts();
 
     hideAndResetClientVideos();
 
@@ -4231,136 +4123,9 @@ const videos = {
     approachPlaybackAnimation = requestAnimationFrame(animate);
   }
 
-  function cancelApproachFreezeFrameRemoval() {
-    if (approachFreezeFrameRemoveTimeout) {
-      clearTimeout(approachFreezeFrameRemoveTimeout);
-      approachFreezeFrameRemoveTimeout = null;
-    }
-  }
+  function removeApproachFreezeFrameImmediately() {}
 
-  function removeApproachFreezeFrameImmediately() {
-    cancelApproachFreezeFrameRemoval();
-
-    if (approachFreezeFrame && approachFreezeFrame.parentNode) {
-      approachFreezeFrame.parentNode.removeChild(approachFreezeFrame);
-    }
-
-    approachFreezeFrame = null;
-  }
-
-  function drawVideoFrameToCanvas(video, canvas, rect) {
-    if (!video || !canvas || !rect) return false;
-    if (!video.videoWidth || !video.videoHeight) return false;
-
-    const ratio = Math.max(1, window.devicePixelRatio || 1);
-    const width = Math.max(1, Math.round(rect.width * ratio));
-    const height = Math.max(1, Math.round(rect.height * ratio));
-    const context = canvas.getContext("2d");
-
-    if (!context) return false;
-
-    canvas.width = width;
-    canvas.height = height;
-
-    const sourceRatio = video.videoWidth / video.videoHeight;
-    const targetRatio = width / height;
-    let drawWidth = width;
-    let drawHeight = height;
-    let drawX = 0;
-    let drawY = 0;
-
-    if (sourceRatio > targetRatio) {
-      drawHeight = height;
-      drawWidth = height * sourceRatio;
-      drawX = (width - drawWidth) / 2;
-    } else {
-      drawWidth = width;
-      drawHeight = width / sourceRatio;
-      drawY = (height - drawHeight) / 2;
-    }
-
-    try {
-      context.drawImage(video, drawX, drawY, drawWidth, drawHeight);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  function showApproachFreezeFrame(video) {
-    if (!useMobileOverlayPauseMode() || !video || video.readyState < 2) return false;
-
-    const rect = video.getBoundingClientRect();
-
-    if (!rect || rect.width < 2 || rect.height < 2) return false;
-
-    removeApproachFreezeFrameImmediately();
-
-    const canvas = document.createElement("canvas");
-    const computedStyle = window.getComputedStyle(video);
-    const zIndex = parseInt(computedStyle.zIndex, 10);
-
-    canvas.className = "dcr-approach-video-freeze-frame";
-    canvas.setAttribute("aria-hidden", "true");
-
-    canvas.style.position = "fixed";
-    canvas.style.left = rect.left + "px";
-    canvas.style.top = rect.top + "px";
-    canvas.style.width = rect.width + "px";
-    canvas.style.height = rect.height + "px";
-    canvas.style.pointerEvents = "none";
-    canvas.style.opacity = "0";
-    canvas.style.visibility = "visible";
-    canvas.style.zIndex = String(Number.isFinite(zIndex) ? Math.max(zIndex + 1, 5) : 5);
-    canvas.style.transformOrigin = computedStyle.transformOrigin || "50% 50%";
-    canvas.style.transform = computedStyle.transform === "none" ? "scale(1)" : computedStyle.transform;
-    canvas.style.filter = computedStyle.filter === "none" ? "blur(0) brightness(1)" : computedStyle.filter;
-    canvas.style.transition =
-      "opacity 720ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "filter 1850ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 2200ms cubic-bezier(0.22, 1, 0.36, 1)";
-    canvas.style.backfaceVisibility = "hidden";
-    canvas.style.webkitBackfaceVisibility = "hidden";
-
-    if (!drawVideoFrameToCanvas(video, canvas, rect)) return false;
-
-    document.body.appendChild(canvas);
-    approachFreezeFrame = canvas;
-
-    canvas.getBoundingClientRect();
-
-    requestAnimationFrame(() => {
-      if (approachFreezeFrame !== canvas) return;
-
-      canvas.style.opacity = "1";
-      canvas.style.filter = "blur(7px) brightness(0.58)";
-      canvas.style.transform = "scale(1.018)";
-    });
-
-    return true;
-  }
-
-  function fadeOutApproachFreezeFrame() {
-    const frame = approachFreezeFrame;
-
-    if (!frame) return;
-
-    cancelApproachFreezeFrameRemoval();
-
-    frame.style.transition =
-      "opacity 1050ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "filter 1250ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 1350ms cubic-bezier(0.22, 1, 0.36, 1)";
-    frame.style.opacity = "0";
-    frame.style.filter = "blur(0) brightness(1)";
-    frame.style.transform = "scale(1)";
-
-    approachFreezeFrameRemoveTimeout = setTimeout(() => {
-      if (approachFreezeFrame === frame) {
-        removeApproachFreezeFrameImmediately();
-      }
-    }, 1150);
-  }
+  function fadeOutApproachFreezeFrame() {}
 
   function isVideoOverlayOpen() {
     return isApproachOpen || isContactOpen;
@@ -4368,42 +4133,6 @@ const videos = {
 
   function useMobileOverlayPauseMode() {
     return isPhase2AMobileViewport();
-  }
-
-  function showMobileApproachHoldVisual(video, key) {
-    if (!useMobileOverlayPauseMode() || !video) return;
-
-    const usedCanvasFrame = showApproachFreezeFrame(video);
-
-    if (!usedCanvasFrame && key && isClientVideoKey(key) && !isCurrentClientVideoHoldingEndCard()) {
-      showClientVideoOverlayHoldStill(key);
-    }
-  }
-
-  function clearMobileApproachHoldVisual() {
-    fadeOutApproachFreezeFrame();
-    clearClientVideoOverlayHoldStill();
-  }
-
-  function canFadeVideoVolume(video) {
-    if (!video) return false;
-
-    if (supportsProgrammaticVideoVolume !== null) {
-      return supportsProgrammaticVideoVolume;
-    }
-
-    const originalVolume = Math.max(0, Math.min(1, video.volume || 0));
-    const testVolume = originalVolume > 0.35 ? originalVolume - 0.25 : originalVolume + 0.25;
-
-    try {
-      video.volume = testVolume;
-      supportsProgrammaticVideoVolume = Math.abs((video.volume || 0) - testVolume) < 0.04;
-      video.volume = originalVolume;
-    } catch (error) {
-      supportsProgrammaticVideoVolume = false;
-    }
-
-    return supportsProgrammaticVideoVolume;
   }
 
   function slowCurrentVideoForApproach() {
@@ -4419,22 +4148,14 @@ const videos = {
 
     if (approachVideoWasPaused || video.ended) return;
 
+    playVideo(video);
+
     function pauseAtOverlayFrame() {
-      const tokenStillMatches =
-        !savedToken ||
-        !approachResumeState ||
-        approachResumeState.token === savedToken;
+      const tokenStillMatches = !savedToken || !approachResumeState || approachResumeState.token === savedToken;
 
-      if (
-        !isVideoOverlayOpen() ||
-        approachPausedVideo !== video ||
-        video.ended ||
-        !tokenStillMatches
-      ) {
-        return;
-      }
+      if (!isVideoOverlayOpen() || approachPausedVideo !== video || video.ended || !tokenStillMatches) return;
 
-      safelySetPlaybackRate(video, useMobileOverlayPauseMode() ? 0.18 : 0.24);
+      safelySetPlaybackRate(video, useMobileOverlayPauseMode() ? 1 : 0.24);
 
       try {
         video.pause();
@@ -4442,25 +4163,18 @@ const videos = {
     }
 
     if (useMobileOverlayPauseMode()) {
-      // Mobile should behave like the main reel: keep the real video visible,
-      // blur/dim it, ease playbackRate down, then pause the same element as
-      // the still. Do not cover it early with the loading still/canvas layer.
-      const startRate = Math.max(0.35, Math.min(1, video.playbackRate || 1));
-      const finalRate = 0.18;
-      const duration = isClientVideoKey(getApproachResumeKey(video)) ? 2350 : 1650;
+      // Mobile Safari/Chrome can behave badly when we try to animate playbackRate.
+      // Keep the elegant visual blur/darken, but freeze much sooner so the video
+      // cannot keep running ahead underneath Approach/Contact.
+      safelySetPlaybackRate(video, 1);
 
-      animatePlaybackRate(video, startRate, finalRate, duration, null, approachSlowdownEase);
+      const pauseTimeout = setTimeout(pauseAtOverlayFrame, 850);
+      const safetyPauseTimeout = setTimeout(pauseAtOverlayFrame, 1250);
 
-      [duration, duration + 420, duration + 900].forEach((delay) => {
-        const pauseTimeout = setTimeout(pauseAtOverlayFrame, delay);
-        overlayVideoTimeouts.push(pauseTimeout);
-      });
-
+      overlayVideoTimeouts.push(pauseTimeout);
+      overlayVideoTimeouts.push(safetyPauseTimeout);
       return;
     }
-
-    // Desktop keeps the existing slow, luxury playback-rate ramp.
-    playVideo(video);
 
     const startRate = Math.max(0.25, Math.min(1, video.playbackRate || 1));
     const finalRate = 0.24;
@@ -4497,74 +4211,12 @@ const videos = {
     if (!video) return;
 
     const target = Math.max(0, Math.min(1, targetVolume));
-    const isMobileOverlay = useMobileOverlayPauseMode();
-    const canFadeAudio = !isMobileOverlay || canFadeVideoVolume(video);
-    const start = canFadeAudio ? Math.max(0, Math.min(target, video.volume || 0)) : 0;
-    const duration = isMobileOverlay ? 1800 : 2200;
+    const start = Math.max(0, Math.min(target, video.volume || 0));
+    const duration = useMobileOverlayPauseMode() ? 1400 : 2200;
     const startTime = performance.now();
 
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
-    }
-
-    if (isMobileOverlay) {
-      // This timeout must NOT live in overlayVideoTimeouts: resumeApproachVideoPlayback()
-      // clears overlay video timers as it closes, which was cancelling mobile
-      // audio before it could come back.
-      clearAudioResumeTimeouts();
-      safelySetVolume(video, 0);
-      safelySetMuted(video, true);
-
-      const mobileUnmuteDelay = setTimeout(() => {
-        if (isApproachOpen || isContactOpen || video.ended) return;
-
-        safelySetVolume(video, 0);
-        safelySetMuted(video, false);
-
-        const mobileFadeStart = performance.now();
-
-        function mobileFade(now) {
-          if (isApproachOpen || isContactOpen || video.ended) {
-            audioFadeAnimation = null;
-            return;
-          }
-
-          const elapsed = now - mobileFadeStart;
-          const progress = Math.min(elapsed / duration, 1);
-          const easedProgress = easeInOutCubic(progress);
-
-          safelySetMuted(video, false);
-          safelySetVolume(video, target * easedProgress);
-
-          if (progress < 1) {
-            audioFadeAnimation = requestAnimationFrame(mobileFade);
-          } else {
-            safelySetVolume(video, target);
-            safelySetMuted(video, false);
-            audioFadeAnimation = null;
-          }
-        }
-
-        audioFadeAnimation = requestAnimationFrame(mobileFade);
-      }, 120);
-
-      trackAudioResumeTimeout(mobileUnmuteDelay);
-      return;
-    }
-
-    if (!canFadeAudio) {
-      safelySetMuted(video, true);
-      safelySetVolume(video, 0);
-
-      const unmuteTimeout = setTimeout(() => {
-        if (isApproachOpen || isContactOpen || video.ended) return;
-
-        safelySetVolume(video, target);
-        safelySetMuted(video, false);
-      }, 520);
-
-      trackAudioResumeTimeout(unmuteTimeout);
-      return;
     }
 
     safelySetMuted(video, false);
@@ -4619,32 +4271,8 @@ const videos = {
     const targetVolume = resumeClientKey
       ? CLIENT_VIDEO_PLAYBACK_VOLUME
       : Math.max(0, Math.min(1, savedState && typeof savedState.startVolume === "number" ? savedState.startVolume : (video.volume || 0)));
-    const resumeConfigAtClose = resumeClientKey
-      ? clientVideoSourceConfig[resumeClientKey]
-      : null;
-    const shouldTreatAsEnded =
-      wasEndedBeforeOverlay ||
-      Boolean(resumeConfigAtClose && resumeConfigAtClose.hasCompleted) ||
-      Boolean(video.ended);
 
     restoreSavedVideoVisibility(savedKey || current, video);
-
-    if (
-      savedState &&
-      resumeClientKey &&
-      !shouldTreatAsEnded &&
-      typeof savedState.time === "number" &&
-      video.readyState >= 1
-    ) {
-      const currentTime = video.currentTime || 0;
-      const drift = Math.abs(currentTime - savedState.time);
-
-      if (drift > 0.45) {
-        try {
-          video.currentTime = savedState.time;
-        } catch (error) {}
-      }
-    }
 
     approachPausedVideo = null;
     approachVideoWasPaused = false;
@@ -4654,26 +4282,13 @@ const videos = {
     setApproachVideoTransition(video, 5200);
     video.style.filter = "blur(0) brightness(1)";
     video.style.transform = "scale(1)";
-    clearMobileApproachHoldVisual();
+    clearClientVideoStillOverlayDim();
 
-    if (wasPausedBeforeOverlay || shouldTreatAsEnded) {
+    if (wasPausedBeforeOverlay || wasEndedBeforeOverlay) {
       safelySetPlaybackRate(video, 1);
-
-      if (shouldTreatAsEnded && resumeClientKey) {
-        if (resumeConfigAtClose) {
-          resumeConfigAtClose.hasCompleted = true;
-          resumeConfigAtClose.suppressLoading = true;
-          resumeConfigAtClose.playbackReady = true;
-          resumeConfigAtClose.autoplayAfterSourceReady = false;
-        }
-
-        hideClientVideoLoadingState();
-        hideClientVideoCredit();
-        showClientVideoEndCardState(resumeClientKey);
-        settleClientVideoStill(video);
-        scheduleClientVideoEndReturn(resumeClientKey);
+      if (resumeClientKey && !wasEndedBeforeOverlay) {
+        fadeOverlayAudioIn(video, targetVolume);
       }
-
       clearApproachResumeState();
       return;
     }
@@ -4689,25 +4304,17 @@ const videos = {
         config.playbackReady = true;
       }
 
-      if (useMobileOverlayPauseMode()) {
-        safelySetMuted(video, true);
-        safelySetVolume(video, 0);
-      } else {
-        safelySetMuted(video, false);
-        safelySetVolume(video, 0);
-      }
+      safelySetMuted(video, false);
+      safelySetVolume(video, 0);
 
       if (useMobileOverlayPauseMode()) {
-        // Mirror the mobile open behaviour: resume from a slowed state, then
-        // ease back to full speed while audio fades in.
-        safelySetPlaybackRate(video, 0.28);
+        // On mobile, do not fake a slow ramp with playbackRate. It can run the
+        // video ahead underneath the overlay. Resume cleanly, then let the visual
+        // blur/focus transition and audio fade do the luxury work.
+        safelySetPlaybackRate(video, 1);
         playVideoWithResumeRetries(video);
-        clearApproachResumeState();
         fadeOverlayAudioIn(video, targetVolume);
-
-        animatePlaybackRate(video, 0.28, 1, 2400, () => {
-          safelySetPlaybackRate(video, 1);
-        }, easeOutCubic);
+        clearApproachResumeState();
         return;
       }
 
@@ -4754,62 +4361,37 @@ const videos = {
     const video = getApproachResumeVideo();
     if (!video) return;
 
-    clearAudioResumeTimeouts();
-
-    const key = getApproachResumeKey(video);
     const startVolume = Math.max(0, Math.min(1, video.volume || 0));
-    const duration = useMobileOverlayPauseMode()
-      ? (isClientVideoKey(key) ? 2350 : 1650)
-      : 2200;
+    const duration = useMobileOverlayPauseMode() ? 900 : 2200;
     const startTime = performance.now();
 
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
     }
 
-    function finishMute() {
+    if (startVolume <= 0.01) {
       safelySetVolume(video, 0);
       safelySetMuted(video, true);
-      audioFadeAnimation = null;
-    }
-
-    if (startVolume <= 0.01) {
-      finishMute();
       return;
     }
 
     function fade(now) {
-      if (!isVideoOverlayOpen()) {
-        audioFadeAnimation = null;
-        return;
-      }
-
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const easedProgress = easeInOutCubic(progress);
 
-      // Best-effort on mobile. Some mobile browsers ignore video.volume,
-      // so muted is the reliable final state.
       safelySetVolume(video, startVolume * (1 - easedProgress));
 
-      if (progress < 1) {
+      if (progress < 1 && isVideoOverlayOpen()) {
         audioFadeAnimation = requestAnimationFrame(fade);
       } else {
-        finishMute();
+        safelySetVolume(video, 0);
+        safelySetMuted(video, true);
+        audioFadeAnimation = null;
       }
     }
 
     audioFadeAnimation = requestAnimationFrame(fade);
-
-    if (useMobileOverlayPauseMode()) {
-      const muteFallback = setTimeout(() => {
-        if (isVideoOverlayOpen() && getApproachResumeVideo() === video) {
-          finishMute();
-        }
-      }, duration + 220);
-
-      overlayVideoTimeouts.push(muteFallback);
-    }
   }
 
   function fadeClientVideoAudioIn(video, key) {
@@ -4830,25 +4412,12 @@ const videos = {
 
   function blurCurrentVideoForApproach() {
     const video = getApproachResumeVideo();
-    const key = video ? getApproachResumeKey(video) : "";
 
-    if (useMobileOverlayPauseMode() && video) {
-      // On mobile, keep the real video visible during the slowdown; the freeze
-      // frame is captured later by slowCurrentVideoForApproach().
-      clearClientVideoOverlayHoldStill();
-    } else if (
-      key &&
-      isClientVideoKey(key) &&
-      !isCurrentClientVideoHoldingEndCard()
-    ) {
-      showClientVideoOverlayHoldStill(key);
-    } else {
-      dimClientVideoStillForOverlay();
-    }
+    dimClientVideoStillForOverlay();
 
     if (!video) return;
 
-    setApproachVideoTransition(video, useMobileOverlayPauseMode() ? 2400 : 5400);
+    setApproachVideoTransition(video, 5400);
 
     video.style.filter = "blur(7px) brightness(0.58)";
     video.style.transform = "scale(1.018)";
@@ -4857,11 +4426,11 @@ const videos = {
   function clearApproachVideoBlur() {
     const video = getApproachResumeVideo();
 
-    clearMobileApproachHoldVisual();
+    clearClientVideoStillOverlayDim();
 
     if (!video) return;
 
-    setApproachVideoTransition(video, useMobileOverlayPauseMode() ? 2200 : 5400);
+    setApproachVideoTransition(video, 5400);
 
     video.style.filter = "blur(0) brightness(1)";
     video.style.transform = "scale(1)";
@@ -4879,7 +4448,6 @@ const videos = {
     }
 
     removeApproachFreezeFrameImmediately();
-    clearClientVideoOverlayHoldStill();
     cancelApproachPlaybackAnimation();
 
     Object.entries(videos).forEach(([key, video]) => {
@@ -5168,10 +4736,10 @@ const videos = {
       (isPhase2AMobileViewport() &&
         document.documentElement.classList.contains("dcr-phase2b-mobile-approach-active"));
 
-    const textStartDelay = isMobileApproachFocus ? 720 : 1550;
-    const lineStagger = isMobileApproachFocus ? 105 : 170;
-    const groupPause = isMobileApproachFocus ? 300 : 460;
-    const fadeInDuration = isMobileApproachFocus ? 2450 : 3600;
+    const textStartDelay = isMobileApproachFocus ? 1050 : 1550;
+    const lineStagger = isMobileApproachFocus ? 145 : 170;
+    const groupPause = isMobileApproachFocus ? 410 : 460;
+    const fadeInDuration = isMobileApproachFocus ? 3400 : 3600;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     let delay = textStartDelay;
@@ -5262,11 +4830,10 @@ const videos = {
 
     const items = getApproachHideItems();
 
-    const isMobileApproachExit = isPhase2AMobileViewport();
-    const textFadeStartDelay = isMobileApproachExit ? 160 : 260;
-    const staggerOut = isMobileApproachExit ? 90 : 145;
-    const fadeOutDuration = isMobileApproachExit ? 2350 : 3400;
-    const backgroundReturnDelay = isMobileApproachExit ? 120 : 150;
+    const textFadeStartDelay = 260;
+    const staggerOut = 145;
+    const fadeOutDuration = 3400;
+    const backgroundReturnDelay = 150;
     const luxuryEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     isApproachOpen = false;
@@ -5348,12 +4915,11 @@ const videos = {
     }
 
     removeApproachFreezeFrameImmediately();
+    fadeCurrentAudioToZero();
 
     isApproachOpen = true;
     activeSection = null;
     activeMainNavButton = approachLink;
-
-    fadeCurrentAudioToZero();
 
     if (approachLink) {
       focusElement(approachLink);
@@ -5814,13 +5380,12 @@ const videos = {
     }
 
     captureApproachResumeState();
-
-    isContactOpen = true;
-
     hideProjectsGradient();
     hideCenterNameAnimated();
     fadeCurrentAudioToZero();
     softenNavForContact();
+
+    isContactOpen = true;
 
     blurCurrentVideoForApproach();
     slowCurrentVideoForApproach();
