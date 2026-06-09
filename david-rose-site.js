@@ -21,6 +21,7 @@ const videos = {
   let mainReelMobileMotionReady = false;
   let mainReelMobileMotionTimer = null;
   let mainReelMobileMotionAttempts = 0;
+  let mainReelHolderSavedStyle = null;
   let mainReelMobileFallbackStillTimer = null;
   let mainReelMobileFallbackStillAllowed = false;
   const clientVideoSourceConfig = {
@@ -475,7 +476,61 @@ const videos = {
     return null;
   }
 
+  function getMainReelHolder() {
+    return (
+      document.querySelector(".dcr-main-reel-holder") ||
+      (videos.main && videos.main.closest && videos.main.closest(".dcr-main-reel-holder")) ||
+      null
+    );
+  }
+
+  function saveMainReelHolderStyle(holder) {
+    if (!holder || mainReelHolderSavedStyle) return;
+
+    mainReelHolderSavedStyle = {
+      display: holder.style.display,
+      visibility: holder.style.visibility,
+      opacity: holder.style.opacity,
+      transition: holder.style.transition,
+      pointerEvents: holder.style.pointerEvents
+    };
+  }
+
+  function hideMainReelHolderForClientVideo() {
+    const holder = getMainReelHolder();
+
+    if (!holder) return;
+
+    saveMainReelHolderStyle(holder);
+
+    holder.style.transition = "none";
+    holder.style.opacity = "0";
+    holder.style.visibility = "hidden";
+    holder.style.pointerEvents = "none";
+  }
+
+  function showMainReelHolderForWebsiteVideo() {
+    const holder = getMainReelHolder();
+
+    if (!holder) return;
+
+    saveMainReelHolderStyle(holder);
+
+    holder.style.display = mainReelHolderSavedStyle.display || "";
+    holder.style.transition = mainReelHolderSavedStyle.transition || "";
+    holder.style.visibility = mainReelHolderSavedStyle.visibility || "";
+    holder.style.opacity = mainReelHolderSavedStyle.opacity || "";
+    holder.style.pointerEvents = "none";
+  }
+
+
   function hideMainReelMobileStillOnDesktop() {
+    if (isClientVideoKey(current)) {
+      hideMainReelHolderForClientVideo();
+    } else {
+      showMainReelHolderForWebsiteVideo();
+    }
+
     const still = getMainReelMobileStill();
 
     if (!still || isMobileViewportForMainReel()) return;
@@ -496,6 +551,10 @@ const videos = {
   }
 
   function configureMainReelAsDecorative() {
+    if (isClientVideoKey(current)) {
+      hideMainReelHolderForClientVideo();
+    }
+
     const mainVideo = videos.main;
 
     if (!mainVideo) return;
@@ -777,7 +836,11 @@ const videos = {
 
         window.addEventListener("load", requestMobileMainReelMotion, { once: true });
       } else {
-        hideMainReelMobileStillOnDesktop();
+        if (isClientVideoKey(current)) {
+          hideMainReelHolderForClientVideo();
+        } else {
+          hideMainReelMobileStillOnDesktop();
+        }
         playVideo(videos.main);
       }
     }
@@ -786,7 +849,11 @@ const videos = {
       if (isMobileViewportForMainReel()) {
         requestMobileMainReelMotion();
       } else if (videos.main) {
-        hideMainReelMobileStillOnDesktop();
+        if (isClientVideoKey(current)) {
+          hideMainReelHolderForClientVideo();
+        } else {
+          hideMainReelMobileStillOnDesktop();
+        }
         playVideo(videos.main);
       }
     });
@@ -797,7 +864,11 @@ const videos = {
       if (isMobileViewportForMainReel()) {
         requestMobileMainReelMotion();
       } else if (videos.main) {
-        hideMainReelMobileStillOnDesktop();
+        if (isClientVideoKey(current)) {
+          hideMainReelHolderForClientVideo();
+        } else {
+          hideMainReelMobileStillOnDesktop();
+        }
         playVideo(videos.main);
       }
 
@@ -807,9 +878,10 @@ const videos = {
     });
 
     window.addEventListener("resize", () => {
-      hideMainReelMobileStillOnDesktop();
-
-      if (!isClientVideoKey(current)) {
+      if (isClientVideoKey(current)) {
+        hideMainReelHolderForClientVideo();
+      } else {
+        hideMainReelMobileStillOnDesktop();
         prepareAllClientSourcesForViewport();
       }
     });
@@ -1330,46 +1402,6 @@ const videos = {
     } else {
       root.classList.remove("dcr-client-video-loading-still-on");
     }
-  }
-
-  function showClientVideoEntryStillImmediately(key) {
-    if (!isClientVideoKey(key)) return;
-
-    const stillUrl = getClientLoadingStillUrlForViewport(key);
-    if (!stillUrl) return;
-
-    const layer = ensureClientVideoLoadingLayer();
-    const root = document.documentElement;
-    const config = clientVideoSourceConfig[key];
-
-    if (clientVideoLoadingHideTimeout) {
-      clearTimeout(clientVideoLoadingHideTimeout);
-      clientVideoLoadingHideTimeout = null;
-    }
-
-    clearClientVideoLoadingTextDelay();
-    root.classList.remove("dcr-client-video-loading-active");
-    root.classList.remove("dcr-client-video-end-card-on");
-    root.classList.remove("dcr-client-video-still-dimmed");
-
-    layer.still.style.backgroundImage = "url(\"" + stillUrl.replace(/"/g, "%22") + "\")";
-    layer.still.style.transition = "none";
-    layer.still.style.opacity = "1";
-    layer.still.style.visibility = "visible";
-    layer.still.style.transform = "scale(1)";
-    layer.still.style.filter = "brightness(0.9) saturate(1)";
-
-    root.classList.add("dcr-client-video-loading-still-on");
-
-    setTimeout(() => {
-      if (current === key && config && !config.playbackReady) {
-        layer.still.style.transition = "";
-        layer.still.style.opacity = "";
-        layer.still.style.visibility = "";
-        layer.still.style.transform = "";
-        layer.still.style.filter = "";
-      }
-    }, 90);
   }
 
   function hideClientVideoLoadingState() {
@@ -1991,7 +2023,6 @@ const videos = {
 
   function markClientVideoPlaybackReady(key) {
     const config = clientVideoSourceConfig[key];
-    const video = videos[key];
 
     if (!config || current !== key) return;
 
@@ -1999,19 +2030,6 @@ const videos = {
 
     clearClientDesktopHlsFallbackTimer(key);
     config.playbackReady = true;
-
-    if (video) {
-      if (isApproachOpen) {
-        setApproachVideoTransition(video, 5200);
-        video.style.opacity = "1";
-        video.style.filter = "blur(7px) brightness(0.62)";
-        video.style.transform = "scale(1.015)";
-      } else {
-        setClientVideoFullBrightness(video);
-        video.style.opacity = "1";
-      }
-    }
-
     hideClientVideoLoadingState();
 
     if (!wasReady) {
@@ -4392,6 +4410,7 @@ const videos = {
 
   function returnToMainWebsiteVideo() {
     hideClientVideoSwipeHint(false);
+    showMainReelHolderForWebsiteVideo();
 
     const mainVideo = videos.main;
 
@@ -4446,6 +4465,8 @@ const videos = {
   }
 
   function moveToMainVideoBehindContact() {
+    showMainReelHolderForWebsiteVideo();
+
     const mainVideo = videos.main;
 
     if (audioFadeAnimation) {
@@ -4921,7 +4942,9 @@ const videos = {
     const isOpeningClientVideo = isClientVideoKey(target);
 
     if (isOpeningClientVideo) {
-      showClientVideoEntryStillImmediately(target);
+      hideMainReelHolderForClientVideo();
+    } else {
+      showMainReelHolderForWebsiteVideo();
     }
 
     if (current === target) {
@@ -4957,19 +4980,13 @@ const videos = {
     }
 
     if (videos[current]) {
-      if (isOpeningClientVideo) {
-        videos[current].style.transition = "none";
-        videos[current].style.opacity = "0";
-        videos[current].style.filter = "blur(2px) brightness(1)";
-        videos[current].style.transform = "scale(1.02)";
-      } else {
-        videos[current].style.opacity = "0";
-        videos[current].style.filter = "blur(2px) brightness(1)";
-        videos[current].style.transform = "scale(1.02)";
-      }
+      videos[current].style.opacity = "0";
+      videos[current].style.filter = "blur(2px) brightness(1)";
+      videos[current].style.transform = "scale(1.02)";
     }
 
     if (isClientVideoKey(target)) {
+      hideMainReelHolderForClientVideo();
       prepareClientSourceForViewport(target);
     } else {
       hideClientVideoLoadingState();
@@ -4993,13 +5010,10 @@ const videos = {
       safelySetMuted(videos[target], true);
     }
 
-    videos[target].style.opacity = isOpeningClientVideo ? "0" : "1";
+    videos[target].style.opacity = "1";
 
     if (isApproachOpen) {
       setApproachVideoTransition(videos[target], 5200);
-      if (!isOpeningClientVideo) {
-        videos[target].style.opacity = "1";
-      }
       videos[target].style.filter = "blur(7px) brightness(0.62)";
       videos[target].style.transform = "scale(1.015)";
     } else {
