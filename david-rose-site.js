@@ -2741,6 +2741,7 @@ const videos = {
 
   let mobileApproachNavTimeouts = [];
   let mobileApproachFocusIsExiting = false;
+  let mobileApproachNavForcedItems = [];
 
   function isMobileLayoutViewport() {
     return false;
@@ -2818,43 +2819,160 @@ const videos = {
     mobileApproachNavTimeouts.push(hideTimeout);
   }
 
-  function animateMobileNavOut() {}
+  function setMobileApproachStyle(element, property, value) {
+    if (!element || !element.style) return;
+    element.style.setProperty(property, value, "important");
+  }
 
-  function animateMobileNavIn() {}
+  function clearMobileApproachStyle(element, property) {
+    if (!element || !element.style) return;
+    element.style.removeProperty(property);
+  }
+
+  function clearMobileApproachNavForcedStyles(items) {
+    const targets = Array.from(new Set(items || mobileApproachNavForcedItems));
+
+    targets.forEach((item) => {
+      [
+        "transition",
+        "transition-delay",
+        "opacity",
+        "filter",
+        "transform",
+        "transform-origin",
+        "visibility",
+        "pointer-events",
+        "will-change"
+      ].forEach((property) => clearMobileApproachStyle(item, property));
+    });
+  }
 
   function getPhase2BEMobileReturnItems() {
-    const items = Array.from(
-      document.querySelectorAll(".side-nav > .nav-text, .side-nav > .ig-link")
-    );
+    const sideNavItems = Array.from(document.querySelectorAll(
+      ".side-nav > .nav-text, " +
+      ".side-nav > .ig-link, " +
+      ".side-nav > a, " +
+      ".side-nav .nav-text, " +
+      ".side-nav .ig-link, " +
+      ".side-nav a"
+    ));
 
-    return items.slice(0, 5);
+    return Array.from(new Set([
+      ...getMobileMainNavButtons(),
+      ...sideNavItems
+    ])).filter(Boolean).filter((item) => {
+      if (!item.getBoundingClientRect) return true;
+
+      const rect = item.getBoundingClientRect();
+      const style = window.getComputedStyle(item);
+
+      return (
+        rect.width > 0 &&
+        rect.height > 0 &&
+        style.display !== "none"
+      );
+    });
+  }
+
+  function isApproachNavElement(element) {
+    return Boolean(
+      element &&
+      (
+        elementMatchesMainNavSection(element, "approach") ||
+        element === approachLink ||
+        (approachLink && element.contains && element.contains(approachLink)) ||
+        (approachLink && approachLink.contains && approachLink.contains(element))
+      )
+    );
+  }
+
+  function getMobileApproachNavDelay(element, index) {
+    if (isApproachNavElement(element)) return 0;
+    if (elementMatchesMainNavSection(element, "direction")) return 170;
+    if (elementMatchesMainNavSection(element, "contact")) return 170;
+    if (elementMatchesMainNavSection(element, "colour")) return 340;
+
+    return Math.min(420, 220 + (index * 45));
+  }
+
+  function animateMobileNavOut() {
+    if (!isPhase2AMobileViewport()) return;
+
+    const items = getPhase2BEMobileReturnItems();
+    if (!items.length) return;
+
+    clearMobileApproachNavForcedStyles(mobileApproachNavForcedItems);
+    mobileApproachNavForcedItems = items;
+
+    items.forEach((item, index) => {
+      const delay = getMobileApproachNavDelay(item, index);
+      const offset = isApproachNavElement(item) ? "-18px" : "-28px";
+
+      setMobileApproachStyle(item, "visibility", "visible");
+      setMobileApproachStyle(item, "pointer-events", "none");
+      setMobileApproachStyle(item, "transform-origin", "0% 50%");
+      setMobileApproachStyle(item, "will-change", "opacity, filter, transform");
+      setMobileApproachStyle(
+        item,
+        "transition",
+        "opacity 2050ms cubic-bezier(0.22, 1, 0.36, 1), " +
+          "filter 2700ms cubic-bezier(0.22, 1, 0.36, 1), " +
+          "transform 3200ms cubic-bezier(0.22, 1, 0.36, 1)"
+      );
+      setMobileApproachStyle(item, "transition-delay", delay + "ms");
+      setMobileApproachStyle(item, "opacity", "0");
+      setMobileApproachStyle(item, "filter", "blur(8px)");
+      setMobileApproachStyle(item, "transform", "translateX(" + offset + ") scale(0.988)");
+    });
+  }
+
+  function animateMobileNavIn() {
+    if (!isPhase2AMobileViewport()) return;
+
+    const items = Array.from(new Set([
+      ...mobileApproachNavForcedItems,
+      ...getPhase2BEMobileReturnItems()
+    ])).filter(Boolean);
+
+    if (!items.length) return;
+
+    items.forEach((item, index) => {
+      setMobileApproachStyle(item, "visibility", "visible");
+      setMobileApproachStyle(item, "pointer-events", "auto");
+      setMobileApproachStyle(item, "will-change", "opacity, filter, transform");
+      setMobileApproachStyle(
+        item,
+        "transition",
+        "opacity 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "filter 2450ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "transform 2900ms cubic-bezier(0.13, 1, 0.22, 1)"
+      );
+      setMobileApproachStyle(item, "transition-delay", Math.min(index * 115, 460) + "ms");
+      setMobileApproachStyle(item, "opacity", "0.5");
+      setMobileApproachStyle(item, "filter", "blur(0)");
+      setMobileApproachStyle(item, "transform", "translateX(0) scale(1)");
+    });
   }
 
   function preparePhase2BEMobileNavReturn() {
-    if (!isPhase2AMobileViewport()) return;
-
-    getPhase2BEMobileReturnItems().forEach((item, index) => {
-      item.style.visibility = "visible";
-      item.style.pointerEvents = "auto";
-      item.style.willChange = "opacity, filter, transform";
-      item.style.transition =
-        "opacity 1850ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "filter 2450ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 2900ms cubic-bezier(0.13, 1, 0.22, 1)";
-      item.style.transitionDelay = index * 115 + "ms";
-      item.style.opacity = "0.5";
-      item.style.filter = "blur(0)";
-      item.style.transform = "translateX(0) scale(1)";
-    });
+    animateMobileNavIn();
   }
 
   function clearPhase2BEMobileNavReturn() {
-    getPhase2BEMobileReturnItems().forEach((item) => {
-      item.style.transitionDelay = "";
-      item.style.willChange = "";
-      item.style.pointerEvents = "";
+    const items = Array.from(new Set([
+      ...mobileApproachNavForcedItems,
+      ...getPhase2BEMobileReturnItems()
+    ])).filter(Boolean);
+
+    clearMobileApproachNavForcedStyles(items);
+
+    items.forEach((item) => {
+      item.style.visibility = "visible";
+      item.style.pointerEvents = "auto";
       settleNavItemAfterArrival(item);
     });
+
+    mobileApproachNavForcedItems = [];
   }
 
   function ensureMobileApproachBackButton() {
@@ -2898,6 +3016,7 @@ const videos = {
     mobileApproachFocusIsExiting = false;
 
     document.documentElement.classList.add("dcr-phase2b-mobile-approach-active");
+    animateMobileNavOut();
 
     revealMobileApproachBackButton(2650);
   }
@@ -4132,17 +4251,7 @@ const videos = {
   }
 
   function useMobileOverlayPauseMode() {
-    if (!isPhase2AMobileViewport()) return false;
-
-    const video = getApproachResumeVideo();
-    const key = getApproachResumeKey(video);
-
-    // Client videos now use the same slow-down / pause / resume behaviour
-    // on mobile as they do on desktop. Non-client mobile video keeps the
-    // previous quick-pause mode for stability.
-    if (isClientVideoKey(key)) return false;
-
-    return true;
+    return isPhase2AMobileViewport();
   }
 
   function slowCurrentVideoForApproach() {
@@ -4173,13 +4282,13 @@ const videos = {
     }
 
     if (useMobileOverlayPauseMode()) {
-      // Mobile Safari/Chrome can behave badly when we try to animate playbackRate.
-      // Keep the elegant visual blur/darken, but freeze much sooner so the video
-      // cannot keep running ahead underneath Approach/Contact.
+      // Mobile browsers, especially iOS Safari, do not reliably support
+      // playbackRate/volume animation. For mobile, keep the premium visual
+      // blur/dim, but freeze the real video frame quickly and safely.
       safelySetPlaybackRate(video, 1);
 
-      const pauseTimeout = setTimeout(pauseAtOverlayFrame, 850);
-      const safetyPauseTimeout = setTimeout(pauseAtOverlayFrame, 1250);
+      const pauseTimeout = setTimeout(pauseAtOverlayFrame, 120);
+      const safetyPauseTimeout = setTimeout(pauseAtOverlayFrame, 360);
 
       overlayVideoTimeouts.push(pauseTimeout);
       overlayVideoTimeouts.push(safetyPauseTimeout);
@@ -4377,6 +4486,17 @@ const videos = {
 
     if (audioFadeAnimation) {
       cancelAnimationFrame(audioFadeAnimation);
+    }
+
+    if (useMobileOverlayPauseMode()) {
+      const quickMuteTimeout = setTimeout(() => {
+        if (!isVideoOverlayOpen()) return;
+
+        safelySetVolume(video, 0);
+        safelySetMuted(video, true);
+      }, 180);
+
+      overlayVideoTimeouts.push(quickMuteTimeout);
     }
 
     if (startVolume <= 0.01) {
