@@ -79,9 +79,9 @@ const videos = {
     },
     "christies-the-winter-egg": {
       creditTitle: "EDITOR + COMPOSER",
-      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/94ab113a-943d-4a5e-851d-b846d46d7363/playlist.m3u8",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/7ec47da3-bda1-4b05-883e-7c69b6eb2e4a/playlist.m3u8",
       mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/d3d2fc38-a7ea-47d3-a18f-20c56ba9422c/playlist.m3u8",
-      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_WEBSITE_RES.mp4",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_WEBSITE_RES.mp4?v=winter-egg-desktop-fix-1",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_WEBSITE_RES.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_1.4.1_1.4.1.jpg",
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_1.4.1_1.4.1.jpg",
