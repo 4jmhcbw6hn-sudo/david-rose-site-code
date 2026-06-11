@@ -12,6 +12,7 @@ const videos = {
     "christies-spring-season-25": document.getElementById("christies-spring-season-25-reel"),
     "vogue-bicester-village": document.getElementById("vogue-bicester-village-reel"),
     "christies-the-winter-egg": document.getElementById("christies-the-winter-egg-reel"),
+    "christies-classic-week": document.getElementById("christies-classic-week-reel"),
     "vogue-suntory": document.getElementById("vogue-suntory-reel"),
     "christies-luxury-aw23": document.getElementById("christies-luxury-aw23-reel"),
     "christies-luxury-ss24": document.getElementById("christies-luxury-ss24-reel"),
@@ -89,6 +90,19 @@ const videos = {
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_1.4.1_1.4.1.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG__WITH_TITLES_1.4.1.jpg",
       mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/THE_WINTER_EGG/STILL_01_CHRISTIE'S_WINTER_EGG_SOCIAL_EDIT_V2_WITH_TITLES_1.4.1.jpg",
+      activeSourceMode: "",
+      playbackReady: false
+    },
+    "christies-classic-week": {
+      creditTitle: "EDITOR, COLOURIST, COMPOSER",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/eca1105c-23ff-485a-a1b0-4101cf5b66c7/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/fb144186-aa4c-4c8c-a135-27b9ba3be022/playlist.m3u8",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/CLASSIC_WEEK/Christie's_Classic_Week_16x9.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/CLASSIC_WEEK/Christie's_Classic_Week_9x16.mp4",
+      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/CLASSIC_WEEK/Christie's_Classic_Week_16x9_HOLDING_STILL.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/CLASSIC_WEEK/Christie's_Classic_Week_9x16_HOLDING_STILL.jpg",
+      desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/CLASSIC_WEEK/Christie's_Classic_Week_16x9_ENDING_STILL.jpg",
+      mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/CHRISTIE'S/CLASSIC_WEEK/Christie's_Classic_Week_9x16_ENDING_STILL.jpg",
       activeSourceMode: "",
       playbackReady: false
     },
@@ -6125,6 +6139,7 @@ const videos = {
   const christiesSpringSeason25Link = document.querySelector("[data-link='christies-spring-season-25']");
   const vogueBicesterVillageLink = document.querySelector("[data-link='vogue-bicester-village']");
   const christiesTheWinterEggLink = document.querySelector("[data-link='christies-the-winter-egg']");
+  const christiesClassicWeekLink = document.querySelector("[data-link='christies-classic-week']");
   const vogueSuntoryLink = document.querySelector("[data-link='vogue-suntory']");
   const christiesLuxuryAw23Link = document.querySelector("[data-link='christies-luxury-aw23']");
   const christiesLuxurySs24Link = document.querySelector("[data-link='christies-luxury-ss24']");
@@ -6153,6 +6168,7 @@ const videos = {
   prepareClientOneShotVideo(videos["christies-spring-season-25"], "christies-spring-season-25");
   prepareClientOneShotVideo(videos["vogue-bicester-village"], "vogue-bicester-village");
   prepareClientOneShotVideo(videos["christies-the-winter-egg"], "christies-the-winter-egg");
+  prepareClientOneShotVideo(videos["christies-classic-week"], "christies-classic-week");
   prepareClientOneShotVideo(videos["vogue-suntory"], "vogue-suntory");
   prepareClientOneShotVideo(videos["christies-luxury-aw23"], "christies-luxury-aw23");
   prepareClientOneShotVideo(videos["christies-luxury-ss24"], "christies-luxury-ss24");
@@ -6289,6 +6305,7 @@ const videos = {
   installClientVideoLink(christiesSpringSeason25Link, "christies-spring-season-25");
   installClientVideoLink(vogueBicesterVillageLink, "vogue-bicester-village");
   installClientVideoLink(christiesTheWinterEggLink, "christies-the-winter-egg");
+  installClientVideoLink(christiesClassicWeekLink, "christies-classic-week");
   installClientVideoLink(vogueSuntoryLink, "vogue-suntory");
   installClientVideoLink(christiesLuxuryAw23Link, "christies-luxury-aw23");
   installClientVideoLink(christiesLuxurySs24Link, "christies-luxury-ss24");
@@ -6388,6 +6405,7 @@ const videos = {
       if (button === christiesSpringSeason25Link) return;
       if (button === vogueBicesterVillageLink) return;
       if (button === christiesTheWinterEggLink) return;
+      if (button === christiesClassicWeekLink) return;
       if (button === christiesLuxuryAw23Link) return;
       if (button === christiesLuxurySs24Link) return;
       activateProjectFocus(button);
