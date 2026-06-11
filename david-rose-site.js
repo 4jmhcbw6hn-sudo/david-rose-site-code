@@ -14,6 +14,7 @@ const videos = {
     "christies-the-winter-egg": document.getElementById("christies-the-winter-egg-reel"),
     "vogue-suntory": document.getElementById("vogue-suntory-reel"),
     "christies-luxury-aw23": document.getElementById("christies-luxury-aw23-reel"),
+    "christies-luxury-ss24": document.getElementById("christies-luxury-ss24-reel"),
     "half-sick-of-shadows": document.getElementById("half-sick-of-shadows-reel")
   };
 
@@ -114,6 +115,19 @@ const videos = {
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_01/CHRISTIE'S_DIRECTION_01_9x16_HOLDING_STILL.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_01/CHRISTIE'S_DIRECTION_01_16x9_ENDING_STILL.jpg",
       mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_01/CHRISTIE'S_DIRECTION_01_9x16_ENDING_STILL.jpg",
+      activeSourceMode: "",
+      playbackReady: false
+    },
+    "christies-luxury-ss24": {
+      creditTitle: "COMMERCIAL DIRECTION",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/77a34ed1-959b-4dd3-aa4e-772b510d12c8/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/5becaa24-9fe7-4f48-858e-a86686b8974c/playlist.m3u8",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_16x9.4.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_9x16.3.mp4",
+      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_16x9_HOLDING_STILL_3.10.1.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_9X16_HOLDING_STILL_3.10.1_3.10.1.jpg",
+      desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_16x9_ENDING_STILL_3.10.1_1.48.1.jpg",
+      mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_9x16_ENDING_STILL_3.10.1_1.48.1_1.54.1.jpg",
       activeSourceMode: "",
       playbackReady: false
     },
@@ -6113,6 +6127,7 @@ const videos = {
   const christiesTheWinterEggLink = document.querySelector("[data-link='christies-the-winter-egg']");
   const vogueSuntoryLink = document.querySelector("[data-link='vogue-suntory']");
   const christiesLuxuryAw23Link = document.querySelector("[data-link='christies-luxury-aw23']");
+  const christiesLuxurySs24Link = document.querySelector("[data-link='christies-luxury-ss24']");
   const halfSickOfShadowsLink = document.querySelector("[data-link='half-sick-of-shadows']");
   const colourLink = getMainNavButton("colour");
   const directionLink = getMainNavButton("direction");
@@ -6140,6 +6155,7 @@ const videos = {
   prepareClientOneShotVideo(videos["christies-the-winter-egg"], "christies-the-winter-egg");
   prepareClientOneShotVideo(videos["vogue-suntory"], "vogue-suntory");
   prepareClientOneShotVideo(videos["christies-luxury-aw23"], "christies-luxury-aw23");
+  prepareClientOneShotVideo(videos["christies-luxury-ss24"], "christies-luxury-ss24");
   prepareClientOneShotVideo(videos["half-sick-of-shadows"], "half-sick-of-shadows");
 
   installMobileLayoutFixes();
@@ -6275,6 +6291,7 @@ const videos = {
   installClientVideoLink(christiesTheWinterEggLink, "christies-the-winter-egg");
   installClientVideoLink(vogueSuntoryLink, "vogue-suntory");
   installClientVideoLink(christiesLuxuryAw23Link, "christies-luxury-aw23");
+  installClientVideoLink(christiesLuxurySs24Link, "christies-luxury-ss24");
   installClientVideoLink(halfSickOfShadowsLink, "half-sick-of-shadows");
 
   if (colourLink) {
@@ -6372,6 +6389,7 @@ const videos = {
       if (button === vogueBicesterVillageLink) return;
       if (button === christiesTheWinterEggLink) return;
       if (button === christiesLuxuryAw23Link) return;
+      if (button === christiesLuxurySs24Link) return;
       activateProjectFocus(button);
     });
   });
