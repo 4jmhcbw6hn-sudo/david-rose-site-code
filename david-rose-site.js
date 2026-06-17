@@ -1,3 +1,4 @@
+/* DCR update: homepage desktop main reel v2 source swap — MP4 + HLS stream. */
 /* DCR update: LOVEBITE excerpt credit + mobile-only swipe-to-clear. */
 /* DCR update: Christie’s Luxury AW23 desktop/mobile v2 source swap — 16x9.2 + 9x16.2. */
 /* DCR update: LOVEBITE desktop/mobile v4 source swap — 16x9.4 + 9x16.4. */
@@ -30,6 +31,13 @@ const videos = {
   let mainReelHolderSavedStyle = null;
   let mainReelMobileFallbackStillTimer = null;
   let mainReelMobileFallbackStillAllowed = false;
+  const MAIN_REEL_DESKTOP_URL = "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-bg-no-audio.1.mp4";
+  const MAIN_REEL_DESKTOP_HLS_URL = "https://vz-636468bf-dd1.b-cdn.net/0c76f733-7dbb-41b1-8c0c-28bd850218ba/playlist.m3u8";
+  const MAIN_REEL_DESKTOP_HLS_FALLBACK_MS = 3000;
+  let mainReelInitialSourceUrl = "";
+  let mainReelDesktopSourceMode = "";
+  let mainReelDesktopHlsInstance = null;
+  let mainReelDesktopHlsFallbackTimeout = null;
   const clientVideoSourceConfig = {
     "tom-ford": {
       creditTitle: "FINISHING EDITOR / ONLINE EDITOR",
@@ -395,6 +403,180 @@ const videos = {
     delete clientVideoHlsInstances[key];
   }
 
+  function destroyMainReelDesktopHlsInstance() {
+    if (!mainReelDesktopHlsInstance) return;
+
+    try {
+      mainReelDesktopHlsInstance.destroy();
+    } catch (error) {}
+
+    mainReelDesktopHlsInstance = null;
+  }
+
+  function clearMainReelDesktopHlsFallbackTimer() {
+    if (!mainReelDesktopHlsFallbackTimeout) return;
+
+    clearTimeout(mainReelDesktopHlsFallbackTimeout);
+    mainReelDesktopHlsFallbackTimeout = null;
+  }
+
+  function isDesktopMainReelSourceViewport() {
+    return Boolean(videos.main && !isMobileViewportForMainReel());
+  }
+
+  function captureMainReelInitialSource() {
+    if (!videos.main || mainReelInitialSourceUrl) return;
+
+    mainReelInitialSourceUrl = getVideoSourceUrl(videos.main);
+  }
+
+  function restoreMainReelInitialSourceForMobile() {
+    if (!videos.main) return;
+
+    clearMainReelDesktopHlsFallbackTimer();
+    destroyMainReelDesktopHlsInstance();
+
+    if (mainReelDesktopSourceMode && mainReelInitialSourceUrl) {
+      mainReelDesktopSourceMode = "";
+      setDirectVideoSourceUrl(videos.main, mainReelInitialSourceUrl);
+    }
+  }
+
+  function fallbackMainReelDesktopToMp4() {
+    if (!videos.main || !MAIN_REEL_DESKTOP_URL) return;
+
+    destroyMainReelDesktopHlsInstance();
+    mainReelDesktopSourceMode = "desktop-mp4|" + MAIN_REEL_DESKTOP_URL;
+    setDirectVideoSourceUrl(videos.main, MAIN_REEL_DESKTOP_URL);
+
+    if (current === "main" && isDesktopMainReelSourceViewport()) {
+      playVideo(videos.main);
+    }
+  }
+
+  function setMainReelDesktopHlsSource(sourceUrl) {
+    const video = videos.main;
+
+    if (!video || !sourceUrl) return;
+
+    destroyMainReelDesktopHlsInstance();
+    mainReelDesktopSourceMode = "desktop-hls|" + sourceUrl;
+
+    const source = video.querySelector("source");
+
+    if (source) {
+      source.removeAttribute("src");
+    }
+
+    video.removeAttribute("src");
+
+    if (supportsNativeHls(video)) {
+      setDirectVideoSourceUrl(video, sourceUrl);
+
+      if (current === "main") {
+        playVideo(video);
+      }
+
+      return;
+    }
+
+    loadHlsJsLibrary()
+      .then((Hls) => {
+        if (!Hls || typeof Hls.isSupported !== "function" || !Hls.isSupported()) {
+          fallbackMainReelDesktopToMp4();
+          return;
+        }
+
+        if (mainReelDesktopSourceMode !== "desktop-hls|" + sourceUrl) return;
+
+        const hls = new Hls({
+          enableWorker: true,
+          capLevelToPlayerSize: true,
+          maxBufferLength: 18,
+          maxMaxBufferLength: 36
+        });
+
+        mainReelDesktopHlsInstance = hls;
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (current === "main" && isDesktopMainReelSourceViewport()) {
+            playVideo(video);
+          }
+        });
+
+        hls.on(Hls.Events.ERROR, (eventName, data) => {
+          if (!data || !data.fatal) return;
+
+          fallbackMainReelDesktopToMp4();
+        });
+
+        hls.attachMedia(video);
+        hls.loadSource(sourceUrl);
+      })
+      .catch(() => {
+        fallbackMainReelDesktopToMp4();
+      });
+  }
+
+  function switchMainReelDesktopToHlsFallback() {
+    const video = videos.main;
+
+    if (!video || !MAIN_REEL_DESKTOP_HLS_URL) return;
+    if (!isDesktopMainReelSourceViewport() || current !== "main") return;
+    if (mainReelDesktopSourceMode === "desktop-hls|" + MAIN_REEL_DESKTOP_HLS_URL) return;
+
+    const hasMotion =
+      !video.paused &&
+      !video.ended &&
+      video.readyState >= 2 &&
+      (video.currentTime || 0) > 0.08;
+
+    if (hasMotion) return;
+
+    setMainReelDesktopHlsSource(MAIN_REEL_DESKTOP_HLS_URL);
+  }
+
+  function scheduleMainReelDesktopHlsFallback() {
+    clearMainReelDesktopHlsFallbackTimer();
+
+    if (!isDesktopMainReelSourceViewport() || !MAIN_REEL_DESKTOP_HLS_URL) return;
+
+    mainReelDesktopHlsFallbackTimeout = setTimeout(() => {
+      mainReelDesktopHlsFallbackTimeout = null;
+      switchMainReelDesktopToHlsFallback();
+    }, MAIN_REEL_DESKTOP_HLS_FALLBACK_MS);
+  }
+
+  function prepareMainReelDesktopSource() {
+    const video = videos.main;
+
+    if (!video) return;
+
+    captureMainReelInitialSource();
+
+    if (!isDesktopMainReelSourceViewport()) {
+      restoreMainReelInitialSourceForMobile();
+      return;
+    }
+
+    const sourceSignature = "desktop-mp4|" + MAIN_REEL_DESKTOP_URL;
+
+    if (!MAIN_REEL_DESKTOP_URL || mainReelDesktopSourceMode === sourceSignature) return;
+
+    clearMainReelDesktopHlsFallbackTimer();
+    destroyMainReelDesktopHlsInstance();
+
+    mainReelDesktopSourceMode = sourceSignature;
+
+    try {
+      video.preload = "auto";
+      video.setAttribute("preload", "auto");
+    } catch (error) {}
+
+    setDirectVideoSourceUrl(video, MAIN_REEL_DESKTOP_URL);
+    scheduleMainReelDesktopHlsFallback();
+  }
+
   Object.keys(clientVideoSourceConfig).forEach((key) => {
     const video = videos[key];
 
@@ -624,6 +806,8 @@ const videos = {
       mainVideo.disablePictureInPicture = true;
       mainVideo.style.pointerEvents = "none";
     } catch (error) {}
+
+    prepareMainReelDesktopSource();
   }
 
   function clearMobileMainReelStillFallbackTimer() {
@@ -924,6 +1108,8 @@ const videos = {
     });
 
     window.addEventListener("resize", () => {
+      prepareMainReelDesktopSource();
+
       if (isClientVideoKey(current)) {
         hideMainReelHolderForClientVideo();
       } else {
