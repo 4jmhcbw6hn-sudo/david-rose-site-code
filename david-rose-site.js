@@ -1,3 +1,4 @@
+/* DCR update: LOVEBITE excerpt credit + mobile-only swipe-to-clear. */
 /* DCR update: Christie’s Luxury AW23 desktop/mobile v2 source swap — 16x9.2 + 9x16.2. */
 /* DCR update: LOVEBITE desktop/mobile v4 source swap — 16x9.4 + 9x16.4. */
 /* DCR update: Half Sick of Shadows job description credit + stills. */
@@ -150,6 +151,7 @@ const videos = {
     },
     "lovebite": {
       creditTitle: "NARRATIVE DIRECTION",
+      creditHtml: 'NARRATIVE DIRECTION<br><span class="dcr-client-video-credit-subline">(excerpt)</span>',
       desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/258f01ec-459d-4156-b751-bb6e54b38706/playlist.m3u8",
       mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/6dc7e73c-d048-41c9-a389-b31c513068f1/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_16x9.4.mp4",
@@ -1357,9 +1359,10 @@ const videos = {
       swipeHint = document.createElement("div");
       swipeHint.className = "dcr-client-video-swipe-hint";
       swipeHint.setAttribute("aria-hidden", "true");
-      swipeHint.textContent = "SWIPE TO CLEAR";
       document.body.appendChild(swipeHint);
     }
+
+    swipeHint.textContent = isMobileClientVideoViewport() ? "SWIPE TO CLEAR" : "";
 
     return { still, text, credit, swipeHint };
   }
@@ -1648,7 +1651,9 @@ const videos = {
   }
 
   function isClientVideoFullscreenGestureViewport() {
-    return isMobileClientVideoViewport() || isDesktopLikePointer();
+    // Swipe-to-clear/fullscreen nav hiding is mobile-only.
+    // Desktop should keep the client navigation visible and should not show the hint.
+    return isMobileClientVideoViewport();
   }
 
   function isMobileClientVideoFullscreenEligible() {
