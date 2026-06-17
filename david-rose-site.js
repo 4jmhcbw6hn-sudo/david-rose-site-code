@@ -149,9 +149,9 @@ const videos = {
     "lovebite": {
       creditTitle: "NARRATIVE DIRECTION",
       desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/a02dc967-ecb4-4bfd-8253-7d5c4fbb832a/playlist.m3u8",
-      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/bc1534d7-cc73-4d3c-8071-a3b24e59df98/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/87733262-b51a-4ce4-ba42-ffb353e58d84/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_16x9.mp4",
-      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_9x16.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_9x16.2.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_HOLDING_STILL_16x9.jpg",
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_MOBILE_HOLDING_STILL_9x16.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_ENDING_STILL_16x9.jpg",
