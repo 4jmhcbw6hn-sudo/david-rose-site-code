@@ -1,3 +1,4 @@
+/* DCR update: LOVEBITE desktop/mobile v4 source swap — 16x9.4 + 9x16.4. */
 /* DCR update: Half Sick of Shadows job description credit + stills. */
 /* Based on overlay timer separation fix; no overlay-behaviour rewrite in this update. */
 /* mobile overlay quick-freeze test from 4ee64d5 */
@@ -148,10 +149,10 @@ const videos = {
     },
     "lovebite": {
       creditTitle: "NARRATIVE DIRECTION",
-      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/2358c8b4-e9bc-4628-9fae-cd084a69aa5b/playlist.m3u8",
-      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/eea2be3d-87af-4f9f-aff1-123e40124cb1/playlist.m3u8",
-      desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_16x9.2.mp4",
-      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_MOBILE_9x16.3.mp4",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/258f01ec-459d-4156-b751-bb6e54b38706/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/6dc7e73c-d048-41c9-a389-b31c513068f1/playlist.m3u8",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_16x9.4.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_MOBILE_9x16.4.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_HOLDING_STILL_16x9.jpg",
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_MOBILE_HOLDING_STILL_9x16.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_ENDING_STILL_16x9.jpg",
