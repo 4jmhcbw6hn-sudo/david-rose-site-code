@@ -1,3 +1,4 @@
+/* DCR update: homepage main reel desktop MP4-only; mobile keeps HLS fallback. */
 /* DCR update: restart homepage main reel when returning from client videos / overlays. */
 /* DCR update: homepage mobile main reel + desktop/mobile poster images. */
 /* DCR update: homepage main reel v2 on desktop + mobile â€” shared MP4 + HLS stream. */
@@ -436,7 +437,9 @@ const videos = {
   }
 
   function getMainReelHlsUrlForViewport() {
-    return isMobileViewportForMainReel() ? MAIN_REEL_MOBILE_HLS_URL : MAIN_REEL_DESKTOP_HLS_URL;
+    // Desktop homepage must stay MP4-only and hold on the poster/still until the MP4 is ready.
+    // Mobile keeps the timed HLS fallback.
+    return isMobileViewportForMainReel() ? MAIN_REEL_MOBILE_HLS_URL : "";
   }
 
   function getMainReelPosterUrlForViewport() {
@@ -561,6 +564,7 @@ const videos = {
     const nextHlsUrl = getMainReelHlsUrlForViewport();
 
     if (!video || !nextHlsUrl) return;
+    if (!isMobileViewportForMainReel()) return;
     if (!isMainReelSourceViewport() || current !== "main") return;
     if (mainReelSourceMode === getMainReelSourceModeForViewport() + "-hls|" + nextHlsUrl) return;
 
@@ -578,6 +582,7 @@ const videos = {
   function scheduleMainReelHlsFallback() {
     clearMainReelHlsFallbackTimer();
 
+    if (!isMobileViewportForMainReel()) return;
     if (!isMainReelSourceViewport() || !getMainReelHlsUrlForViewport()) return;
 
     mainReelHlsFallbackTimeout = setTimeout(() => {
