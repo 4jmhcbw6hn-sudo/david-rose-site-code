@@ -1,8 +1,9 @@
-/* DCR update: homepage main reel v2 on desktop + mobile — shared MP4 + HLS stream. */
-/* DCR update: homepage desktop main reel v2 source swap — MP4 + HLS stream. */
+/* DCR update: homepage mobile main reel + desktop/mobile poster images. */
+/* DCR update: homepage main reel v2 on desktop + mobile â€” shared MP4 + HLS stream. */
+/* DCR update: homepage desktop main reel v2 source swap â€” MP4 + HLS stream. */
 /* DCR update: LOVEBITE excerpt credit + mobile-only swipe-to-clear. */
-/* DCR update: Christie’s Luxury AW23 desktop/mobile v2 source swap — 16x9.2 + 9x16.2. */
-/* DCR update: LOVEBITE desktop/mobile v4 source swap — 16x9.4 + 9x16.4. */
+/* DCR update: Christieâ€™s Luxury AW23 desktop/mobile v2 source swap â€” 16x9.2 + 9x16.2. */
+/* DCR update: LOVEBITE desktop/mobile v4 source swap â€” 16x9.4 + 9x16.4. */
 /* DCR update: Half Sick of Shadows job description credit + stills. */
 /* Based on overlay timer separation fix; no overlay-behaviour rewrite in this update. */
 /* mobile overlay quick-freeze test from 4ee64d5 */
@@ -34,8 +35,10 @@ const videos = {
   let mainReelMobileFallbackStillAllowed = false;
   const MAIN_REEL_DESKTOP_URL = "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-bg-no-audio.2.mp4";
   const MAIN_REEL_DESKTOP_HLS_URL = "https://vz-636468bf-dd1.b-cdn.net/54e7b2ef-f693-42d4-a0db-d1b07138fda5/playlist.m3u8";
-  const MAIN_REEL_MOBILE_URL = "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-bg-no-audio.2.mp4";
-  const MAIN_REEL_MOBILE_HLS_URL = "https://vz-636468bf-dd1.b-cdn.net/54e7b2ef-f693-42d4-a0db-d1b07138fda5/playlist.m3u8";
+  const MAIN_REEL_MOBILE_URL = "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-bg-no-audio-mobile.mp4";
+  const MAIN_REEL_MOBILE_HLS_URL = "https://vz-636468bf-dd1.b-cdn.net/f574af13-853b-4efe-96af-c277d922884a/playlist.m3u8";
+  const MAIN_REEL_DESKTOP_POSTER_URL = "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-poster-desktop.jpg";
+  const MAIN_REEL_MOBILE_POSTER_URL = "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-poster-mobile.jpg";
   const MAIN_REEL_HLS_FALLBACK_MS = 3000;
   let mainReelInitialSourceUrl = "";
   let mainReelSourceMode = "";
@@ -435,6 +438,35 @@ const videos = {
     return isMobileViewportForMainReel() ? MAIN_REEL_MOBILE_HLS_URL : MAIN_REEL_DESKTOP_HLS_URL;
   }
 
+  function getMainReelPosterUrlForViewport() {
+    return isMobileViewportForMainReel()
+      ? MAIN_REEL_MOBILE_POSTER_URL
+      : MAIN_REEL_DESKTOP_POSTER_URL;
+  }
+
+  function applyMainReelPosterForViewport() {
+    const video = videos.main;
+    const posterUrl = getMainReelPosterUrlForViewport();
+
+    if (!video || !posterUrl) return;
+
+    try {
+      video.poster = posterUrl;
+      video.setAttribute("poster", posterUrl);
+    } catch (error) {}
+
+    const holder = getMainReelHolder();
+
+    if (holder) {
+      try {
+        holder.style.backgroundImage = 'url("' + posterUrl + '")';
+        holder.style.backgroundSize = "cover";
+        holder.style.backgroundPosition = "center center";
+        holder.style.backgroundRepeat = "no-repeat";
+      } catch (error) {}
+    }
+  }
+
   function isMainReelSourceViewport() {
     return Boolean(videos.main);
   }
@@ -560,6 +592,7 @@ const videos = {
     if (!video || !nextMp4Url) return;
 
     captureMainReelInitialSource();
+    applyMainReelPosterForViewport();
 
     const sourceSignature = getMainReelSourceModeForViewport() + "-mp4|" + nextMp4Url;
 
