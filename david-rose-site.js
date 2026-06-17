@@ -1,3 +1,4 @@
+/* DCR update: homepage main reel v2 on desktop + mobile — shared MP4 + HLS stream. */
 /* DCR update: homepage desktop main reel v2 source swap — MP4 + HLS stream. */
 /* DCR update: LOVEBITE excerpt credit + mobile-only swipe-to-clear. */
 /* DCR update: Christie’s Luxury AW23 desktop/mobile v2 source swap — 16x9.2 + 9x16.2. */
@@ -31,13 +32,15 @@ const videos = {
   let mainReelHolderSavedStyle = null;
   let mainReelMobileFallbackStillTimer = null;
   let mainReelMobileFallbackStillAllowed = false;
-  const MAIN_REEL_DESKTOP_URL = "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-bg-no-audio.1.mp4";
-  const MAIN_REEL_DESKTOP_HLS_URL = "https://vz-636468bf-dd1.b-cdn.net/0c76f733-7dbb-41b1-8c0c-28bd850218ba/playlist.m3u8";
-  const MAIN_REEL_DESKTOP_HLS_FALLBACK_MS = 3000;
+  const MAIN_REEL_DESKTOP_URL = "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-bg-no-audio.2.mp4";
+  const MAIN_REEL_DESKTOP_HLS_URL = "https://vz-636468bf-dd1.b-cdn.net/54e7b2ef-f693-42d4-a0db-d1b07138fda5/playlist.m3u8";
+  const MAIN_REEL_MOBILE_URL = "https://portfolio-pullzone.b-cdn.net/HOMEPAGE_FILMS/main-reel-bg-no-audio.2.mp4";
+  const MAIN_REEL_MOBILE_HLS_URL = "https://vz-636468bf-dd1.b-cdn.net/54e7b2ef-f693-42d4-a0db-d1b07138fda5/playlist.m3u8";
+  const MAIN_REEL_HLS_FALLBACK_MS = 3000;
   let mainReelInitialSourceUrl = "";
-  let mainReelDesktopSourceMode = "";
-  let mainReelDesktopHlsInstance = null;
-  let mainReelDesktopHlsFallbackTimeout = null;
+  let mainReelSourceMode = "";
+  let mainReelHlsInstance = null;
+  let mainReelHlsFallbackTimeout = null;
   const clientVideoSourceConfig = {
     "tom-ford": {
       creditTitle: "FINISHING EDITOR / ONLINE EDITOR",
@@ -403,25 +406,37 @@ const videos = {
     delete clientVideoHlsInstances[key];
   }
 
-  function destroyMainReelDesktopHlsInstance() {
-    if (!mainReelDesktopHlsInstance) return;
+  function destroyMainReelHlsInstance() {
+    if (!mainReelHlsInstance) return;
 
     try {
-      mainReelDesktopHlsInstance.destroy();
+      mainReelHlsInstance.destroy();
     } catch (error) {}
 
-    mainReelDesktopHlsInstance = null;
+    mainReelHlsInstance = null;
   }
 
-  function clearMainReelDesktopHlsFallbackTimer() {
-    if (!mainReelDesktopHlsFallbackTimeout) return;
+  function clearMainReelHlsFallbackTimer() {
+    if (!mainReelHlsFallbackTimeout) return;
 
-    clearTimeout(mainReelDesktopHlsFallbackTimeout);
-    mainReelDesktopHlsFallbackTimeout = null;
+    clearTimeout(mainReelHlsFallbackTimeout);
+    mainReelHlsFallbackTimeout = null;
   }
 
-  function isDesktopMainReelSourceViewport() {
-    return Boolean(videos.main && !isMobileViewportForMainReel());
+  function getMainReelSourceModeForViewport() {
+    return isMobileViewportForMainReel() ? "mobile" : "desktop";
+  }
+
+  function getMainReelMp4UrlForViewport() {
+    return isMobileViewportForMainReel() ? MAIN_REEL_MOBILE_URL : MAIN_REEL_DESKTOP_URL;
+  }
+
+  function getMainReelHlsUrlForViewport() {
+    return isMobileViewportForMainReel() ? MAIN_REEL_MOBILE_HLS_URL : MAIN_REEL_DESKTOP_HLS_URL;
+  }
+
+  function isMainReelSourceViewport() {
+    return Boolean(videos.main);
   }
 
   function captureMainReelInitialSource() {
@@ -430,37 +445,27 @@ const videos = {
     mainReelInitialSourceUrl = getVideoSourceUrl(videos.main);
   }
 
-  function restoreMainReelInitialSourceForMobile() {
-    if (!videos.main) return;
+  function fallbackMainReelToMp4() {
+    const nextMp4Url = getMainReelMp4UrlForViewport();
 
-    clearMainReelDesktopHlsFallbackTimer();
-    destroyMainReelDesktopHlsInstance();
+    if (!videos.main || !nextMp4Url) return;
 
-    if (mainReelDesktopSourceMode && mainReelInitialSourceUrl) {
-      mainReelDesktopSourceMode = "";
-      setDirectVideoSourceUrl(videos.main, mainReelInitialSourceUrl);
-    }
-  }
+    destroyMainReelHlsInstance();
+    mainReelSourceMode = getMainReelSourceModeForViewport() + "-mp4|" + nextMp4Url;
+    setDirectVideoSourceUrl(videos.main, nextMp4Url);
 
-  function fallbackMainReelDesktopToMp4() {
-    if (!videos.main || !MAIN_REEL_DESKTOP_URL) return;
-
-    destroyMainReelDesktopHlsInstance();
-    mainReelDesktopSourceMode = "desktop-mp4|" + MAIN_REEL_DESKTOP_URL;
-    setDirectVideoSourceUrl(videos.main, MAIN_REEL_DESKTOP_URL);
-
-    if (current === "main" && isDesktopMainReelSourceViewport()) {
+    if (current === "main" && isMainReelSourceViewport()) {
       playVideo(videos.main);
     }
   }
 
-  function setMainReelDesktopHlsSource(sourceUrl) {
+  function setMainReelHlsSource(sourceUrl) {
     const video = videos.main;
 
     if (!video || !sourceUrl) return;
 
-    destroyMainReelDesktopHlsInstance();
-    mainReelDesktopSourceMode = "desktop-hls|" + sourceUrl;
+    destroyMainReelHlsInstance();
+    mainReelSourceMode = getMainReelSourceModeForViewport() + "-hls|" + sourceUrl;
 
     const source = video.querySelector("source");
 
@@ -483,11 +488,11 @@ const videos = {
     loadHlsJsLibrary()
       .then((Hls) => {
         if (!Hls || typeof Hls.isSupported !== "function" || !Hls.isSupported()) {
-          fallbackMainReelDesktopToMp4();
+          fallbackMainReelToMp4();
           return;
         }
 
-        if (mainReelDesktopSourceMode !== "desktop-hls|" + sourceUrl) return;
+        if (mainReelSourceMode !== getMainReelSourceModeForViewport() + "-hls|" + sourceUrl) return;
 
         const hls = new Hls({
           enableWorker: true,
@@ -496,10 +501,10 @@ const videos = {
           maxMaxBufferLength: 36
         });
 
-        mainReelDesktopHlsInstance = hls;
+        mainReelHlsInstance = hls;
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          if (current === "main" && isDesktopMainReelSourceViewport()) {
+          if (current === "main" && isMainReelSourceViewport()) {
             playVideo(video);
           }
         });
@@ -507,23 +512,24 @@ const videos = {
         hls.on(Hls.Events.ERROR, (eventName, data) => {
           if (!data || !data.fatal) return;
 
-          fallbackMainReelDesktopToMp4();
+          fallbackMainReelToMp4();
         });
 
         hls.attachMedia(video);
         hls.loadSource(sourceUrl);
       })
       .catch(() => {
-        fallbackMainReelDesktopToMp4();
+        fallbackMainReelToMp4();
       });
   }
 
-  function switchMainReelDesktopToHlsFallback() {
+  function switchMainReelToHlsFallback() {
     const video = videos.main;
+    const nextHlsUrl = getMainReelHlsUrlForViewport();
 
-    if (!video || !MAIN_REEL_DESKTOP_HLS_URL) return;
-    if (!isDesktopMainReelSourceViewport() || current !== "main") return;
-    if (mainReelDesktopSourceMode === "desktop-hls|" + MAIN_REEL_DESKTOP_HLS_URL) return;
+    if (!video || !nextHlsUrl) return;
+    if (!isMainReelSourceViewport() || current !== "main") return;
+    if (mainReelSourceMode === getMainReelSourceModeForViewport() + "-hls|" + nextHlsUrl) return;
 
     const hasMotion =
       !video.paused &&
@@ -533,48 +539,44 @@ const videos = {
 
     if (hasMotion) return;
 
-    setMainReelDesktopHlsSource(MAIN_REEL_DESKTOP_HLS_URL);
+    setMainReelHlsSource(nextHlsUrl);
   }
 
-  function scheduleMainReelDesktopHlsFallback() {
-    clearMainReelDesktopHlsFallbackTimer();
+  function scheduleMainReelHlsFallback() {
+    clearMainReelHlsFallbackTimer();
 
-    if (!isDesktopMainReelSourceViewport() || !MAIN_REEL_DESKTOP_HLS_URL) return;
+    if (!isMainReelSourceViewport() || !getMainReelHlsUrlForViewport()) return;
 
-    mainReelDesktopHlsFallbackTimeout = setTimeout(() => {
-      mainReelDesktopHlsFallbackTimeout = null;
-      switchMainReelDesktopToHlsFallback();
-    }, MAIN_REEL_DESKTOP_HLS_FALLBACK_MS);
+    mainReelHlsFallbackTimeout = setTimeout(() => {
+      mainReelHlsFallbackTimeout = null;
+      switchMainReelToHlsFallback();
+    }, MAIN_REEL_HLS_FALLBACK_MS);
   }
 
   function prepareMainReelDesktopSource() {
     const video = videos.main;
+    const nextMp4Url = getMainReelMp4UrlForViewport();
 
-    if (!video) return;
+    if (!video || !nextMp4Url) return;
 
     captureMainReelInitialSource();
 
-    if (!isDesktopMainReelSourceViewport()) {
-      restoreMainReelInitialSourceForMobile();
-      return;
-    }
+    const sourceSignature = getMainReelSourceModeForViewport() + "-mp4|" + nextMp4Url;
 
-    const sourceSignature = "desktop-mp4|" + MAIN_REEL_DESKTOP_URL;
+    if (mainReelSourceMode === sourceSignature) return;
 
-    if (!MAIN_REEL_DESKTOP_URL || mainReelDesktopSourceMode === sourceSignature) return;
+    clearMainReelHlsFallbackTimer();
+    destroyMainReelHlsInstance();
 
-    clearMainReelDesktopHlsFallbackTimer();
-    destroyMainReelDesktopHlsInstance();
-
-    mainReelDesktopSourceMode = sourceSignature;
+    mainReelSourceMode = sourceSignature;
 
     try {
       video.preload = "auto";
       video.setAttribute("preload", "auto");
     } catch (error) {}
 
-    setDirectVideoSourceUrl(video, MAIN_REEL_DESKTOP_URL);
-    scheduleMainReelDesktopHlsFallback();
+    setDirectVideoSourceUrl(video, nextMp4Url);
+    scheduleMainReelHlsFallback();
   }
 
   Object.keys(clientVideoSourceConfig).forEach((key) => {
