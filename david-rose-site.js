@@ -1,3 +1,4 @@
+/* DCR update: restart homepage main reel when returning from client videos / overlays. */
 /* DCR update: homepage mobile main reel + desktop/mobile poster images. */
 /* DCR update: homepage main reel v2 on desktop + mobile â€” shared MP4 + HLS stream. */
 /* DCR update: homepage desktop main reel v2 source swap â€” MP4 + HLS stream. */
@@ -610,6 +611,45 @@ const videos = {
 
     setDirectVideoSourceUrl(video, nextMp4Url);
     scheduleMainReelHlsFallback();
+  }
+
+  function restartMainReelFromBeginning() {
+    const mainVideo = videos.main;
+
+    if (!mainVideo) return;
+
+    prepareMainReelDesktopSource();
+
+    try {
+      mainVideo.pause();
+    } catch (error) {}
+
+    try {
+      mainVideo.currentTime = 0;
+    } catch (error) {}
+
+    safelySetMuted(mainVideo, true);
+    safelySetPlaybackRate(mainVideo, 1);
+
+    mainVideo.style.opacity = "1";
+    mainVideo.style.filter = "blur(0) brightness(1)";
+    mainVideo.style.transform = "scale(1)";
+
+    if (isMobileViewportForMainReel()) {
+      mainReelMobileMotionReady = false;
+      mainReelMobileFallbackStillAllowed = false;
+      clearMobileMainReelStillFallbackTimer();
+
+      if (mainReelMobileMotionTimer) {
+        clearTimeout(mainReelMobileMotionTimer);
+        mainReelMobileMotionTimer = null;
+      }
+
+      requestMobileMainReelMotion();
+    } else {
+      hideMainReelMobileStillOnDesktop();
+      playVideo(mainVideo);
+    }
   }
 
   Object.keys(clientVideoSourceConfig).forEach((key) => {
@@ -4706,11 +4746,7 @@ const videos = {
       mainVideo.style.filter = "blur(0) brightness(1)";
       mainVideo.style.transform = "scale(1)";
 
-      if (isMobileViewportForMainReel()) {
-        requestMobileMainReelMotion();
-      } else {
-        playVideo(mainVideo);
-      }
+      restartMainReelFromBeginning();
     }
 
     if (activeSection) {
@@ -4755,11 +4791,7 @@ const videos = {
       mainVideo.style.filter = "blur(0) brightness(1)";
       mainVideo.style.transform = "scale(1)";
 
-      if (isMobileViewportForMainReel()) {
-        requestMobileMainReelMotion();
-      } else {
-        playVideo(mainVideo);
-      }
+      restartMainReelFromBeginning();
     }
 
   }
@@ -5086,6 +5118,13 @@ const videos = {
         safelySetPlaybackRate(video, 1);
       }, easeOutCubic);
 
+      clearApproachResumeState();
+      return;
+    }
+
+    if ((savedKey || current) === "main") {
+      current = "main";
+      restartMainReelFromBeginning();
       clearApproachResumeState();
       return;
     }
