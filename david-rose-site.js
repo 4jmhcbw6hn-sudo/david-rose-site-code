@@ -1,3 +1,4 @@
+/* DCR update: Christie’s Luxury AW23 desktop/mobile v2 source swap — 16x9.2 + 9x16.2. */
 /* DCR update: LOVEBITE desktop/mobile v4 source swap — 16x9.4 + 9x16.4. */
 /* DCR update: Half Sick of Shadows job description credit + stills. */
 /* Based on overlay timer separation fix; no overlay-behaviour rewrite in this update. */
@@ -123,10 +124,10 @@ const videos = {
     },
     "christies-luxury-aw23": {
       creditTitle: "COMMERCIAL DIRECTION",
-      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/5c07d682-48f8-4fa0-bd08-408ae87b6895/playlist.m3u8",
-      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/5f419ef8-c26f-4dc2-bb26-af201756c092/playlist.m3u8",
-      desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_01/CHRISTIE'S_DIRECTION_01_16x9.mp4",
-      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_01/CHRISTIE'S_DIRECTION_01_9x16.mp4",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/a5a6ec45-3a66-4391-8635-53569b50b5ca/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/43e0a9ea-d31d-4de9-9138-b733510287ae/playlist.m3u8",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_01/CHRISTIE'S_DIRECTION_01_16x9.2.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_01/CHRISTIE'S_DIRECTION_01_9x16.2.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_01/CHRISTIE'S_DIRECTION_01_16x9_HOLDING_STILL.jpg",
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_01/CHRISTIE'S_DIRECTION_01_9x16_HOLDING_STILL.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_01/CHRISTIE'S_DIRECTION_01_16x9_ENDING_STILL.jpg",
