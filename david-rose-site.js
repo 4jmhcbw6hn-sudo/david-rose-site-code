@@ -16,6 +16,7 @@ const videos = {
     "vogue-suntory": document.getElementById("vogue-suntory-reel"),
     "christies-luxury-aw23": document.getElementById("christies-luxury-aw23-reel"),
     "christies-luxury-ss24": document.getElementById("christies-luxury-ss24-reel"),
+    "lovebite": document.getElementById("lovebite-reel"),
     "half-sick-of-shadows": document.getElementById("half-sick-of-shadows-reel")
   };
 
@@ -142,6 +143,19 @@ const videos = {
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_9X16_HOLDING_STILL_3.10.1_3.10.1.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_16x9_ENDING_STILL_3.10.1_1.48.1.jpg",
       mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_9x16_ENDING_STILL_3.10.1_1.48.1_1.54.1.jpg",
+      activeSourceMode: "",
+      playbackReady: false
+    },
+    "lovebite": {
+      creditTitle: "NARRATIVE DIRECTION",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/a02dc967-ecb4-4bfd-8253-7d5c4fbb832a/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/bc1534d7-cc73-4d3c-8071-a3b24e59df98/playlist.m3u8",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_16x9.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_9x16.mp4",
+      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_HOLDING_STILL_16x9.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_MOBILE_HOLDING_STILL_9x16.jpg",
+      desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_DESKTOP_ENDING_STILL_16x9.jpg",
+      mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/LOVEBITE/LOVEBITE_ENDING_STILL_9x16.jpg",
       activeSourceMode: "",
       playbackReady: false
     },
@@ -6143,6 +6157,7 @@ const videos = {
   const vogueSuntoryLink = document.querySelector("[data-link='vogue-suntory']");
   const christiesLuxuryAw23Link = document.querySelector("[data-link='christies-luxury-aw23']");
   const christiesLuxurySs24Link = document.querySelector("[data-link='christies-luxury-ss24']");
+  const lovebiteLink = document.querySelector("[data-link='lovebite']");
   const halfSickOfShadowsLink = document.querySelector("[data-link='half-sick-of-shadows']");
   const colourLink = getMainNavButton("colour");
   const directionLink = getMainNavButton("direction");
@@ -6172,6 +6187,7 @@ const videos = {
   prepareClientOneShotVideo(videos["vogue-suntory"], "vogue-suntory");
   prepareClientOneShotVideo(videos["christies-luxury-aw23"], "christies-luxury-aw23");
   prepareClientOneShotVideo(videos["christies-luxury-ss24"], "christies-luxury-ss24");
+  prepareClientOneShotVideo(videos["lovebite"], "lovebite");
   prepareClientOneShotVideo(videos["half-sick-of-shadows"], "half-sick-of-shadows");
 
   installMobileLayoutFixes();
@@ -6309,6 +6325,7 @@ const videos = {
   installClientVideoLink(vogueSuntoryLink, "vogue-suntory");
   installClientVideoLink(christiesLuxuryAw23Link, "christies-luxury-aw23");
   installClientVideoLink(christiesLuxurySs24Link, "christies-luxury-ss24");
+  installClientVideoLink(lovebiteLink, "lovebite");
   installClientVideoLink(halfSickOfShadowsLink, "half-sick-of-shadows");
 
   if (colourLink) {
