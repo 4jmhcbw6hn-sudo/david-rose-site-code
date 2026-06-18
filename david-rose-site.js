@@ -1,3 +1,4 @@
+/* DCR update: contact stable v6 mobile pause/resume, nav toggle, native email. */
 /* DCR update: contact modal v4 slower reveal, contact nav stays active, native mailto. */
 /* DCR update: contact modal v3 slower luxury reveal, staged links, close last. */
 /* DCR update: contact modal v2 centred crisp links, mailto fix, subtle glass reveal. */
@@ -215,6 +216,7 @@ const videos = {
   let approachPausedVideo = null;
   let approachVideoWasPaused = false;
   let approachResumeState = null;
+  let mobileContactVideoState = null;
   let centerNameReturnTimeout = null;
   let centerNameSettleTimeout = null;
   let projectsGradientPeakTimeout = null;
@@ -6159,6 +6161,14 @@ const videos = {
         }
       }
 
+      .contact-overlay.dcr-contact-pass-through {
+        pointer-events: none !important;
+      }
+
+      .contact-overlay.dcr-contact-pass-through .contact-modal {
+        pointer-events: auto !important;
+      }
+
       .contact-modal.dcr-refined-contact-modal {
         width: min(300px, calc(100vw - 52px)) !important;
         min-height: 142px !important;
@@ -6216,7 +6226,7 @@ const videos = {
         padding: 0 !important;
         border: 0 !important;
         background: transparent !important;
-        color: rgba(255, 255, 255, 0.58) !important;
+        color: rgba(255, 255, 255, 0.68) !important;
         font-family: inherit, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
         font-size: clamp(11px, 0.9vw, 13px) !important;
         line-height: 1.1 !important;
@@ -6226,20 +6236,21 @@ const videos = {
         font-weight: 400 !important;
         white-space: nowrap !important;
         cursor: pointer !important;
-        opacity: 0.78 !important;
+        opacity: 0.5 !important;
         filter: blur(0) !important;
-        transform: none !important;
+        transform: scale(1) !important;
         transition:
-          opacity 1050ms cubic-bezier(0.22, 1, 0.36, 1),
-          color 1050ms cubic-bezier(0.22, 1, 0.36, 1),
-          filter 1050ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+          opacity 950ms cubic-bezier(0.22, 1, 0.36, 1),
+          color 950ms cubic-bezier(0.22, 1, 0.36, 1),
+          filter 1150ms cubic-bezier(0.22, 1, 0.36, 1),
+          transform 1150ms cubic-bezier(0.22, 1, 0.36, 1) !important;
       }
 
       @media (hover: hover) and (pointer: fine) {
         .contact-modal.dcr-refined-contact-modal .dcr-contact-actions:hover .dcr-contact-action {
-          opacity: 0.34 !important;
-          filter: blur(0.55px) !important;
-          transform: none !important;
+          opacity: 0.42 !important;
+          filter: blur(1.4px) !important;
+          transform: scale(0.994) !important;
         }
 
         .contact-modal.dcr-refined-contact-modal .dcr-contact-actions:hover .dcr-contact-action:hover,
@@ -6247,7 +6258,7 @@ const videos = {
           opacity: 1 !important;
           color: rgba(255, 255, 255, 0.96) !important;
           filter: blur(0) !important;
-          transform: none !important;
+          transform: scale(1) !important;
         }
       }
 
@@ -6377,9 +6388,17 @@ const videos = {
     const emailLink = document.createElement("a");
     emailLink.className = "dcr-contact-action";
     emailLink.href = CONTACT_MAILTO_URL;
+    emailLink.target = "_self";
     emailLink.textContent = "EMAIL";
     emailLink.setAttribute("data-contact-email-link", "");
     emailLink.setAttribute("aria-label", "Email David C. Rose");
+    emailLink.setAttribute("title", CONTACT_EMAIL_ADDRESS);
+
+    emailLink.addEventListener("click", () => {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) return;
+
+      navigator.clipboard.writeText(CONTACT_EMAIL_ADDRESS).catch(() => {});
+    });
 
     const instagramLink = document.createElement("a");
     instagramLink.className = "dcr-contact-action";
@@ -6437,6 +6456,95 @@ const videos = {
     }
   }
 
+  function getCurrentVisibleVideoForContact() {
+    const currentVideo = videos[current];
+
+    if (currentVideo) return currentVideo;
+
+    const videoList = Object.values(videos).filter(Boolean);
+
+    return videoList.find((video) => {
+      const computed = window.getComputedStyle(video);
+      const opacity = parseFloat(video.style.opacity || computed.opacity || "0");
+
+      return opacity > 0.2 && computed.display !== "none" && computed.visibility !== "hidden";
+    }) || null;
+  }
+
+  function captureMobileContactVideoState() {
+    const video = getCurrentVisibleVideoForContact();
+
+    mobileContactVideoState = null;
+
+    if (!video) return;
+
+    mobileContactVideoState = {
+      video,
+      key: getApproachResumeKey(video) || current,
+      wasPaused: video.paused,
+      wasEnded: video.ended,
+      currentTime: Number.isFinite(video.currentTime) ? video.currentTime : 0,
+      playbackRate: video.playbackRate || 1,
+      volume: typeof video.volume === "number" ? video.volume : 0,
+      muted: Boolean(video.muted),
+      filter: video.style.filter || "",
+      transform: video.style.transform || "",
+      transition: video.style.transition || ""
+    };
+
+    cancelApproachPlaybackAnimation();
+    clearOverlayVideoTimeouts();
+    clearClientVideoStillOverlayDim();
+
+    safelySetPlaybackRate(video, 1);
+
+    if (!video.paused && !video.ended) {
+      try {
+        video.pause();
+      } catch (error) {}
+    }
+
+    video.style.filter = mobileContactVideoState.filter;
+    video.style.transform = mobileContactVideoState.transform;
+  }
+
+  function restoreMobileContactVideoAfterContact() {
+    const savedState = mobileContactVideoState;
+
+    mobileContactVideoState = null;
+
+    if (!savedState || !savedState.video) return;
+
+    const video = savedState.video;
+
+    cancelApproachPlaybackAnimation();
+    clearOverlayVideoTimeouts();
+    clearClientVideoStillOverlayDim();
+
+    video.style.transition = savedState.transition;
+    video.style.filter = savedState.filter;
+    video.style.transform = savedState.transform;
+
+    safelySetPlaybackRate(video, savedState.playbackRate || 1);
+    safelySetMuted(video, savedState.muted);
+
+    if (typeof savedState.volume === "number") {
+      safelySetVolume(video, savedState.volume);
+    }
+
+    if (!savedState.wasPaused && !savedState.wasEnded) {
+      const savedTime = Number.isFinite(savedState.currentTime) ? savedState.currentTime : null;
+
+      if (savedTime !== null && Math.abs((video.currentTime || 0) - savedTime) > 1.25) {
+        try {
+          video.currentTime = savedTime;
+        } catch (error) {}
+      }
+
+      playVideoWithResumeRetries(video);
+    }
+  }
+
   function getContactOverlay() {
     return document.querySelector(".contact-overlay");
   }
@@ -6467,6 +6575,7 @@ const videos = {
     const closeButton = getContactCloseButton();
 
     if (overlay) {
+      overlay.classList.remove("dcr-contact-pass-through");
       overlay.style.transition = "none";
       overlay.style.opacity = "0";
       overlay.style.visibility = "hidden";
@@ -6500,6 +6609,8 @@ const videos = {
     contactLink.style.filter = "blur(0)";
     contactLink.style.transform = "scale(1)";
     contactLink.style.pointerEvents = "auto";
+    contactLink.style.position = contactLink.style.position || "relative";
+    contactLink.style.zIndex = "120";
   }
 
   function softenNavForContact() {
@@ -6528,6 +6639,10 @@ const videos = {
     getLeftNavButtons().forEach((button) => {
       resetElement(button);
       button.style.pointerEvents = "";
+
+      if (button === contactLink) {
+        button.style.zIndex = "";
+      }
     });
   }
 
@@ -6551,16 +6666,27 @@ const videos = {
       closeActiveSectionAnimated();
     }
 
-    captureApproachResumeState();
+    const useMobileContactMode = isMobileLayoutViewport();
+
+    if (useMobileContactMode) {
+      captureMobileContactVideoState();
+    } else {
+      captureApproachResumeState();
+    }
 
     isContactOpen = true;
 
     hideProjectsGradient();
     hideCenterNameAnimated();
     softenNavForContact();
-    blurCurrentVideoForApproach();
-    slowCurrentVideoForApproach();
-    fadeCurrentAudioToZero();
+
+    if (useMobileContactMode) {
+      clearApproachVideoBlur();
+    } else {
+      blurCurrentVideoForApproach();
+      slowCurrentVideoForApproach();
+      fadeCurrentAudioToZero();
+    }
     activeSection = null;
     activeProjectButton = null;
     activeMainNavButton = contactLink || null;
@@ -6582,14 +6708,15 @@ const videos = {
       item.style.filter = "blur(0)";
       item.style.transform = "none";
       item.style.visibility = "hidden";
-      item.style.pointerEvents = "none";
+      item.style.pointerEvents = "auto";
     });
 
     overlay.style.display = "";
     overlay.style.transition = "none";
     overlay.style.visibility = "visible";
     overlay.style.opacity = "1";
-    overlay.style.pointerEvents = "auto";
+    overlay.classList.add("dcr-contact-pass-through");
+    overlay.style.pointerEvents = "none";
 
     modal.style.display = "";
     modal.style.transformOrigin = "50% 50%";
@@ -6688,9 +6815,17 @@ const videos = {
     clearContactTimeouts();
     clearApproachTimeouts();
 
+    const wasMobileContactMode = Boolean(mobileContactVideoState);
+
     isContactOpen = false;
-    resumeApproachVideoPlayback();
-    restoreCenterNameAfterApproachClose(600);
+
+    if (wasMobileContactMode) {
+      restoreMobileContactVideoAfterContact();
+      restoreCenterNameAfterApproachClose(600);
+    } else {
+      resumeApproachVideoPlayback();
+      restoreCenterNameAfterApproachClose(600);
+    }
 
     modal.classList.remove("dcr-contact-revealing");
 
@@ -6740,6 +6875,7 @@ const videos = {
     modal.style.transform = "scale(0.976)";
     modal.style.pointerEvents = "none";
 
+    overlay.classList.remove("dcr-contact-pass-through");
     overlay.style.pointerEvents = "none";
     overlay.style.transition = "none";
     overlay.style.opacity = "1";
@@ -6753,6 +6889,7 @@ const videos = {
     }, 550);
 
     const finalHideTimeout = setTimeout(() => {
+      overlay.classList.remove("dcr-contact-pass-through");
       overlay.style.visibility = "hidden";
       overlay.style.pointerEvents = "none";
       overlay.style.opacity = "0";
@@ -6781,13 +6918,17 @@ const videos = {
     clearApproachTimeouts();
     isContactOpen = false;
 
-    if (wasOpen) {
+    if (wasOpen && mobileContactVideoState) {
+      restoreMobileContactVideoAfterContact();
+      restoreCenterNameAfterApproachClose(700);
+    } else if (wasOpen) {
       clearApproachVideoBlur();
       resumeApproachVideoPlayback();
       restoreCenterNameAfterApproachClose(700);
     } else {
       clearApproachVideoBlur();
       clearApproachResumeState();
+      mobileContactVideoState = null;
     }
 
     if (overlay) {
@@ -6875,7 +7016,7 @@ const videos = {
   hideContactImmediate();
 
   document.documentElement.classList.add("dcr-js-ready");
-  document.documentElement.setAttribute("data-dcr-contact-version", "v4-luxury-contact");
+  document.documentElement.setAttribute("data-dcr-contact-version", "v6-contact-stable");
 
   setTimeout(() => {
     runCustomPageLoadIntro();
@@ -7087,6 +7228,25 @@ const videos = {
       showContactAnimated();
     });
   }
+
+  document.addEventListener("click", (event) => {
+    if (!contactLink || !event.target || !event.target.closest) return;
+
+    const clickedContact = event.target === contactLink || contactLink.contains(event.target);
+
+    if (!clickedContact) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    if (isContactOpen) {
+      hideContactAnimated();
+      return;
+    }
+
+    showContactAnimated();
+  }, true);
 
   const projectButtons = getProjectButtons();
 
