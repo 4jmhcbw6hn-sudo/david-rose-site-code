@@ -1,3 +1,4 @@
+/* DCR update: contact modal v4 slower reveal, contact nav stays active, native mailto. */
 /* DCR update: contact modal v3 slower luxury reveal, staged links, close last. */
 /* DCR update: contact modal v2 centred crisp links, mailto fix, subtle glass reveal. */
 /* DCR update: refined contact modal links using original glass animation. */
@@ -6192,7 +6193,7 @@ const videos = {
       }
 
       .contact-modal.dcr-refined-contact-modal.dcr-contact-revealing::after {
-        animation: dcrContactGlassSweep 2600ms cubic-bezier(0.16, 1, 0.3, 1) 520ms 1 both !important;
+        animation: dcrContactGlassSweep 3600ms cubic-bezier(0.16, 1, 0.3, 1) 900ms 1 both !important;
       }
 
       .contact-modal.dcr-refined-contact-modal .dcr-contact-actions {
@@ -6266,10 +6267,6 @@ const videos = {
         opacity: 1 !important;
         color: rgba(255, 255, 255, 0.96) !important;
         filter: blur(0) !important;
-      }
-
-      .contact-modal.dcr-refined-contact-modal.dcr-contact-opening .dcr-contact-action {
-        pointer-events: none !important;
       }
 
       .contact-modal.dcr-refined-contact-modal.dcr-contact-open .dcr-contact-action {
@@ -6384,18 +6381,6 @@ const videos = {
     emailLink.setAttribute("data-contact-email-link", "");
     emailLink.setAttribute("aria-label", "Email David C. Rose");
 
-    emailLink.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-
-      try {
-        window.location.assign(CONTACT_MAILTO_URL);
-      } catch (error) {
-        window.location.href = CONTACT_MAILTO_URL;
-      }
-    });
-
     const instagramLink = document.createElement("a");
     instagramLink.className = "dcr-contact-action";
     instagramLink.href = CONTACT_INSTAGRAM_URL;
@@ -6447,15 +6432,8 @@ const videos = {
       buildRefinedContactPanel(modal);
     }
 
-    if (overlay && overlay.getAttribute("data-dcr-refined-contact-overlay-bound") !== "true") {
+    if (overlay) {
       overlay.setAttribute("data-dcr-refined-contact-overlay-bound", "true");
-
-      overlay.addEventListener("click", (event) => {
-        if (event.target === overlay && isContactOpen) {
-          event.preventDefault();
-          hideContactAnimated();
-        }
-      });
     }
   }
 
@@ -6510,15 +6488,34 @@ const videos = {
     }
   }
 
+  function keepContactNavActive() {
+    if (!contactLink) return;
+
+    contactLink.style.transition =
+      "opacity 1800ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "filter 2200ms cubic-bezier(0.22, 1, 0.36, 1), " +
+      "transform 2200ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+    contactLink.style.opacity = "1";
+    contactLink.style.filter = "blur(0)";
+    contactLink.style.transform = "scale(1)";
+    contactLink.style.pointerEvents = "auto";
+  }
+
   function softenNavForContact() {
     getLeftNavButtons().forEach((button) => {
-      button.style.transition =
-        "opacity 3400ms cubic-bezier(0.22, 1, 0.36, 1), " +
-        "filter 4200ms cubic-bezier(0.22, 1, 0.36, 1), " +
-        "transform 4200ms cubic-bezier(0.22, 1, 0.36, 1)";
+      if (button === contactLink) {
+        keepContactNavActive();
+        return;
+      }
 
-      button.style.opacity = "0.42";
-      button.style.filter = "blur(2px)";
+      button.style.transition =
+        "opacity 4200ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "filter 5200ms cubic-bezier(0.22, 1, 0.36, 1), " +
+        "transform 5200ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+      button.style.opacity = "0.34";
+      button.style.filter = "blur(2.2px)";
       button.style.transform = "scale(0.992)";
       button.style.pointerEvents = "none";
     });
@@ -6584,7 +6581,7 @@ const videos = {
       item.style.opacity = "0";
       item.style.filter = "blur(0)";
       item.style.transform = "none";
-      item.style.visibility = "visible";
+      item.style.visibility = "hidden";
       item.style.pointerEvents = "none";
     });
 
@@ -6598,22 +6595,22 @@ const videos = {
     modal.style.transformOrigin = "50% 50%";
     modal.style.transition = "none";
     modal.style.visibility = "visible";
-    modal.style.opacity = "0";
+    modal.style.setProperty("opacity", "0", "important");
     modal.classList.remove("dcr-contact-open");
     modal.classList.add("dcr-contact-opening");
 
-    /* Build the glass as an event: the background video has begun slowing and dimming,
-       then the pane breathes in, EMAIL arrives, INSTAGRAM follows, and close appears last. */
-    modal.style.backgroundColor = "rgba(255, 255, 255, 0)";
-    modal.style.borderColor = "rgba(255, 255, 255, 0)";
-    modal.style.backdropFilter = "blur(0px)";
-    modal.style.webkitBackdropFilter = "blur(0px)";
+    /* Build the glass deliberately slowly: background settles first,
+       the pane forms, then EMAIL, INSTAGRAM, and the close mark arrive in order. */
+    modal.style.setProperty("background-color", "rgba(255, 255, 255, 0)", "important");
+    modal.style.setProperty("border-color", "rgba(255, 255, 255, 0)", "important");
+    modal.style.setProperty("backdrop-filter", "blur(0px)", "important");
+    modal.style.setProperty("-webkit-backdrop-filter", "blur(0px)", "important");
     modal.style.filter = "blur(0)";
     modal.classList.remove("dcr-contact-revealing");
     void modal.offsetWidth;
     modal.classList.add("dcr-contact-revealing");
-    modal.style.transform = "scale(0.976)";
-    modal.style.boxShadow = "0 0 0 rgba(0, 0, 0, 0)";
+    modal.style.setProperty("transform", "scale(0.955)", "important");
+    modal.style.setProperty("box-shadow", "0 0 0 rgba(0, 0, 0, 0)", "important");
     modal.style.willChange = "opacity, background-color, border-color, backdrop-filter, transform, box-shadow";
     modal.style.backfaceVisibility = "hidden";
     modal.style.webkitBackfaceVisibility = "hidden";
@@ -6628,35 +6625,44 @@ const videos = {
 
     const revealTimeout = setTimeout(() => {
       modal.style.transition =
-        "opacity 2400ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "background-color 3600ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "border-color 3800ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "backdrop-filter 4200ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "-webkit-backdrop-filter 4200ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "box-shadow 4600ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 5200ms cubic-bezier(0.13, 1, 0.22, 1)";
+        "opacity 3200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "background-color 5200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "border-color 5400ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "backdrop-filter 5800ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "-webkit-backdrop-filter 5800ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "box-shadow 6200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 6800ms cubic-bezier(0.13, 1, 0.22, 1)";
 
-      modal.style.opacity = "1";
-      modal.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-      modal.style.borderColor = "rgba(255, 255, 255, 0.15)";
-      modal.style.backdropFilter = "blur(12px)";
-      modal.style.webkitBackdropFilter = "blur(12px)";
-      modal.style.boxShadow = "0 24px 90px rgba(0, 0, 0, 0.18)";
-      modal.style.transform = "scale(1)";
+      modal.style.setProperty("opacity", "1", "important");
+      modal.style.setProperty("background-color", "rgba(255, 255, 255, 0.08)", "important");
+      modal.style.setProperty("border-color", "rgba(255, 255, 255, 0.15)", "important");
+      modal.style.setProperty("backdrop-filter", "blur(12px)", "important");
+      modal.style.setProperty("-webkit-backdrop-filter", "blur(12px)", "important");
+      modal.style.setProperty("box-shadow", "0 24px 90px rgba(0, 0, 0, 0.18)", "important");
+      modal.style.setProperty("transform", "scale(1)", "important");
 
       modalRevealItems.forEach((item, index) => {
-        const revealDelays = [760, 1120, 1720];
+        const revealDelays = [1700, 2600, 3950];
 
         item.style.transition =
-          "opacity 1900ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "filter 1600ms cubic-bezier(0.16, 1, 0.3, 1)";
+          "opacity 2300ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "filter 1800ms cubic-bezier(0.16, 1, 0.3, 1)";
 
-        item.style.transitionDelay = (revealDelays[index] || 1720) + "ms";
+        item.style.transitionDelay = (revealDelays[index] || 3950) + "ms";
+        item.style.visibility = "visible";
         item.style.opacity = "1";
         item.style.filter = "blur(0)";
         item.style.transform = "none";
+
+        const pointerTimeout = setTimeout(() => {
+          item.style.pointerEvents = "auto";
+        }, revealDelays[index] || 3950);
+
+        contactTimeouts.push(pointerTimeout);
       });
-    }, 160);
+
+      keepContactNavActive();
+    }, 420);
 
     const revealClassTimeout = setTimeout(() => {
       modal.classList.remove("dcr-contact-revealing");
@@ -6666,7 +6672,9 @@ const videos = {
       modalRevealItems.forEach((item) => {
         item.style.pointerEvents = "auto";
       });
-    }, 3600);
+
+      keepContactNavActive();
+    }, 5600);
 
     contactTimeouts.push(revealTimeout, revealClassTimeout);
   }
@@ -6751,7 +6759,11 @@ const videos = {
 
       modal.style.visibility = "hidden";
       modal.style.pointerEvents = "none";
-      modal.style.opacity = "0";
+      modal.style.removeProperty("opacity");
+      modal.style.setProperty("opacity", "0", "important");
+      modal.classList.remove("dcr-contact-revealing");
+      modal.classList.remove("dcr-contact-opening");
+      modal.classList.remove("dcr-contact-open");
 
       restoreNavAfterContact();
     }, 2650);
@@ -6863,6 +6875,7 @@ const videos = {
   hideContactImmediate();
 
   document.documentElement.classList.add("dcr-js-ready");
+  document.documentElement.setAttribute("data-dcr-contact-version", "v4-luxury-contact");
 
   setTimeout(() => {
     runCustomPageLoadIntro();
@@ -6909,20 +6922,6 @@ const videos = {
       settleNavItemAfterArrival(link);
     });
   });
-
-  document.addEventListener("click", (event) => {
-    if (!event.target || !event.target.closest) return;
-
-    const emailLink = event.target.closest("[data-contact-email-link]");
-
-    if (!emailLink) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-
-    window.location.href = CONTACT_MAILTO_URL;
-  }, true);
 
   document.addEventListener("click", (event) => {
     if (!event.target || !event.target.closest) return;
@@ -7079,6 +7078,11 @@ const videos = {
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
+
+      if (isContactOpen) {
+        hideContactAnimated();
+        return;
+      }
 
       showContactAnimated();
     });
