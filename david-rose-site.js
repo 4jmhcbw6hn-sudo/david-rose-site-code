@@ -1,3 +1,4 @@
+/* DCR update: coded glass contact panel with email and Instagram. */
 /* DCR update: mobile client videos now MP4-first with 3s HLS fallback. */
 /* DCR update: homepage desktop v3 + mobile v2 videos; desktop remains MP4-only. */
 /* DCR update: homepage main reel desktop MP4-only; mobile keeps HLS fallback. */
@@ -233,6 +234,9 @@ const videos = {
   const CLIENT_VIDEO_PLAYBACK_VOLUME = 0.68;
   const CLIENT_DESKTOP_MP4_FALLBACK_TO_HLS_MS = 3000;
   const CLIENT_HLS_JS_URL = "https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js";
+  const CONTACT_EMAIL_ADDRESS = "contact@davidcrose.com";
+  const CONTACT_MAILTO_URL = "mailto:" + CONTACT_EMAIL_ADDRESS;
+  const CONTACT_INSTAGRAM_URL = "https://www.instagram.com/davidr0se/";
   const clientVideoHlsInstances = {};
   let hlsJsLoadPromise = null;
 
@@ -6126,15 +6130,242 @@ const videos = {
     showApproachAnimated();
   }
 
+  function installContactPanelStyles() {
+    if (document.getElementById("dcr-coded-contact-panel-styles")) return;
+
+    const style = document.createElement("style");
+    style.id = "dcr-coded-contact-panel-styles";
+    style.textContent = `
+      .contact-overlay.dcr-coded-contact-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100svh !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: clamp(22px, 5vw, 64px) !important;
+        box-sizing: border-box !important;
+        z-index: 80 !important;
+        background: transparent !important;
+        color: #fff !important;
+      }
+
+      .contact-modal.dcr-coded-contact-modal {
+        position: relative !important;
+        box-sizing: border-box !important;
+        width: min(390px, calc(100vw - 48px)) !important;
+        min-height: 188px !important;
+        padding: clamp(34px, 5.2vw, 52px) clamp(32px, 5vw, 54px) clamp(32px, 4.7vw, 48px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 2px !important;
+        background-color: rgba(255, 255, 255, 0.08);
+        color: #fff !important;
+        font-family: inherit, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+        text-align: left !important;
+        box-shadow: 0 24px 90px rgba(0, 0, 0, 0.22) !important;
+        overflow: hidden !important;
+      }
+
+      .dcr-contact-close {
+        position: absolute !important;
+        top: 18px !important;
+        right: 18px !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        border: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        color: rgba(255, 255, 255, 0.72) !important;
+        font-family: inherit, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+        font-size: 9px !important;
+        line-height: 1 !important;
+        letter-spacing: 0.18em !important;
+        text-transform: uppercase !important;
+        cursor: pointer !important;
+        transition:
+          opacity 900ms cubic-bezier(0.22, 1, 0.36, 1),
+          color 900ms cubic-bezier(0.22, 1, 0.36, 1),
+          filter 1200ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+      }
+
+      .dcr-contact-close:hover {
+        color: rgba(255, 255, 255, 0.98) !important;
+      }
+
+      .dcr-contact-heading {
+        margin: 0 0 26px !important;
+        color: rgba(255, 255, 255, 0.86) !important;
+        font-family: inherit, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+        font-size: 10px !important;
+        line-height: 1.35 !important;
+        letter-spacing: 0.24em !important;
+        text-transform: uppercase !important;
+        font-weight: 400 !important;
+      }
+
+      .dcr-contact-links {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 13px !important;
+      }
+
+      .dcr-contact-link {
+        display: inline-block !important;
+        color: rgba(255, 255, 255, 0.88) !important;
+        font-family: inherit, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+        font-size: clamp(13px, 1.05vw, 15px) !important;
+        line-height: 1.38 !important;
+        letter-spacing: 0.035em !important;
+        text-decoration: none !important;
+        text-transform: none !important;
+        font-weight: 400 !important;
+        cursor: pointer !important;
+        transition:
+          opacity 900ms cubic-bezier(0.22, 1, 0.36, 1),
+          color 900ms cubic-bezier(0.22, 1, 0.36, 1),
+          filter 1200ms cubic-bezier(0.22, 1, 0.36, 1),
+          transform 1200ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+      }
+
+      .dcr-contact-link:hover {
+        color: rgba(255, 255, 255, 1) !important;
+        transform: translateX(1px) !important;
+      }
+
+      @media (max-width: 1024px) {
+        .contact-overlay.dcr-coded-contact-overlay {
+          padding: 24px !important;
+          z-index: 90 !important;
+        }
+
+        .contact-modal.dcr-coded-contact-modal {
+          width: min(350px, calc(100vw - 42px)) !important;
+          min-height: 174px !important;
+          padding: 38px 32px 34px !important;
+        }
+
+        .dcr-contact-close {
+          top: 16px !important;
+          right: 16px !important;
+          font-size: 9px !important;
+        }
+
+        .dcr-contact-heading {
+          margin-bottom: 24px !important;
+          font-size: 10px !important;
+        }
+
+        .dcr-contact-link {
+          font-size: 14px !important;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function buildCodedContactPanelContent(modal) {
+    if (!modal || modal.getAttribute("data-dcr-coded-contact-ready") === "true") return;
+
+    modal.setAttribute("data-dcr-coded-contact-ready", "true");
+    modal.innerHTML = "";
+
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "dcr-contact-close";
+    closeButton.setAttribute("data-contact-close", "");
+    closeButton.setAttribute("aria-label", "Close contact");
+    closeButton.textContent = "CLOSE";
+
+    const heading = document.createElement("div");
+    heading.className = "dcr-contact-heading";
+    heading.textContent = "CONTACT";
+
+    const links = document.createElement("div");
+    links.className = "dcr-contact-links";
+
+    const emailLink = document.createElement("a");
+    emailLink.className = "dcr-contact-link";
+    emailLink.href = CONTACT_MAILTO_URL;
+    emailLink.textContent = CONTACT_EMAIL_ADDRESS;
+
+    const instagramLink = document.createElement("a");
+    instagramLink.className = "dcr-contact-link";
+    instagramLink.href = CONTACT_INSTAGRAM_URL;
+    instagramLink.target = "_blank";
+    instagramLink.rel = "noopener noreferrer";
+    instagramLink.setAttribute("data-instagram-link", "");
+    instagramLink.textContent = "instagram";
+
+    links.appendChild(emailLink);
+    links.appendChild(instagramLink);
+
+    modal.appendChild(closeButton);
+    modal.appendChild(heading);
+    modal.appendChild(links);
+  }
+
+  function ensureContactLayer() {
+    installContactPanelStyles();
+
+    let overlay = document.querySelector(".contact-overlay");
+
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.className = "contact-overlay dcr-coded-contact-overlay";
+      document.body.appendChild(overlay);
+    }
+
+    overlay.classList.add("dcr-coded-contact-overlay");
+    overlay.setAttribute("aria-hidden", isContactOpen ? "false" : "true");
+
+    let modal = overlay.querySelector(".contact-modal") || document.querySelector(".contact-modal");
+
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.className = "contact-modal dcr-coded-contact-modal";
+    }
+
+    modal.classList.add("dcr-coded-contact-modal");
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-label", "Contact David C. Rose");
+
+    if (modal.parentElement !== overlay) {
+      overlay.appendChild(modal);
+    }
+
+    buildCodedContactPanelContent(modal);
+
+    if (overlay.getAttribute("data-dcr-contact-overlay-click-bound") !== "true") {
+      overlay.setAttribute("data-dcr-contact-overlay-click-bound", "true");
+
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay && isContactOpen) {
+          event.preventDefault();
+          hideContactAnimated();
+        }
+      });
+    }
+
+    return { overlay, modal };
+  }
+
   function getContactOverlay() {
-    return document.querySelector(".contact-overlay");
+    return ensureContactLayer().overlay;
   }
 
   function getContactModal() {
-    return document.querySelector(".contact-modal");
+    return ensureContactLayer().modal;
   }
 
   function getContactCloseButton() {
+    ensureContactLayer();
+
     return (
       document.querySelector("[data-contact-close]") ||
       document.querySelector(".exit-contact") ||
@@ -6154,6 +6385,7 @@ const videos = {
     const closeButton = getContactCloseButton();
 
     if (overlay) {
+      overlay.setAttribute("aria-hidden", "true");
       overlay.style.transition = "none";
       overlay.style.opacity = "0";
       overlay.style.visibility = "hidden";
@@ -6242,6 +6474,7 @@ const videos = {
       item.style.visibility = "visible";
     });
 
+    overlay.setAttribute("aria-hidden", "false");
     overlay.style.display = "";
     overlay.style.transition = "none";
     overlay.style.visibility = "visible";
@@ -6359,6 +6592,7 @@ const videos = {
     }, 550);
 
     const finalHideTimeout = setTimeout(() => {
+      overlay.setAttribute("aria-hidden", "true");
       overlay.style.visibility = "hidden";
       overlay.style.pointerEvents = "none";
       overlay.style.opacity = "0";
@@ -6493,7 +6727,7 @@ const videos = {
     forceInactiveProjectPanelsHidden();
   }, 500);
 
-  const instagramUrl = "https://www.instagram.com/davidr0se/";
+  const instagramUrl = CONTACT_INSTAGRAM_URL;
 
   function getApproachInstagramLinks() {
     return document.querySelectorAll(
