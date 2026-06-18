@@ -1,4 +1,4 @@
-/* DCR update: coded glass contact panel with email and Instagram. */
+/* DCR update: refined contact modal links using original glass animation. */
 /* DCR update: mobile client videos now MP4-first with 3s HLS fallback. */
 /* DCR update: homepage desktop v3 + mobile v2 videos; desktop remains MP4-only. */
 /* DCR update: homepage main reel desktop MP4-only; mobile keeps HLS fallback. */
@@ -6130,137 +6130,137 @@ const videos = {
     showApproachAnimated();
   }
 
-  function installContactPanelStyles() {
-    if (document.getElementById("dcr-coded-contact-panel-styles")) return;
+  function installRefinedContactPanelStyles() {
+    if (document.getElementById("dcr-refined-contact-panel-styles")) return;
 
     const style = document.createElement("style");
-    style.id = "dcr-coded-contact-panel-styles";
+    style.id = "dcr-refined-contact-panel-styles";
     style.textContent = `
-      .contact-overlay.dcr-coded-contact-overlay {
-        position: fixed !important;
-        inset: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        height: 100svh !important;
+      .contact-modal.dcr-refined-contact-modal {
+        width: min(320px, calc(100vw - 52px)) !important;
+        min-height: 142px !important;
+        height: auto !important;
+        padding: 42px 48px 40px !important;
+        box-sizing: border-box !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: center !important;
-        padding: clamp(22px, 5vw, 64px) !important;
-        box-sizing: border-box !important;
-        z-index: 80 !important;
-        background: transparent !important;
-        color: #fff !important;
-      }
-
-      .contact-modal.dcr-coded-contact-modal {
-        position: relative !important;
-        box-sizing: border-box !important;
-        width: min(390px, calc(100vw - 48px)) !important;
-        min-height: 188px !important;
-        padding: clamp(34px, 5.2vw, 52px) clamp(32px, 5vw, 54px) clamp(32px, 4.7vw, 48px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        border-radius: 2px !important;
-        background-color: rgba(255, 255, 255, 0.08);
-        color: #fff !important;
-        font-family: inherit, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-        text-align: left !important;
-        box-shadow: 0 24px 90px rgba(0, 0, 0, 0.22) !important;
+        justify-content: flex-start !important;
         overflow: hidden !important;
       }
 
-      .dcr-contact-close {
-        position: absolute !important;
-        top: 18px !important;
-        right: 18px !important;
-        appearance: none !important;
-        -webkit-appearance: none !important;
-        border: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: transparent !important;
-        color: rgba(255, 255, 255, 0.72) !important;
-        font-family: inherit, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-        font-size: 9px !important;
-        line-height: 1 !important;
-        letter-spacing: 0.18em !important;
-        text-transform: uppercase !important;
-        cursor: pointer !important;
-        transition:
-          opacity 900ms cubic-bezier(0.22, 1, 0.36, 1),
-          color 900ms cubic-bezier(0.22, 1, 0.36, 1),
-          filter 1200ms cubic-bezier(0.22, 1, 0.36, 1) !important;
-      }
-
-      .dcr-contact-close:hover {
-        color: rgba(255, 255, 255, 0.98) !important;
-      }
-
-      .dcr-contact-heading {
-        margin: 0 0 26px !important;
-        color: rgba(255, 255, 255, 0.86) !important;
-        font-family: inherit, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-        font-size: 10px !important;
-        line-height: 1.35 !important;
-        letter-spacing: 0.24em !important;
-        text-transform: uppercase !important;
-        font-weight: 400 !important;
-      }
-
-      .dcr-contact-links {
+      .contact-modal.dcr-refined-contact-modal .dcr-contact-actions {
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-start !important;
-        gap: 13px !important;
+        justify-content: center !important;
+        gap: 20px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
       }
 
-      .dcr-contact-link {
+      .contact-modal.dcr-refined-contact-modal .dcr-contact-action {
         display: inline-block !important;
-        color: rgba(255, 255, 255, 0.88) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        color: rgba(255, 255, 255, 0.56) !important;
         font-family: inherit, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-        font-size: clamp(13px, 1.05vw, 15px) !important;
-        line-height: 1.38 !important;
-        letter-spacing: 0.035em !important;
+        font-size: clamp(11px, 0.92vw, 13px) !important;
+        line-height: 1.05 !important;
+        letter-spacing: 0.28em !important;
+        text-transform: uppercase !important;
         text-decoration: none !important;
-        text-transform: none !important;
         font-weight: 400 !important;
+        white-space: nowrap !important;
         cursor: pointer !important;
+        opacity: 0.78 !important;
+        filter: blur(0.15px) !important;
+        transform: translateX(0) !important;
         transition:
-          opacity 900ms cubic-bezier(0.22, 1, 0.36, 1),
-          color 900ms cubic-bezier(0.22, 1, 0.36, 1),
-          filter 1200ms cubic-bezier(0.22, 1, 0.36, 1),
-          transform 1200ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+          opacity 1100ms cubic-bezier(0.22, 1, 0.36, 1),
+          color 1100ms cubic-bezier(0.22, 1, 0.36, 1),
+          filter 1300ms cubic-bezier(0.22, 1, 0.36, 1),
+          transform 1400ms cubic-bezier(0.13, 1, 0.22, 1) !important;
       }
 
-      .dcr-contact-link:hover {
+      @media (hover: hover) and (pointer: fine) {
+        .contact-modal.dcr-refined-contact-modal .dcr-contact-actions:hover .dcr-contact-action {
+          opacity: 0.33 !important;
+          filter: blur(0.9px) !important;
+        }
+
+        .contact-modal.dcr-refined-contact-modal .dcr-contact-actions:hover .dcr-contact-action:hover,
+        .contact-modal.dcr-refined-contact-modal .dcr-contact-actions:hover .dcr-contact-action:focus-visible {
+          opacity: 1 !important;
+          color: rgba(255, 255, 255, 0.96) !important;
+          filter: blur(0) !important;
+          transform: translateX(3px) !important;
+        }
+      }
+
+      .contact-modal.dcr-refined-contact-modal .dcr-contact-action:active,
+      .contact-modal.dcr-refined-contact-modal .dcr-contact-action.dcr-contact-action-active {
+        opacity: 1 !important;
         color: rgba(255, 255, 255, 1) !important;
-        transform: translateX(1px) !important;
+        filter: blur(0) !important;
+        transform: translateX(2px) !important;
+      }
+
+      .contact-modal.dcr-refined-contact-modal .dcr-contact-action:focus {
+        outline: none !important;
+      }
+
+      .contact-modal.dcr-refined-contact-modal .dcr-contact-action:focus-visible {
+        opacity: 1 !important;
+        color: rgba(255, 255, 255, 0.96) !important;
+        filter: blur(0) !important;
+      }
+
+      .contact-modal.dcr-refined-contact-modal [data-contact-close],
+      .contact-modal.dcr-refined-contact-modal .exit-contact,
+      .contact-modal.dcr-refined-contact-modal .Exit-Contact,
+      .contact-modal.dcr-refined-contact-modal .contact-close,
+      .contact-modal.dcr-refined-contact-modal .close-contact {
+        position: absolute !important;
+        top: 20px !important;
+        right: 20px !important;
+        z-index: 2 !important;
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        color: rgba(255, 255, 255, 0.48) !important;
+        opacity: 0.58 !important;
+        transition:
+          opacity 1100ms cubic-bezier(0.22, 1, 0.36, 1),
+          color 1100ms cubic-bezier(0.22, 1, 0.36, 1),
+          filter 1300ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+      }
+
+      .contact-modal.dcr-refined-contact-modal [data-contact-close]:hover,
+      .contact-modal.dcr-refined-contact-modal .exit-contact:hover,
+      .contact-modal.dcr-refined-contact-modal .Exit-Contact:hover,
+      .contact-modal.dcr-refined-contact-modal .contact-close:hover,
+      .contact-modal.dcr-refined-contact-modal .close-contact:hover {
+        color: rgba(255, 255, 255, 0.92) !important;
+        opacity: 1 !important;
+        filter: blur(0) !important;
       }
 
       @media (max-width: 1024px) {
-        .contact-overlay.dcr-coded-contact-overlay {
-          padding: 24px !important;
-          z-index: 90 !important;
+        .contact-modal.dcr-refined-contact-modal {
+          width: min(300px, calc(100vw - 44px)) !important;
+          min-height: 132px !important;
+          padding: 40px 42px 38px !important;
         }
 
-        .contact-modal.dcr-coded-contact-modal {
-          width: min(350px, calc(100vw - 42px)) !important;
-          min-height: 174px !important;
-          padding: 38px 32px 34px !important;
+        .contact-modal.dcr-refined-contact-modal .dcr-contact-actions {
+          gap: 19px !important;
         }
 
-        .dcr-contact-close {
-          top: 16px !important;
-          right: 16px !important;
-          font-size: 9px !important;
-        }
-
-        .dcr-contact-heading {
-          margin-bottom: 24px !important;
-          font-size: 10px !important;
-        }
-
-        .dcr-contact-link {
-          font-size: 14px !important;
+        .contact-modal.dcr-refined-contact-modal .dcr-contact-action {
+          font-size: 11px !important;
+          letter-spacing: 0.27em !important;
         }
       }
     `;
@@ -6268,81 +6268,94 @@ const videos = {
     document.head.appendChild(style);
   }
 
-  function buildCodedContactPanelContent(modal) {
-    if (!modal || modal.getAttribute("data-dcr-coded-contact-ready") === "true") return;
+  function getContactCloseCandidate(modal) {
+    if (!modal) return null;
 
-    modal.setAttribute("data-dcr-coded-contact-ready", "true");
-    modal.innerHTML = "";
+    return (
+      modal.querySelector("[data-contact-close]") ||
+      modal.querySelector(".exit-contact") ||
+      modal.querySelector(".Exit-Contact") ||
+      modal.querySelector(".contact-close") ||
+      modal.querySelector(".close-contact") ||
+      modal.querySelector("[class*='Exit']") ||
+      modal.querySelector("[class*='exit']") ||
+      modal.querySelector("[class*='Close']") ||
+      modal.querySelector("[class*='close']")
+    );
+  }
 
-    const closeButton = document.createElement("button");
-    closeButton.type = "button";
-    closeButton.className = "dcr-contact-close";
+  function buildRefinedContactPanel(modal) {
+    if (!modal || modal.getAttribute("data-dcr-refined-contact-ready") === "true") return;
+
+    installRefinedContactPanelStyles();
+
+    const existingClose = getContactCloseCandidate(modal);
+    const closeButton = existingClose || document.createElement("button");
+
+    if (!existingClose) {
+      closeButton.type = "button";
+      closeButton.className = "Exit-Contact";
+      closeButton.textContent = "×";
+    }
+
     closeButton.setAttribute("data-contact-close", "");
     closeButton.setAttribute("aria-label", "Close contact");
-    closeButton.textContent = "CLOSE";
 
-    const heading = document.createElement("div");
-    heading.className = "dcr-contact-heading";
-    heading.textContent = "CONTACT";
+    while (modal.firstChild) {
+      modal.removeChild(modal.firstChild);
+    }
 
-    const links = document.createElement("div");
-    links.className = "dcr-contact-links";
+    const actions = document.createElement("div");
+    actions.className = "dcr-contact-actions";
 
     const emailLink = document.createElement("a");
-    emailLink.className = "dcr-contact-link";
+    emailLink.className = "dcr-contact-action";
     emailLink.href = CONTACT_MAILTO_URL;
-    emailLink.textContent = CONTACT_EMAIL_ADDRESS;
+    emailLink.textContent = "EMAIL";
+    emailLink.setAttribute("aria-label", "Email David C. Rose");
 
     const instagramLink = document.createElement("a");
-    instagramLink.className = "dcr-contact-link";
+    instagramLink.className = "dcr-contact-action";
     instagramLink.href = CONTACT_INSTAGRAM_URL;
     instagramLink.target = "_blank";
     instagramLink.rel = "noopener noreferrer";
     instagramLink.setAttribute("data-instagram-link", "");
-    instagramLink.textContent = "instagram";
+    instagramLink.setAttribute("aria-label", "Open Instagram");
+    instagramLink.textContent = "INSTAGRAM";
 
-    links.appendChild(emailLink);
-    links.appendChild(instagramLink);
+    [emailLink, instagramLink].forEach((link) => {
+      link.addEventListener("pointerdown", () => {
+        link.classList.add("dcr-contact-action-active");
+      });
+
+      ["pointerup", "pointercancel", "mouseleave", "blur"].forEach((eventName) => {
+        link.addEventListener(eventName, () => {
+          link.classList.remove("dcr-contact-action-active");
+        });
+      });
+    });
+
+    actions.appendChild(emailLink);
+    actions.appendChild(instagramLink);
 
     modal.appendChild(closeButton);
-    modal.appendChild(heading);
-    modal.appendChild(links);
+    modal.appendChild(actions);
+    modal.classList.add("dcr-refined-contact-modal");
+    modal.setAttribute("data-dcr-refined-contact-ready", "true");
   }
 
-  function ensureContactLayer() {
-    installContactPanelStyles();
+  function prepareRefinedContactPanel() {
+    installRefinedContactPanelStyles();
 
-    let overlay = document.querySelector(".contact-overlay");
+    const overlay = document.querySelector(".contact-overlay");
+    const modal = document.querySelector(".contact-modal");
 
-    if (!overlay) {
-      overlay = document.createElement("div");
-      overlay.className = "contact-overlay dcr-coded-contact-overlay";
-      document.body.appendChild(overlay);
+    if (modal) {
+      buildRefinedContactPanel(modal);
     }
 
-    overlay.classList.add("dcr-coded-contact-overlay");
-    overlay.setAttribute("aria-hidden", isContactOpen ? "false" : "true");
-
-    let modal = overlay.querySelector(".contact-modal") || document.querySelector(".contact-modal");
-
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.className = "contact-modal dcr-coded-contact-modal";
-    }
-
-    modal.classList.add("dcr-coded-contact-modal");
-    modal.setAttribute("role", "dialog");
-    modal.setAttribute("aria-modal", "true");
-    modal.setAttribute("aria-label", "Contact David C. Rose");
-
-    if (modal.parentElement !== overlay) {
-      overlay.appendChild(modal);
-    }
-
-    buildCodedContactPanelContent(modal);
-
-    if (overlay.getAttribute("data-dcr-contact-overlay-click-bound") !== "true") {
-      overlay.setAttribute("data-dcr-contact-overlay-click-bound", "true");
+    if (overlay && overlay.getAttribute("data-dcr-refined-contact-overlay-bound") !== "true") {
+      overlay.setAttribute("data-dcr-refined-contact-overlay-bound", "true");
 
       overlay.addEventListener("click", (event) => {
         if (event.target === overlay && isContactOpen) {
@@ -6351,21 +6364,17 @@ const videos = {
         }
       });
     }
-
-    return { overlay, modal };
   }
 
   function getContactOverlay() {
-    return ensureContactLayer().overlay;
+    return document.querySelector(".contact-overlay");
   }
 
   function getContactModal() {
-    return ensureContactLayer().modal;
+    return document.querySelector(".contact-modal");
   }
 
   function getContactCloseButton() {
-    ensureContactLayer();
-
     return (
       document.querySelector("[data-contact-close]") ||
       document.querySelector(".exit-contact") ||
@@ -6380,12 +6389,13 @@ const videos = {
   }
 
   function prepareContactHidden() {
+    prepareRefinedContactPanel();
+
     const overlay = getContactOverlay();
     const modal = getContactModal();
     const closeButton = getContactCloseButton();
 
     if (overlay) {
-      overlay.setAttribute("aria-hidden", "true");
       overlay.style.transition = "none";
       overlay.style.opacity = "0";
       overlay.style.visibility = "hidden";
@@ -6432,6 +6442,8 @@ const videos = {
   }
 
   function showContactAnimated() {
+    prepareRefinedContactPanel();
+
     const overlay = getContactOverlay();
     const modal = getContactModal();
     const closeButton = getContactCloseButton();
@@ -6474,7 +6486,6 @@ const videos = {
       item.style.visibility = "visible";
     });
 
-    overlay.setAttribute("aria-hidden", "false");
     overlay.style.display = "";
     overlay.style.transition = "none";
     overlay.style.visibility = "visible";
@@ -6592,7 +6603,6 @@ const videos = {
     }, 550);
 
     const finalHideTimeout = setTimeout(() => {
-      overlay.setAttribute("aria-hidden", "true");
       overlay.style.visibility = "hidden";
       overlay.style.pointerEvents = "none";
       overlay.style.opacity = "0";
