@@ -1,3 +1,4 @@
+/* DCR update: contact modal v3 slower luxury reveal, staged links, close last. */
 /* DCR update: contact modal v2 centred crisp links, mailto fix, subtle glass reveal. */
 /* DCR update: refined contact modal links using original glass animation. */
 /* DCR update: mobile client videos now MP4-first with 3s HLS fallback. */
@@ -6182,8 +6183,8 @@ const videos = {
             112deg,
             rgba(255, 255, 255, 0) 0%,
             rgba(255, 255, 255, 0) 38%,
-            rgba(255, 255, 255, 0.105) 48%,
-            rgba(255, 255, 255, 0.035) 54%,
+            rgba(255, 255, 255, 0.085) 48%,
+            rgba(255, 255, 255, 0.026) 54%,
             rgba(255, 255, 255, 0) 66%,
             rgba(255, 255, 255, 0) 100%
           ) !important;
@@ -6191,7 +6192,7 @@ const videos = {
       }
 
       .contact-modal.dcr-refined-contact-modal.dcr-contact-revealing::after {
-        animation: dcrContactGlassSweep 1850ms cubic-bezier(0.16, 1, 0.3, 1) 260ms 1 both !important;
+        animation: dcrContactGlassSweep 2600ms cubic-bezier(0.16, 1, 0.3, 1) 520ms 1 both !important;
       }
 
       .contact-modal.dcr-refined-contact-modal .dcr-contact-actions {
@@ -6265,6 +6266,14 @@ const videos = {
         opacity: 1 !important;
         color: rgba(255, 255, 255, 0.96) !important;
         filter: blur(0) !important;
+      }
+
+      .contact-modal.dcr-refined-contact-modal.dcr-contact-opening .dcr-contact-action {
+        pointer-events: none !important;
+      }
+
+      .contact-modal.dcr-refined-contact-modal.dcr-contact-open .dcr-contact-action {
+        pointer-events: auto !important;
       }
 
       .contact-modal.dcr-refined-contact-modal [data-contact-close],
@@ -6380,7 +6389,11 @@ const videos = {
       event.stopPropagation();
       event.stopImmediatePropagation();
 
-      window.location.href = CONTACT_MAILTO_URL;
+      try {
+        window.location.assign(CONTACT_MAILTO_URL);
+      } catch (error) {
+        window.location.href = CONTACT_MAILTO_URL;
+      }
     });
 
     const instagramLink = document.createElement("a");
@@ -6542,22 +6555,28 @@ const videos = {
     }
 
     captureApproachResumeState();
-    hideProjectsGradient();
-    hideCenterNameAnimated();
-    fadeCurrentAudioToZero();
-    softenNavForContact();
 
     isContactOpen = true;
 
+    hideProjectsGradient();
+    hideCenterNameAnimated();
+    softenNavForContact();
     blurCurrentVideoForApproach();
     slowCurrentVideoForApproach();
+    fadeCurrentAudioToZero();
     activeSection = null;
     activeProjectButton = null;
     activeMainNavButton = contactLink || null;
 
-    const modalRevealItems = Array.from(
-      modal.querySelectorAll(".dcr-contact-action, [data-contact-close]")
-    );
+    const emailRevealItem = modal.querySelector("[data-contact-email-link]");
+    const instagramRevealItem = modal.querySelector("[data-instagram-link]");
+    const closeRevealItem = getContactCloseButton();
+
+    const modalRevealItems = [
+      emailRevealItem,
+      instagramRevealItem,
+      closeRevealItem
+    ].filter(Boolean);
 
     modalRevealItems.forEach((item) => {
       item.style.transition = "none";
@@ -6566,6 +6585,7 @@ const videos = {
       item.style.filter = "blur(0)";
       item.style.transform = "none";
       item.style.visibility = "visible";
+      item.style.pointerEvents = "none";
     });
 
     overlay.style.display = "";
@@ -6578,11 +6598,12 @@ const videos = {
     modal.style.transformOrigin = "50% 50%";
     modal.style.transition = "none";
     modal.style.visibility = "visible";
-    modal.style.opacity = "1";
+    modal.style.opacity = "0";
+    modal.classList.remove("dcr-contact-open");
+    modal.classList.add("dcr-contact-opening");
 
-    /* Glass build: do not fade the whole backdrop-filter element.
-       Instead, gently build the glass itself using background/border/blur/scale,
-       while the contents fade in at the same time. */
+    /* Build the glass as an event: the background video has begun slowing and dimming,
+       then the pane breathes in, EMAIL arrives, INSTAGRAM follows, and close appears last. */
     modal.style.backgroundColor = "rgba(255, 255, 255, 0)";
     modal.style.borderColor = "rgba(255, 255, 255, 0)";
     modal.style.backdropFilter = "blur(0px)";
@@ -6591,8 +6612,9 @@ const videos = {
     modal.classList.remove("dcr-contact-revealing");
     void modal.offsetWidth;
     modal.classList.add("dcr-contact-revealing");
-    modal.style.transform = "scale(0.982)";
-    modal.style.willChange = "background-color, border-color, backdrop-filter, transform";
+    modal.style.transform = "scale(0.976)";
+    modal.style.boxShadow = "0 0 0 rgba(0, 0, 0, 0)";
+    modal.style.willChange = "opacity, background-color, border-color, backdrop-filter, transform, box-shadow";
     modal.style.backfaceVisibility = "hidden";
     modal.style.webkitBackfaceVisibility = "hidden";
     modal.style.pointerEvents = "auto";
@@ -6606,33 +6628,45 @@ const videos = {
 
     const revealTimeout = setTimeout(() => {
       modal.style.transition =
-        "background-color 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "border-color 2600ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "backdrop-filter 3000ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "-webkit-backdrop-filter 3000ms cubic-bezier(0.16, 1, 0.3, 1), " +
-        "transform 4200ms cubic-bezier(0.13, 1, 0.22, 1)";
+        "opacity 2400ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "background-color 3600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "border-color 3800ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "backdrop-filter 4200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "-webkit-backdrop-filter 4200ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "box-shadow 4600ms cubic-bezier(0.16, 1, 0.3, 1), " +
+        "transform 5200ms cubic-bezier(0.13, 1, 0.22, 1)";
 
+      modal.style.opacity = "1";
       modal.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
       modal.style.borderColor = "rgba(255, 255, 255, 0.15)";
       modal.style.backdropFilter = "blur(12px)";
       modal.style.webkitBackdropFilter = "blur(12px)";
+      modal.style.boxShadow = "0 24px 90px rgba(0, 0, 0, 0.18)";
       modal.style.transform = "scale(1)";
 
       modalRevealItems.forEach((item, index) => {
-        item.style.transition =
-          "opacity 2100ms cubic-bezier(0.16, 1, 0.3, 1), " +
-          "filter 1800ms cubic-bezier(0.16, 1, 0.3, 1)";
+        const revealDelays = [760, 1120, 1720];
 
-        item.style.transitionDelay = (index * 130 + 120) + "ms";
+        item.style.transition =
+          "opacity 1900ms cubic-bezier(0.16, 1, 0.3, 1), " +
+          "filter 1600ms cubic-bezier(0.16, 1, 0.3, 1)";
+
+        item.style.transitionDelay = (revealDelays[index] || 1720) + "ms";
         item.style.opacity = "1";
         item.style.filter = "blur(0)";
         item.style.transform = "none";
       });
-    }, 90);
+    }, 160);
 
     const revealClassTimeout = setTimeout(() => {
       modal.classList.remove("dcr-contact-revealing");
-    }, 2350);
+      modal.classList.remove("dcr-contact-opening");
+      modal.classList.add("dcr-contact-open");
+
+      modalRevealItems.forEach((item) => {
+        item.style.pointerEvents = "auto";
+      });
+    }, 3600);
 
     contactTimeouts.push(revealTimeout, revealClassTimeout);
   }
@@ -6652,34 +6686,50 @@ const videos = {
 
     modal.classList.remove("dcr-contact-revealing");
 
-    const modalRevealItems = Array.from(
-      modal.querySelectorAll(".dcr-contact-action, [data-contact-close]")
-    );
+    modal.classList.remove("dcr-contact-opening");
+    modal.classList.remove("dcr-contact-open");
+
+    const emailRevealItem = modal.querySelector("[data-contact-email-link]");
+    const instagramRevealItem = modal.querySelector("[data-instagram-link]");
+    const closeRevealItem = getContactCloseButton();
+
+    const modalRevealItems = [
+      closeRevealItem,
+      instagramRevealItem,
+      emailRevealItem
+    ].filter(Boolean);
 
     /* Exit composite fade:
        Keep the glass fully formed, then fade the entire modal as one object.
        This avoids the empty transparent rectangle caused by fading the contents
        and backdrop-filter separately. */
-    modalRevealItems.forEach((item) => {
-      item.style.transitionDelay = "0ms";
-      item.style.transition = "none";
-      item.style.opacity = "1";
+    modalRevealItems.forEach((item, index) => {
+      item.style.transitionDelay = (index * 80) + "ms";
+      item.style.transition =
+        "opacity 900ms cubic-bezier(0.66, 0, 0.2, 1), " +
+        "filter 900ms cubic-bezier(0.66, 0, 0.2, 1)";
+      item.style.opacity = "0";
       item.style.filter = "blur(0)";
       item.style.transform = "none";
+      item.style.pointerEvents = "none";
     });
 
     modal.style.transition =
-      "opacity 2200ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "filter 2500ms cubic-bezier(0.22, 1, 0.36, 1), " +
-      "transform 2600ms cubic-bezier(0.22, 1, 0.36, 1)";
+      "opacity 1650ms cubic-bezier(0.66, 0, 0.2, 1), " +
+      "background-color 1650ms cubic-bezier(0.66, 0, 0.2, 1), " +
+      "border-color 1650ms cubic-bezier(0.66, 0, 0.2, 1), " +
+      "backdrop-filter 1850ms cubic-bezier(0.66, 0, 0.2, 1), " +
+      "-webkit-backdrop-filter 1850ms cubic-bezier(0.66, 0, 0.2, 1), " +
+      "filter 1650ms cubic-bezier(0.66, 0, 0.2, 1), " +
+      "transform 1850ms cubic-bezier(0.66, 0, 0.2, 1)";
 
     modal.style.opacity = "0";
-    modal.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-    modal.style.borderColor = "rgba(255, 255, 255, 0.15)";
-    modal.style.backdropFilter = "blur(12px)";
-    modal.style.webkitBackdropFilter = "blur(12px)";
-    modal.style.filter = "blur(5px)";
-    modal.style.transform = "scale(0.975)";
+    modal.style.backgroundColor = "rgba(255, 255, 255, 0)";
+    modal.style.borderColor = "rgba(255, 255, 255, 0)";
+    modal.style.backdropFilter = "blur(0px)";
+    modal.style.webkitBackdropFilter = "blur(0px)";
+    modal.style.filter = "blur(0)";
+    modal.style.transform = "scale(0.976)";
     modal.style.pointerEvents = "none";
 
     overlay.style.pointerEvents = "none";
