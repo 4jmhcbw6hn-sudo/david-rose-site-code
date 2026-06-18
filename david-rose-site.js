@@ -1,3 +1,4 @@
+/* DCR update: mobile client videos now MP4-first with 3s HLS fallback. */
 /* DCR update: homepage desktop v3 + mobile v2 videos; desktop remains MP4-only. */
 /* DCR update: homepage main reel desktop MP4-only; mobile keeps HLS fallback. */
 /* DCR update: restart homepage main reel when returning from client videos / overlays. */
@@ -310,17 +311,16 @@ const videos = {
   }
 
   function switchDesktopClientVideoToHlsFallback(key) {
-    if (isMobileClientVideoViewport()) return;
-
     const video = videos[key];
     const config = clientVideoSourceConfig[key];
     const hlsUrl = getClientHlsSourceUrlForViewport(key);
+    const sourceMode = isMobileClientVideoViewport() ? "mobile" : "desktop";
 
     if (!video || !config || !hlsUrl) return;
     if (current !== key || config.playbackReady) return;
     if (isHlsSourceUrl(config.activeSourceUrl)) return;
 
-    config.activeSourceMode = "desktop-hls-fallback|" + hlsUrl;
+    config.activeSourceMode = sourceMode + "-hls-fallback|" + hlsUrl;
     config.activeSourceUrl = hlsUrl;
     config.autoplayAfterSourceReady = true;
     config.playbackReady = false;
@@ -340,14 +340,8 @@ const videos = {
   function scheduleDesktopClientVideoHlsFallback(key) {
     const config = clientVideoSourceConfig[key];
 
-    // Mobile is intentionally MP4-only for now. The HLS fallback was making
-    // pause/resume and audio behaviour less stable on phones. Desktop keeps
-    // the MP4-first -> HLS fallback path.
-    if (isMobileClientVideoViewport()) {
-      clearClientDesktopHlsFallbackTimer(key);
-      return;
-    }
-
+    // Client videos are MP4-first on both desktop and mobile.
+    // If the MP4 has not started after the timer, switch to the matching Bunny Stream HLS.
     const hlsUrl = getClientHlsSourceUrlForViewport(key);
 
     if (!config || !hlsUrl) return;
@@ -2652,6 +2646,11 @@ const videos = {
 
     if (supportsNativeHls(video)) {
       setDirectVideoSourceUrl(video, sourceUrl);
+
+      if (current === key && config.autoplayAfterSourceReady) {
+        playVideo(video);
+      }
+
       return;
     }
 
