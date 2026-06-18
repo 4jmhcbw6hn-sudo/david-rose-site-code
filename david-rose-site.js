@@ -1,3 +1,4 @@
+/* DCR update: contact stable v7 no restart, tab-freeze, robust email, contact-toggle hit zone. */
 /* DCR update: contact stable v6 mobile pause/resume, nav toggle, native email. */
 /* DCR update: contact modal v4 slower reveal, contact nav stays active, native mailto. */
 /* DCR update: contact modal v3 slower luxury reveal, staged links, close last. */
@@ -216,7 +217,7 @@ const videos = {
   let approachPausedVideo = null;
   let approachVideoWasPaused = false;
   let approachResumeState = null;
-  let mobileContactVideoState = null;
+  let contactVideoState = null;
   let centerNameReturnTimeout = null;
   let centerNameSettleTimeout = null;
   let projectsGradientPeakTimeout = null;
@@ -6395,9 +6396,25 @@ const videos = {
     emailLink.setAttribute("title", CONTACT_EMAIL_ADDRESS);
 
     emailLink.addEventListener("click", () => {
-      if (!navigator.clipboard || !navigator.clipboard.writeText) return;
+      const originalText = emailLink.textContent;
 
-      navigator.clipboard.writeText(CONTACT_EMAIL_ADDRESS).catch(() => {});
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(CONTACT_EMAIL_ADDRESS).then(() => {
+          emailLink.textContent = "COPIED";
+
+          setTimeout(() => {
+            emailLink.textContent = originalText;
+          }, 1400);
+        }).catch(() => {});
+      }
+
+      // Do not prevent the native mailto link. This delayed assignment is only
+      // a desktop fallback if the browser fails to hand the native anchor to Mail.
+      setTimeout(() => {
+        try {
+          window.location.href = CONTACT_MAILTO_URL;
+        } catch (error) {}
+      }, 80);
     });
 
     const instagramLink = document.createElement("a");
@@ -6451,8 +6468,36 @@ const videos = {
       buildRefinedContactPanel(modal);
     }
 
-    if (overlay) {
+    if (overlay && overlay.getAttribute("data-dcr-refined-contact-overlay-bound") !== "true") {
       overlay.setAttribute("data-dcr-refined-contact-overlay-bound", "true");
+
+      overlay.addEventListener("click", (event) => {
+        if (!isContactOpen || !contactLink) return;
+
+        const modal = getContactModal();
+
+        if (modal && modal.contains(event.target)) return;
+
+        const rect = contactLink.getBoundingClientRect();
+        const pad = 18;
+        const clickedContactZone =
+          event.clientX >= rect.left - pad &&
+          event.clientX <= rect.right + pad &&
+          event.clientY >= rect.top - pad &&
+          event.clientY <= rect.bottom + pad;
+
+        if (!clickedContactZone) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        hideContactAnimated();
+      }, true);
     }
   }
 
@@ -6471,26 +6516,32 @@ const videos = {
     }) || null;
   }
 
-  function captureMobileContactVideoState() {
+  function captureContactVideoState() {
     const video = getCurrentVisibleVideoForContact();
+    const isMobileContactMode = isMobileLayoutViewport();
 
-    mobileContactVideoState = null;
+    contactVideoState = null;
 
     if (!video) return;
 
-    mobileContactVideoState = {
+    const state = {
       video,
       key: getApproachResumeKey(video) || current,
       wasPaused: video.paused,
       wasEnded: video.ended,
-      currentTime: Number.isFinite(video.currentTime) ? video.currentTime : 0,
+      startTime: Number.isFinite(video.currentTime) ? video.currentTime : 0,
+      lockedTime: Number.isFinite(video.currentTime) ? video.currentTime : 0,
       playbackRate: video.playbackRate || 1,
       volume: typeof video.volume === "number" ? video.volume : 0,
       muted: Boolean(video.muted),
       filter: video.style.filter || "",
       transform: video.style.transform || "",
-      transition: video.style.transition || ""
+      transition: video.style.transition || "",
+      mode: isMobileContactMode ? "mobile" : "desktop",
+      freezeTimeout: null
     };
+
+    contactVideoState = state;
 
     cancelApproachPlaybackAnimation();
     clearOverlayVideoTimeouts();
@@ -6498,24 +6549,66 @@ const videos = {
 
     safelySetPlaybackRate(video, 1);
 
-    if (!video.paused && !video.ended) {
+    if (state.wasPaused || state.wasEnded) {
+      state.lockedTime = Number.isFinite(video.currentTime) ? video.currentTime : state.startTime;
+      return;
+    }
+
+    if (isMobileContactMode) {
       try {
         video.pause();
       } catch (error) {}
+
+      state.lockedTime = Number.isFinite(video.currentTime) ? video.currentTime : state.startTime;
+      safelySetPlaybackRate(video, 1);
+
+      video.style.transition = state.transition;
+      video.style.filter = state.filter;
+      video.style.transform = state.transform;
+      return;
     }
 
-    video.style.filter = mobileContactVideoState.filter;
-    video.style.transform = mobileContactVideoState.transform;
+    // Desktop: keep the premium slow-down, but isolate it from the Approach
+    // resume code so it cannot restart or swap video source on close.
+    animatePlaybackRate(video, Math.max(0.25, Math.min(1, video.playbackRate || 1)), 0.24, 3600, () => {
+      if (!contactVideoState || contactVideoState.video !== video || !isContactOpen) return;
+
+      try {
+        video.pause();
+      } catch (error) {}
+
+      state.lockedTime = Number.isFinite(video.currentTime) ? video.currentTime : state.startTime;
+      safelySetPlaybackRate(video, 1);
+    }, approachSlowdownEase);
+
+    const freezeTimeout = setTimeout(() => {
+      if (!contactVideoState || contactVideoState.video !== video || !isContactOpen) return;
+
+      try {
+        video.pause();
+      } catch (error) {}
+
+      state.lockedTime = Number.isFinite(video.currentTime) ? video.currentTime : state.startTime;
+      safelySetPlaybackRate(video, 1);
+    }, 4300);
+
+    state.freezeTimeout = freezeTimeout;
+    contactTimeouts.push(freezeTimeout);
   }
 
-  function restoreMobileContactVideoAfterContact() {
-    const savedState = mobileContactVideoState;
 
-    mobileContactVideoState = null;
+  function restoreContactVideoAfterContact() {
+    const savedState = contactVideoState;
+
+    contactVideoState = null;
 
     if (!savedState || !savedState.video) return;
 
     const video = savedState.video;
+
+    if (savedState.freezeTimeout) {
+      clearTimeout(savedState.freezeTimeout);
+    }
 
     cancelApproachPlaybackAnimation();
     clearOverlayVideoTimeouts();
@@ -6525,25 +6618,50 @@ const videos = {
     video.style.filter = savedState.filter;
     video.style.transform = savedState.transform;
 
-    safelySetPlaybackRate(video, savedState.playbackRate || 1);
+    safelySetPlaybackRate(video, 1);
     safelySetMuted(video, savedState.muted);
 
     if (typeof savedState.volume === "number") {
       safelySetVolume(video, savedState.volume);
     }
 
+    const resumeTime = Number.isFinite(savedState.lockedTime)
+      ? savedState.lockedTime
+      : savedState.startTime;
+
+    if (Number.isFinite(resumeTime) && Math.abs((video.currentTime || 0) - resumeTime) > 0.65) {
+      try {
+        video.currentTime = resumeTime;
+      } catch (error) {}
+    }
+
     if (!savedState.wasPaused && !savedState.wasEnded) {
-      const savedTime = Number.isFinite(savedState.currentTime) ? savedState.currentTime : null;
-
-      if (savedTime !== null && Math.abs((video.currentTime || 0) - savedTime) > 1.25) {
-        try {
-          video.currentTime = savedTime;
-        } catch (error) {}
-      }
-
       playVideoWithResumeRetries(video);
     }
   }
+
+  function refreezeContactVideoIfNeeded() {
+    const savedState = contactVideoState;
+
+    if (!isContactOpen || !savedState || !savedState.video) return;
+
+    const video = savedState.video;
+    const lockedTime = Number.isFinite(savedState.lockedTime)
+      ? savedState.lockedTime
+      : (Number.isFinite(video.currentTime) ? video.currentTime : savedState.startTime);
+
+    try {
+      if (Math.abs((video.currentTime || 0) - lockedTime) > 0.35) {
+        video.currentTime = lockedTime;
+      }
+
+      video.pause();
+    } catch (error) {}
+
+    savedState.lockedTime = lockedTime;
+    safelySetPlaybackRate(video, 1);
+  }
+
 
   function getContactOverlay() {
     return document.querySelector(".contact-overlay");
@@ -6668,11 +6786,7 @@ const videos = {
 
     const useMobileContactMode = isMobileLayoutViewport();
 
-    if (useMobileContactMode) {
-      captureMobileContactVideoState();
-    } else {
-      captureApproachResumeState();
-    }
+    captureContactVideoState();
 
     isContactOpen = true;
 
@@ -6684,7 +6798,6 @@ const videos = {
       clearApproachVideoBlur();
     } else {
       blurCurrentVideoForApproach();
-      slowCurrentVideoForApproach();
       fadeCurrentAudioToZero();
     }
     activeSection = null;
@@ -6715,8 +6828,8 @@ const videos = {
     overlay.style.transition = "none";
     overlay.style.visibility = "visible";
     overlay.style.opacity = "1";
-    overlay.classList.add("dcr-contact-pass-through");
-    overlay.style.pointerEvents = "none";
+    overlay.classList.remove("dcr-contact-pass-through");
+    overlay.style.pointerEvents = "auto";
 
     modal.style.display = "";
     modal.style.transformOrigin = "50% 50%";
@@ -6815,12 +6928,12 @@ const videos = {
     clearContactTimeouts();
     clearApproachTimeouts();
 
-    const wasMobileContactMode = Boolean(mobileContactVideoState);
+    const hasContactVideoState = Boolean(contactVideoState);
 
     isContactOpen = false;
 
-    if (wasMobileContactMode) {
-      restoreMobileContactVideoAfterContact();
+    if (hasContactVideoState) {
+      restoreContactVideoAfterContact();
       restoreCenterNameAfterApproachClose(600);
     } else {
       resumeApproachVideoPlayback();
@@ -6918,8 +7031,8 @@ const videos = {
     clearApproachTimeouts();
     isContactOpen = false;
 
-    if (wasOpen && mobileContactVideoState) {
-      restoreMobileContactVideoAfterContact();
+    if (wasOpen && contactVideoState) {
+      restoreContactVideoAfterContact();
       restoreCenterNameAfterApproachClose(700);
     } else if (wasOpen) {
       clearApproachVideoBlur();
@@ -6928,7 +7041,7 @@ const videos = {
     } else {
       clearApproachVideoBlur();
       clearApproachResumeState();
-      mobileContactVideoState = null;
+      contactVideoState = null;
     }
 
     if (overlay) {
@@ -7016,7 +7129,7 @@ const videos = {
   hideContactImmediate();
 
   document.documentElement.classList.add("dcr-js-ready");
-  document.documentElement.setAttribute("data-dcr-contact-version", "v6-contact-stable");
+  document.documentElement.setAttribute("data-dcr-contact-version", "v7-contact-stable");
 
   setTimeout(() => {
     runCustomPageLoadIntro();
@@ -7247,6 +7360,16 @@ const videos = {
 
     showContactAnimated();
   }, true);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      refreezeContactVideoIfNeeded();
+    }
+  });
+
+  window.addEventListener("focus", () => {
+    refreezeContactVideoIfNeeded();
+  });
 
   const projectButtons = getProjectButtons();
 
