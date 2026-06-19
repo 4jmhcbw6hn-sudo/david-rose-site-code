@@ -1,3 +1,4 @@
+/* DCR update: 77 Diamonds SS24 — Commercial Direction, desktop/mobile MP4 + HLS + stills. */
 /* DCR update: contact stable v7 no restart, tab-freeze, robust email, contact-toggle hit zone. */
 /* DCR update: contact stable v6 mobile pause/resume, nav toggle, native email. */
 /* DCR update: contact modal v4 slower reveal, contact nav stays active, native mailto. */
@@ -32,6 +33,7 @@ const videos = {
     "vogue-suntory": document.getElementById("vogue-suntory-reel"),
     "christies-luxury-aw23": document.getElementById("christies-luxury-aw23-reel"),
     "christies-luxury-ss24": document.getElementById("christies-luxury-ss24-reel"),
+    "77-diamonds-ss24": document.getElementById("77-diamonds-ss24-reel"),
     "lovebite": document.getElementById("lovebite-reel"),
     "half-sick-of-shadows": document.getElementById("half-sick-of-shadows-reel")
   };
@@ -170,6 +172,19 @@ const videos = {
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_9X16_HOLDING_STILL_3.10.1_3.10.1.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_16x9_ENDING_STILL_3.10.1_1.48.1.jpg",
       mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/CHRISTIE'S/LUX_02/CHRISTIE'S_LUX_SS24_9x16_ENDING_STILL_3.10.1_1.48.1_1.54.1.jpg",
+      activeSourceMode: "",
+      playbackReady: false
+    },
+    "77-diamonds-ss24": {
+      creditTitle: "COMMERCIAL DIRECTION",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/51ee4082-9675-41fa-9b2e-3edcf97e446a/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/f66624aa-4bd7-4282-b8e4-18894a272e8c/playlist.m3u8",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_SS24_DESKTOP_16x9.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_SS24_MOBILE_9x16.mp4",
+      desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_STILL_OPENING_DESKTOP_16x9.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_STILL_OPENING_MOBILE_9x16.jpg",
+      desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_STILL_ENDING_DESKTOP_16x9.jpg",
+      mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_STILL_ENDING_MOBILE_9x16.jpg",
       activeSourceMode: "",
       playbackReady: false
     },
@@ -7081,6 +7096,7 @@ const videos = {
   const vogueSuntoryLink = document.querySelector("[data-link='vogue-suntory']");
   const christiesLuxuryAw23Link = document.querySelector("[data-link='christies-luxury-aw23']");
   const christiesLuxurySs24Link = document.querySelector("[data-link='christies-luxury-ss24']");
+  const diamonds77Ss24Link = document.querySelector("[data-link='77-diamonds-ss24']");
   const lovebiteLink = document.querySelector("[data-link='lovebite']");
   const halfSickOfShadowsLink = document.querySelector("[data-link='half-sick-of-shadows']");
   const colourLink = getMainNavButton("colour");
@@ -7111,6 +7127,7 @@ const videos = {
   prepareClientOneShotVideo(videos["vogue-suntory"], "vogue-suntory");
   prepareClientOneShotVideo(videos["christies-luxury-aw23"], "christies-luxury-aw23");
   prepareClientOneShotVideo(videos["christies-luxury-ss24"], "christies-luxury-ss24");
+  prepareClientOneShotVideo(videos["77-diamonds-ss24"], "77-diamonds-ss24");
   prepareClientOneShotVideo(videos["lovebite"], "lovebite");
   prepareClientOneShotVideo(videos["half-sick-of-shadows"], "half-sick-of-shadows");
 
@@ -7250,6 +7267,7 @@ const videos = {
   installClientVideoLink(vogueSuntoryLink, "vogue-suntory");
   installClientVideoLink(christiesLuxuryAw23Link, "christies-luxury-aw23");
   installClientVideoLink(christiesLuxurySs24Link, "christies-luxury-ss24");
+  installClientVideoLink(diamonds77Ss24Link, "77-diamonds-ss24");
   installClientVideoLink(lovebiteLink, "lovebite");
   installClientVideoLink(halfSickOfShadowsLink, "half-sick-of-shadows");
 
@@ -7384,6 +7402,7 @@ const videos = {
       if (button === christiesClassicWeekLink) return;
       if (button === christiesLuxuryAw23Link) return;
       if (button === christiesLuxurySs24Link) return;
+      if (button === diamonds77Ss24Link) return;
       activateProjectFocus(button);
     });
   });
