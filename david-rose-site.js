@@ -1,3 +1,4 @@
+/* DCR update: 77 Diamonds SS24 refreshed MP4 and HLS sources v4. */
 /* DCR update: 77 Diamonds SS24 refreshed MP4 and HLS sources v3. */
 /* DCR update: 77 Diamonds SS24 refreshed HLS streams. */
 /* DCR update: 77 Diamonds SS24 — Commercial Direction, desktop/mobile MP4 + HLS + stills. */
@@ -179,10 +180,10 @@ const videos = {
     },
     "77-diamonds-ss24": {
       creditTitle: "COMMERCIAL DIRECTION",
-      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/601f8139-b579-4be2-b689-16ebee206c05/playlist.m3u8",
-      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/fb8ab5ca-68d8-4e92-8dcf-e171ba40bf29/playlist.m3u8",
-      desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_SS24_DESKTOP_16x9.2.mp4",
-      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_SS24_MOBILE_9x16.2.mp4",
+      desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/c6cd000f-20b5-4fbb-88f9-f342c4cc0d03/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/da2b9abd-0c50-45f9-8849-f5a8315bde43/playlist.m3u8",
+      desktopUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_SS24_DESKTOP_16x9.3.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_SS24_MOBILE_9x16.3.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_STILL_OPENING_DESKTOP_16x9.jpg",
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_STILL_OPENING_MOBILE_9x16.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/DIRECTION/77_DIAMONDS/77_DIAMONDS_STILL_ENDING_DESKTOP_16x9.jpg",
