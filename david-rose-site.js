@@ -1,3 +1,4 @@
+/* DCR update: Approach now resumes the homepage reel instead of restarting it. */
 /* DCR update: 77 Diamonds SS24 mobile MP4 and HLS refreshed v6. */
 /* DCR update: 77 Diamonds SS24 refreshed MP4, HLS, and still assets v5. */
 /* DCR update: 77 Diamonds SS24 refreshed MP4 and HLS sources v4. */
@@ -4986,6 +4987,12 @@ const videos = {
       try {
         video.pause();
       } catch (error) {}
+
+      if (approachResumeState && approachResumeState.video === video) {
+        approachResumeState.time = Number.isFinite(video.currentTime)
+          ? video.currentTime
+          : approachResumeState.time;
+      }
     }
 
     if (useMobileOverlayPauseMode()) {
@@ -5159,7 +5166,33 @@ const videos = {
 
     if ((savedKey || current) === "main") {
       current = "main";
-      restartMainReelFromBeginning();
+
+      const resumeTime = savedState && Number.isFinite(savedState.time)
+        ? savedState.time
+        : (Number.isFinite(video.currentTime) ? video.currentTime : 0);
+
+      safelySetPlaybackRate(video, 1);
+      safelySetMuted(video, savedState ? Boolean(savedState.wasMuted) : true);
+
+      if (savedState && typeof savedState.startVolume === "number") {
+        safelySetVolume(video, Math.max(0, Math.min(1, savedState.startVolume)));
+      }
+
+      // The homepage reel source is already loaded. Do not prepare, reload,
+      // or reset it here: Approach must resume the same frame/time.
+      if (
+        Number.isFinite(resumeTime) &&
+        Math.abs((video.currentTime || 0) - resumeTime) > 0.35
+      ) {
+        try {
+          video.currentTime = resumeTime;
+        } catch (error) {}
+      }
+
+      if (!wasPausedBeforeOverlay && !wasEndedBeforeOverlay) {
+        playVideoWithResumeRetries(video);
+      }
+
       clearApproachResumeState();
       return;
     }
@@ -7152,6 +7185,7 @@ const videos = {
 
   document.documentElement.classList.add("dcr-js-ready");
   document.documentElement.setAttribute("data-dcr-contact-version", "v7-contact-stable");
+  document.documentElement.setAttribute("data-dcr-approach-reel-version", "v8-resume");
 
   setTimeout(() => {
     runCustomPageLoadIntro();
