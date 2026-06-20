@@ -1,3 +1,4 @@
+/* DCR update: Vogue Bicester mobile opening still refreshed v3. */
 /* DCR update: Vogue Bicester mobile MP4 and HLS refreshed v2. */
 /* DCR update: Approach now resumes the homepage reel instead of restarting it. */
 /* DCR update: 77 Diamonds SS24 mobile MP4 and HLS refreshed v6. */
@@ -111,7 +112,7 @@ const videos = {
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_16X9.mp4",
       mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_INSTAGRAM_VID_9x16.2.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_16X9_HOLDING_STILL.jpg",
-      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_9x16_HOLDING_STILL.jpg",
+      mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_9x16_HOLDING_STILL.2.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_16X9_END_STILL.jpg",
       mobileEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_9X16_END_STILL.jpg",
       activeSourceMode: "",
