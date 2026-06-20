@@ -1,3 +1,4 @@
+/* DCR update: Vogue Bicester mobile MP4 and HLS refreshed v2. */
 /* DCR update: Approach now resumes the homepage reel instead of restarting it. */
 /* DCR update: 77 Diamonds SS24 mobile MP4 and HLS refreshed v6. */
 /* DCR update: 77 Diamonds SS24 refreshed MP4, HLS, and still assets v5. */
@@ -106,9 +107,9 @@ const videos = {
       creditTitle: "COLOURIST",
       creditDelayMs: 5000,
       desktopHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/41929183-a0d0-4bcf-b3f1-298cc06f6ac5/playlist.m3u8",
-      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/5ed7099b-4942-4890-8417-8131e2641279/playlist.m3u8",
+      mobileHlsUrl: "https://vz-636468bf-dd1.b-cdn.net/05a9e9ef-54c0-4ec7-9551-88fbb1c08c17/playlist.m3u8",
       desktopUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_16X9.mp4",
-      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_9X16.mp4",
+      mobileUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_INSTAGRAM_VID_9x16.2.mp4",
       desktopStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_16X9_HOLDING_STILL.jpg",
       mobileStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_9x16_HOLDING_STILL.jpg",
       desktopEndStillUrl: "https://portfolio-pullzone.b-cdn.net/POST_PRODUCTION/VOGUE/BICESTER/VOGUE_BICESTER_COLLECTION_16X9_END_STILL.jpg",
